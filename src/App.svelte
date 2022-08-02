@@ -5,6 +5,7 @@
 	import { onMount } from "svelte";
 	import type { EssayEntry } from "./types";
 	import { Action, Diff_ONP } from "./ts/diff";
+import { processString } from "./ts/normalization";
 
 	let correctText = "";
 	let checkText = "";
@@ -26,7 +27,7 @@
 
 	async function loadCorrectText() {
 		const req = await fetch("/resources/correct.txt");
-		correctText = await req.text();
+		correctText = processString(await req.text());
 	}
 
 	onMount(() => {
