@@ -1,11 +1,10 @@
 import Papa from "papaparse";
 
-export function parseCSV(file: File) {
+export function parseCSV(file: File, cb: (entry: any) => void) {
 	// @ts-ignore
 	Papa.parse(file, {
 		worker: true,
-		step: (result) => {
-			console.log(result);
-		}
+		step: cb,
+		header: true
 	})
 }

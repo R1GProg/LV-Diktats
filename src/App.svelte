@@ -7,10 +7,12 @@
 
 	let correctText = "";
 	let checkText = "";
+	let checkID = "";
 	
 	function onSelect(e: CustomEvent) {
 		const entry = e.detail.entry as EssayEntry;
 		checkText = entry.text;
+		checkID = entry.id;
 	}
 
 	async function loadCorrectText() {
@@ -33,7 +35,7 @@
 	</div>
 
 	<div class="essay essay1">
-		<h2>Labošanai</h2>
+		<h2>Labošanai {#if checkID}- ID {checkID}{/if}</h2>
 		<EssayBox text={checkText}/>
 	</div>
 

@@ -1,23 +1,39 @@
 <script lang="ts">
-	import { onMount, createEventDispatcher } from "svelte";
+	import { createEventDispatcher } from "svelte";
 	import { parseCSV } from "../ts/csv";
+	import { processString } from "../ts/normalization";
 	import type { EssayEntry } from "../types";
 
 	const dispatch = createEventDispatcher();
 
 	let files: FileList;
-	let entries: Record<string, EssayEntry> = {
-		"1": {id: "1", text: "Hello world1!"},
-		"2": {id: "2", text: "Hello world2!"},
-		"3": {id: "3", text: "Hello world3!"},
-		"4": {id: "4", text: "Hello world4!"},
-		"5": {id: "5", text: "Hello world5!"},
-	};
+	let entries: Record<string, EssayEntry> = {};
+	let activeID = "";
 
-	$: if (files) parseCSV(files[0]);
+	$: if (files) parseCSV(files[0], (result) => {
+		const id = result.data.id as string;
+
+		if (!id) return;
+
+		entries[id] = {
+			id,
+			text: processString(result.data.message),
+		};
+	});
 
 	function onSelect(id: string) {
+		activeID = id;
 		dispatch("select", { entry: entries[id] })
+	}
+
+	export function changeSelectionBy(delta: number) {
+		const keys = Object.keys(entries);
+		const activeIndex = keys.findIndex((v) => v === activeID);
+		const nextIndex = keys[activeIndex + delta];
+
+		if (entries[nextIndex]) {
+			onSelect(entries[nextIndex].id);
+		}
 	}
 </script>
 
@@ -27,9 +43,19 @@
 		<input type="file" bind:files={files}>
 	</div>
 
+	<div class="nav">
+		<button on:click={() => {changeSelectionBy(-1)}}>Iepriekšējais</button>
+		<button on:click={() => {changeSelectionBy(1)}}>Nākamais</button>
+	</div>
+
 	<div class="entryContainer">
 		{#each Object.values(entries) as entry}
-		<div class="entry" data-id={entry.id} on:click={() => { onSelect(entry.id); }}>
+		<div
+			class="entry"
+			class:active={activeID === entry.id}
+			data-id={entry.id}
+			on:click={() => { onSelect(entry.id); }}
+		>
 			<span class="entry-title">{entry.id}</span>
 		</div>
 		{/each}
@@ -39,8 +65,8 @@
 <style lang="scss">
 	.container {
 		display: grid;
-		grid-template-areas: "select" "entries";
-		grid-template-rows: 10% 80%;
+		grid-template-areas: "select" "nav" "entries";
+		grid-template-rows: 10% 5% 80%;
 		row-gap: 10px;
 		padding: 10px;
 		height: calc(100% - 20px);
@@ -55,6 +81,18 @@
 
 	.fileselect h2 {
 		margin: 0.35em 0;
+	}
+
+	.nav {
+		grid-area: nav;
+
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		column-gap: 10px;
+
+		button {
+			width: 100%;
+		}
 	}
 
 	.entryContainer {
@@ -87,6 +125,10 @@
 
 		&:hover {
 			filter: brightness(50%);
+		}
+
+		&.active {
+			background-color: rgba(30, 175, 30, 0.25);
 		}
 	}
 </style>
