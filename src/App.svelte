@@ -2,6 +2,25 @@
 	import EssayBox from "./components/EssayBox.svelte";
 	import EssaySelector from "./components/EssaySelector.svelte";
 	import Diff from "./components/Diff.svelte";
+	import { onMount } from "svelte";
+	import type { EssayEntry } from "./types";
+
+	let correctText = "";
+	let checkText = "";
+	
+	function onSelect(e: CustomEvent) {
+		const entry = e.detail.entry as EssayEntry;
+		checkText = entry.text;
+	}
+
+	async function loadCorrectText() {
+		const req = await fetch("/resources/correct.txt");
+		correctText = await req.text();
+	}
+
+	onMount(() => {
+		loadCorrectText();
+	});
 </script>
 
 <main>
@@ -10,21 +29,21 @@
 	</header>
 
 	<div class="select">
-		<EssaySelector />
+		<EssaySelector on:select={onSelect}/>
 	</div>
 
-	<div class="essay1">
-		wrong essay
-		<EssayBox />
+	<div class="essay essay1">
+		<h2>Labošanai</h2>
+		<EssayBox text={checkText}/>
 	</div>
 
-	<div class="essay2">
-		correct essay
-		<EssayBox />
+	<div class="essay essay2">
+		<h2>Pareizais</h2>
+		<EssayBox text={correctText}/>
 	</div>
 
 	<div class="diff">
-		diff
+		<h2>Kļūdas</h2>
 		<Diff />
 	</div>
 </main>
@@ -33,7 +52,7 @@
 	main {
 		display: grid;
 		grid-template-columns: 15vw auto 30vw;
-		grid-template-rows: 10vh 1fr 1fr;
+		grid-template-rows: 10vh 42vh 42vh;
 		grid-template-areas: "header header header" "select essay1 diff" "select essay2 diff";
 		padding: 1vw;
 		gap: 10px;
@@ -41,6 +60,12 @@
 
 		> * {
 			border: 1px solid black;
+
+			h2 {
+				margin-top: 0;
+				padding-bottom: 0.45em;
+				border-bottom: 1px solid black;
+			}
 		}
 	}
 
@@ -55,12 +80,20 @@
 		grid-area: select;
 	}
 
-	.essay1 {
-		grid-area: essay1;
+	.essay, .diff {
+		padding: 10px;
+		display: grid;
+		grid-template-rows: auto 1fr;
 	}
 
-	.essay2 {
-		grid-area: essay2;
+	.essay {
+		&.essay1 {
+			grid-area: essay1;
+		}
+
+		&.essay2 {
+			grid-area: essay2;
+		}
 	}
 
 	.diff {

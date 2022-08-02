@@ -1,46 +1,24 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, createEventDispatcher } from "svelte";
 	import { parseCSV } from "../ts/csv";
+	import type { EssayEntry } from "../types";
 
-	interface Entry {
-		id: number,
-		text: string,
-	}
+	const dispatch = createEventDispatcher();
 
 	let files: FileList;
-	let entries: Entry[] = [
-		{id: 1, text: "Hello world1!"},
-		{id: 2, text: "Hello world2!"},
-		{id: 3, text: "Hello world3!"},
-		{id: 4, text: "Hello world4!"},
-		{id: 5, text: "Hello world5!"},
-		{id: 1, text: "Hello world1!"},
-		{id: 2, text: "Hello world2!"},
-		{id: 3, text: "Hello world3!"},
-		{id: 4, text: "Hello world4!"},
-		{id: 5, text: "Hello world5!"},
-		{id: 1, text: "Hello world1!"},
-		{id: 2, text: "Hello world2!"},
-		{id: 3, text: "Hello world3!"},
-		{id: 4, text: "Hello world4!"},
-		{id: 5, text: "Hello world5!"},
-		{id: 1, text: "Hello world1!"},
-		{id: 2, text: "Hello world2!"},
-		{id: 3, text: "Hello world3!"},
-		{id: 4, text: "Hello world4!"},
-		{id: 5, text: "Hello world5!"},
-		{id: 1, text: "Hello world1!"},
-		{id: 2, text: "Hello world2!"},
-		{id: 3, text: "Hello world3!"},
-		{id: 4, text: "Hello world4!"},
-		{id: 5, text: "Hello world5!"},
-	];
+	let entries: Record<string, EssayEntry> = {
+		"1": {id: "1", text: "Hello world1!"},
+		"2": {id: "2", text: "Hello world2!"},
+		"3": {id: "3", text: "Hello world3!"},
+		"4": {id: "4", text: "Hello world4!"},
+		"5": {id: "5", text: "Hello world5!"},
+	};
 
 	$: if (files) parseCSV(files[0]);
 
-	onMount(() => {
-		// loadFromCSV("/resources/data.csv");
-	});
+	function onSelect(id: string) {
+		dispatch("select", { entry: entries[id] })
+	}
 </script>
 
 <div class="container">
@@ -50,8 +28,8 @@
 	</div>
 
 	<div class="entryContainer">
-		{#each entries as entry}
-		<div class="entry" data-id={entry.id}>
+		{#each Object.values(entries) as entry}
+		<div class="entry" data-id={entry.id} on:click={() => { onSelect(entry.id); }}>
 			<span class="entry-title">{entry.id}</span>
 		</div>
 		{/each}
@@ -65,7 +43,7 @@
 		grid-template-rows: 10% 80%;
 		row-gap: 10px;
 		padding: 10px;
-		height: 100%;
+		height: calc(100% - 20px);
 	}
 
 	.fileselect {

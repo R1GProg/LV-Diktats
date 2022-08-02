@@ -40,13 +40,13 @@
 	}
 
 	onMount(() => {
-		svelteClass = textContainer.className.match(/svelte-.{7}/)[0];
+		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
 	});
 </script>
 
 <div class="textbox">
 	<span class="container" bind:this={textContainer}>
-		{@html text}
+		{text}
 	</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
@@ -55,15 +55,19 @@
 
 <style lang="scss">
 	.textbox {
-		width: 100%;
-		margin: 15vw;
+		border: 1px solid rgba(0,0,0,0.15);
+		width: calc(100% - 10px);
+		height: calc(100% - 10px);
 		text-align: justify;
-		font-size: 18pt;
+		font-size: 1rem;
 		font-family: 'Times New Roman', Times, serif;
+		overflow-y: auto;
+		padding: 5px;
 	}
 
 	.container {
 		width: 100%;
+		white-space: pre-line;
 	}
 
 	:global(.highlight) {
