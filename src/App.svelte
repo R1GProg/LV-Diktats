@@ -4,15 +4,24 @@
 	import Diff from "./components/Diff.svelte";
 	import { onMount } from "svelte";
 	import type { EssayEntry } from "./types";
+	import { Action, Diff_ONP } from "./ts/diff";
 
 	let correctText = "";
 	let checkText = "";
 	let checkID = "";
+	let activeDiff: Action[] = [];
+	let checkEssayBox: EssayBox;
 	
 	function onSelect(e: CustomEvent) {
 		const entry = e.detail.entry as EssayEntry;
 		checkText = entry.text;
 		checkID = entry.id;
+
+		const diff = new Diff_ONP(checkText, correctText);
+		diff.calc();
+		activeDiff = diff.getSequence();
+
+		checkEssayBox.set(checkText, activeDiff);
 	}
 
 	async function loadCorrectText() {
@@ -36,7 +45,7 @@
 
 	<div class="essay essay1">
 		<h2>Labošanai {#if checkID}- ID {checkID}{/if}</h2>
-		<EssayBox text={checkText}/>
+		<EssayBox bind:this={checkEssayBox}/>
 	</div>
 
 	<div class="essay essay2">
@@ -45,8 +54,8 @@
 	</div>
 
 	<div class="diff">
-		<h2>Kļūdas</h2>
-		<Diff />
+		<h2>Kļūdas (WIP)</h2>
+		<Diff diff={activeDiff}/>
 	</div>
 </main>
 

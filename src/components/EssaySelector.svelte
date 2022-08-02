@@ -92,6 +92,7 @@
 
 		button {
 			width: 100%;
+			cursor: pointer;
 		}
 	}
 
