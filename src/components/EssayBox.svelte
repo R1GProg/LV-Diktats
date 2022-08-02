@@ -23,14 +23,18 @@
 	}
 
 	function addHighlightedText(newText: string, start: number, styleID: number) {
-		const parsedStartIndex = textIndexToHTMLIndex(start);
-		const html = textContainer.innerHTML;
 		const tag = `<span class="highlight hl-${styleID} ${svelteClass} tag-ignore">${newText}</span>`;
-		const newHTML = `${html.substring(0, parsedStartIndex)}${tag}${html.substring(parsedStartIndex)}`;
 
-		textContainer.innerHTML = newHTML;
-
-		shiftTextToHTMLTranslation(start, tag.length);
+		if (start === text.length) {
+			textContainer.innerHTML += tag;
+		} else {
+			const parsedStartIndex = textIndexToHTMLIndex(start);
+			const html = textContainer.innerHTML;
+			const newHTML = `${html.substring(0, parsedStartIndex)}${tag}${html.substring(parsedStartIndex)}`;
+			textContainer.innerHTML = newHTML;
+		
+			shiftTextToHTMLTranslation(start, tag.length);
+		}
 	}
 
 	function highlightErrors() {
@@ -39,6 +43,7 @@
 				case "ADD":
 					const parsed = JSON.stringify(error.char); // To visualize new lines
 					addHighlightedText(parsed.substring(1, parsed.length - 1), error.indexCheck, 2);
+
 					break;
 				case "DEL":
 					highlightText(error.indexCheck, 1, 1);
@@ -68,8 +73,6 @@
 	}
 
 	function shiftTextToHTMLTranslation(startIndex: number, shiftNumber: number) {
-		console.log("shift");
-		
 		for (let i = startIndex; i < text.length; i++) {
 			textToHTMLIndexTranslation[i] += shiftNumber;
 		}
