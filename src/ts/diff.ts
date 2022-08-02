@@ -11,6 +11,7 @@ export interface Action {
 	indexCheck: number,
 	indexCorrect: number,
 	char: string, // The character to delete, to add, or to substitute with, depending on the action type
+	charBefore?: string, // Defined only for type=SUB
 }
 
 export function getDiff_BasicLevenshtein(correct: string, check: string) {
@@ -88,7 +89,7 @@ export function getDiff_BasicLevenshtein(correct: string, check: string) {
 	return mat[m - 1][n - 1];
 }
 
-interface P {
+interface GridPoint {
 	x: number,
 	y: number,
 	k: number | null,
@@ -106,17 +107,17 @@ export class Diff_ONP {
 	private stringsReversed: boolean;
 
 	// Edit script tracking
-	private pathposi: P[] = [];
+	private pathposi: GridPoint[] = [];
 	private path: number[] = [];
 	private sequence: Action[] = [];
 
-	constructor(_a: string, _b: string) {
-		this.a = _a.length > _b.length ? _b : _a;
-		this.b = _a.length > _b.length ? _a : _b;
+	constructor(check: string, correct: string) {
+		this.a = check.length > correct.length ? correct : check;
+		this.b = check.length > correct.length ? check : correct;
 		this.m = this.a.length;
 		this.n = this.b.length;
 
-		this.stringsReversed = this.a !== _a;
+		this.stringsReversed = this.a !== check;
 	}
 
 	calc() {
@@ -145,14 +146,14 @@ export class Diff_ONP {
 		this.dist = delta + 2 * p;
 
 		let r = this.path[delta + offset];
-		const epc: P[] = [];
+		const seqPath: GridPoint[] = []; // The path to be followed
 
 		while (r !== -1) {
-			epc.push({ ...this.pathposi[r], k: null });
+			seqPath.push({ ...this.pathposi[r], k: null });
 			r = this.pathposi[r].k as number;
 		}
 
-		this.parseSequence(epc);
+		this.parseSequence(seqPath);
 	}
 
 	private snake(k: number, offset: number, p: number, pp: number): number {
@@ -174,71 +175,81 @@ export class Diff_ONP {
 		return y;
 	}
 
-	private parseSequence(epc: P[]) {
-		let px_idx = 0;
-		let py_idx = 0;
+	private parseSequence(seqPath: GridPoint[]) {
+		let x_a = 0;
+		let y_b = 0;
 
-		for (let i = epc.length - 1; i >= 0; i--) {
-			while (px_idx < epc[i].x || py_idx < epc[i].y) {
-				if (epc[i].y - epc[i].x > py_idx - px_idx) {
+		for (let i = seqPath.length - 1; i >= 0; i--) {
+			while (x_a < seqPath[i].x || y_b < seqPath[i].y) {
+				if (seqPath[i].y - seqPath[i].x > y_b - x_a) {
 					// Down
 
 					this.sequence.push({
 						type: this.stringsReversed ? "DEL" : "ADD",
-						indexCheck: this.stringsReversed ? py_idx : px_idx,
-						indexCorrect: this.stringsReversed ? px_idx : py_idx,
-						char: this.b[py_idx],
+						indexCheck: this.stringsReversed ? y_b : x_a,
+						indexCorrect: this.stringsReversed ? x_a : y_b,
+						char: this.b[y_b],
 					});
 
-					py_idx++;
-				} else if (epc[i].y - epc[i].x < py_idx - px_idx) {
+					y_b++;
+				} else if (seqPath[i].y - seqPath[i].x < y_b - x_a) {
 					// Right
 
 					this.sequence.push({
 						type: this.stringsReversed ? "ADD" : "DEL",
-						indexCheck: this.stringsReversed ? py_idx : px_idx,
-						indexCorrect: this.stringsReversed ? px_idx : py_idx,
-						char: this.a[px_idx],
+						indexCheck: this.stringsReversed ? y_b : x_a,
+						indexCorrect: this.stringsReversed ? x_a : y_b,
+						char: this.a[x_a],
 					});
 
-					px_idx++;
+					x_a++;
 				} else {
 					// Diagonal
-					px_idx++;
-					py_idx++;
+
+					// this.sequence.push({
+					// 	type: "NONE",
+					// 	indexCheck: this.stringsReversed ? y_b : x_a,
+					// 	indexCorrect: this.stringsReversed ? x_a : y_b,
+					// 	char: this.a[x_a],
+					// });
+
+					x_a++;
+					y_b++;
 				}
 			}
 		}
 
-		// TODO: Make substitution parsing
-
 		// Parse substitutions
+		// Find ADD actions whose indexCorrect matches with a DEL action's indexCheck
 
 		// const sequenceCopy: Action[] = [];
+		// const addActions = this.sequence.filter((a) => a.type === "ADD");
+		// const delActions = this.sequence.filter((a) => a.type === "DEL");
 
-		// for (let i = 1; i < this.sequence.length; i++) {
-		// 	// indexCorrect is equal for two subsequent entries if it's a substitution
-		// 	if (this.sequence[i].indexCorrect !== this.sequence[i - 1].indexCorrect) {
-		// 		sequenceCopy.push(this.sequence[i - 1]);
+		// for (const action of addActions) {
+		// 	const iCorrect = action.indexCorrect;
+		// 	const delPair = delActions.findIndex((a) => a.indexCheck === iCorrect)
 
-		// 		if (i === this.sequence.length - 1) {
-		// 			sequenceCopy.push(this.sequence[i]);
-		// 		}
+		// 	if (delPair !== -1) {
+		// 		// ADD/DEL Sub pair found
 
-		// 		continue;
+		// 		const delAction = delActions[delPair];
+
+		// 		sequenceCopy.push({
+		// 			type: "SUB",
+		// 			indexCheck: delAction.indexCheck,
+		// 			indexCorrect: iCorrect,
+		// 			char: action.char,
+		// 			charBefore: delAction.char,
+		// 		});
+
+		// 		delActions.splice(delPair, 1); // Remove the delete action to prevent adding it twice
+		// 	} else {
+		// 		sequenceCopy.push(action);
 		// 	}
-
-		// 	sequenceCopy.push({
-		// 		type: "SUB",
-		// 		indexCheck: this.sequence[i - 1].indexCheck,
-		// 		indexCorrect: this.sequence[i].indexCorrect,
-		// 		char: this.sequence[i - 1].char,
-		// 	});
-
-		// 	i++; // Skip over the next one
 		// }
 
-		// this.sequence = sequenceCopy;
+		// this.sequence = [...sequenceCopy, ...delActions];
 		// this.dist = this.sequence.length;
 	}
 
