@@ -3,6 +3,7 @@
 	import { v4 as uuidv4 } from "uuid";
 	import type { Action } from "../ts/diff";
 	import HighlightTooltip from "./HighlightTooltip.svelte";
+	export let editable = false;
 	export let text = "";
 	export let diff: Action[] = [];
 	let textContainer: HTMLElement;
@@ -11,6 +12,10 @@
 
 	let textToHTMLIndexTranslation: Record<number, number> = {};
 	let highlightHTMLBuffer: string = "";
+
+	export function getText() {
+		return textContainer.textContent;
+	}
 
 	export function highlightText(start: number, length: number, styleID: number) {
 		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
@@ -157,10 +162,6 @@
 		return textToHTMLIndexTranslation[activeShiftIndex] + index;
 	}
 
-	function onHighlightHover(index: number) {
-		console.log(index);
-	}
-
 	onMount(() => {
 		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
 
@@ -169,7 +170,7 @@
 </script>
 
 <div class="textbox">
-	<span class="container" bind:this={textContainer}>{text}</span>
+	<span class="container" bind:this={textContainer} contenteditable={editable}>{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
 	<span class=".highlight hl-0 hl-1 hl-2"></span>
@@ -192,6 +193,11 @@
 	.container {
 		width: 100%;
 		white-space: pre-line;
+	}
+
+	.container:focus {
+		outline: none;
+		background-color: rgba(230, 200, 20, 0.1);
 	}
 
 	:global(.highlight) {
