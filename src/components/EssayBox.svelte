@@ -41,15 +41,20 @@
 		for (const error of diff) {
 			switch (error.type) {
 				case "ADD":
-					const parsed = JSON.stringify(error.char); // To visualize new lines
-					addHighlightedText(parsed.substring(1, parsed.length - 1), error.indexCheck, 2);
+					let char = error.char;
 
+					if (error.char === "\n") {
+						char = `\\n\n`;
+					}
+
+					addHighlightedText(char, error.indexCheck, 2);
 					break;
 				case "DEL":
 					highlightText(error.indexCheck, 1, 1);
 					break;
-				// case "SUB":
-				// 	break;
+				case "SUB":
+					highlightText(error.indexCheck, 1, 0);
+					break;
 			}
 		}
 	}
