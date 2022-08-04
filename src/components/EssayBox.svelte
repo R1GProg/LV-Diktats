@@ -1,61 +1,111 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { v4 as uuidv4 } from "uuid";
 	import type { Action } from "../ts/diff";
+	import HighlightTooltip from "./HighlightTooltip.svelte";
 	export let text = "";
 	export let diff: Action[] = [];
 	let textContainer: HTMLElement;
 	let svelteClass: string;
+	let tooltip: HighlightTooltip;
+
 	let textToHTMLIndexTranslation: Record<number, number> = {};
+	let highlightHTMLBuffer: string = "";
 
 	export function highlightText(start: number, length: number, styleID: number) {
+		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
+
+		const id = uuidv4();
 		const parsedStartIndex = textIndexToHTMLIndex(start);
 		const parsedEndIndex = textIndexToHTMLIndex(start + length);
-		const html = textContainer.innerHTML;
-
-		const tag1 = `<span class="highlight hl-${styleID} ${svelteClass}">`;
+		const html = highlightHTMLBuffer;
+		const tag1 = `<span class="highlight hl-${styleID} ${svelteClass}" data-highlight_id="${id}">`;
 		const tag2 = `</span>`;
 		const newHTML = `${html.substring(0, parsedStartIndex)}${tag1}${html.substring(parsedStartIndex, parsedEndIndex)}${tag2}${html.substring(parsedEndIndex)}`;
-		
-		textContainer.innerHTML = newHTML;
+
+		highlightHTMLBuffer = newHTML;
 
 		shiftTextToHTMLTranslation(start, tag1.length);
 		shiftTextToHTMLTranslation(start + length, tag2.length);
+
+		return id;
 	}
 
 	function addHighlightedText(newText: string, start: number, styleID: number) {
-		const tag = `<span class="highlight hl-${styleID} ${svelteClass} tag-ignore">${newText}</span>`;
+		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
+		const id = uuidv4();
+		const tag = `<span class="highlight hl-${styleID} ${svelteClass} tag-ignore" data-highlight_id="${id}">${newText}</span>`;
 
 		if (start === text.length) {
-			textContainer.innerHTML += tag;
+			highlightHTMLBuffer += tag;
 		} else {
 			const parsedStartIndex = textIndexToHTMLIndex(start);
-			const html = textContainer.innerHTML;
+			const html = highlightHTMLBuffer;
 			const newHTML = `${html.substring(0, parsedStartIndex)}${tag}${html.substring(parsedStartIndex)}`;
-			textContainer.innerHTML = newHTML;
+			highlightHTMLBuffer = newHTML;
 		
 			shiftTextToHTMLTranslation(start, tag.length);
 		}
+
+		return id;
+	}
+
+	function commitHighlightBuffer() {
+		textContainer.innerHTML = highlightHTMLBuffer;
+		highlightHTMLBuffer = "";
 	}
 
 	function highlightErrors() {
+		const tagRef: Record<string, Action> = {};
+
+		// Create the highlight elements
 		for (const error of diff) {
+			let id: string;
+
 			switch (error.type) {
 				case "ADD":
-					let char = error.char;
+					{ // In a block to scope the variable definition
+						let char = error.char;
 
-					if (error.char === "\n") {
-						char = `\\n\n`;
+						if (error.char === "\n") {
+							char = `\\n\n`;
+						}
+
+						id = addHighlightedText(char, error.indexCheck, 2);
 					}
-
-					addHighlightedText(char, error.indexCheck, 2);
 					break;
 				case "DEL":
-					highlightText(error.indexCheck, 1, 1);
+					id = highlightText(error.indexCheck, 1, 1);
 					break;
 				case "SUB":
-					highlightText(error.indexCheck, 1, 0);
+					id = highlightText(error.indexCheck, 1, 0);
 					break;
+				default:
+					continue;
 			}
+
+			tagRef[id] = error;
+		}
+
+		commitHighlightBuffer();
+
+		// Add event listeners to the tags
+		for (const id of Object.keys(tagRef)) {
+			const el = textContainer.querySelector<HTMLSpanElement>(`span[data-highlight_id="${id}"]`);
+			const err = tagRef[id];
+
+			if (!el) {
+				console.warn(`Unable to add event listener to highlight tag! UUID=${id}, Action=${JSON.stringify(err)}`);
+				continue;
+			}
+
+			el.addEventListener("mouseenter", () => {
+				tooltip.setTooltip(el, JSON.stringify(err));
+			});
+
+			el.addEventListener("mouseleave", () => {
+				tooltip.clearTooltip();
+			});
 		}
 	}
 
@@ -66,9 +116,11 @@
 
 		initTextToHTMLTranslation();
 
-		setTimeout(() => { // Do it on the next event cycle to allow the HTML to render
+		// Do it on the next event cycle to allow the HTML to render
+		// No idea whether it is necessary, but it seems to be more consistently correct with this?
+		setTimeout(() => {
 			highlightErrors();
-		}, 100);
+		}, 0);
 	}
 
 	function initTextToHTMLTranslation() {
@@ -105,6 +157,10 @@
 		return textToHTMLIndexTranslation[activeShiftIndex] + index;
 	}
 
+	function onHighlightHover(index: number) {
+		console.log(index);
+	}
+
 	onMount(() => {
 		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
 
@@ -118,6 +174,8 @@
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
 	<span class=".highlight hl-0 hl-1 hl-2"></span>
 </div>
+
+<HighlightTooltip bind:this={tooltip}/>
 
 <style lang="scss">
 	.textbox {
