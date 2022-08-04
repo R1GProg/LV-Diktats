@@ -5,7 +5,7 @@
 	import { onMount } from "svelte";
 	import type { EssayEntry } from "./types";
 	import { Action, Diff_ONP } from "./ts/diff";
-import { processString } from "./ts/normalization";
+	import { processString } from "./ts/normalization";
 
 	let correctText = "";
 	let checkText = "";

@@ -67,23 +67,43 @@
 	}
 
 	function initTextToHTMLTranslation() {
-		for (let i = 0; i < text.length; i++) {
-			textToHTMLIndexTranslation[i] = i;
-		}
+		textToHTMLIndexTranslation = { 0: 0 };
+	}
+
+	// Returns the defined index that is before `index`
+	function getPrevDefinedIndex(index: number) {
+		return Math.max(...Object.keys(textToHTMLIndexTranslation)
+			.map((k) => Number(k))
+			.filter((k) => k <= index)
+		);
 	}
 
 	function shiftTextToHTMLTranslation(startIndex: number, shiftNumber: number) {
-		for (let i = startIndex; i < text.length; i++) {
+		if (startIndex in textToHTMLIndexTranslation) {
+			textToHTMLIndexTranslation[startIndex] += shiftNumber;
+		} else {
+			textToHTMLIndexTranslation[startIndex] = shiftNumber + textToHTMLIndexTranslation[getPrevDefinedIndex(startIndex)];
+		}
+
+		// Shift all indices that are after the new offset
+		for (let k of Object.keys(textToHTMLIndexTranslation)) {
+			const i = Number(k);
+
+			if (startIndex >= i) continue;
+
 			textToHTMLIndexTranslation[i] += shiftNumber;
 		}
 	}
 
 	function textIndexToHTMLIndex(index: number) {
-		return textToHTMLIndexTranslation[index];
+		const activeShiftIndex = getPrevDefinedIndex(index);
+		return textToHTMLIndexTranslation[activeShiftIndex] + index;
 	}
 
 	onMount(() => {
 		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
+
+		initTextToHTMLTranslation();
 	});
 </script>
 
