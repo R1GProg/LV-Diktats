@@ -1,8 +1,12 @@
+import { charIsPunctuation } from "./langUtil";
+
 // The action done to go from target to source character
 export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
+export type ActionSubtype = "PUNCT" | "ORTHO";
 
 export interface Action {
 	type: ActionType,
+	subtype?: ActionSubtype,
 	indexCheck: number,
 	indexCorrect: number,
 	indexDiff?: number,
@@ -31,8 +35,13 @@ export class Diff_ONP {
 	private pathposi: GridPoint[] = [];
 	private path: number[] = [];
 	private sequence: Action[] = [];
+	private checkText: string;
+	private correctText: string;
 
 	constructor(check: string, correct: string) {
+		this.checkText = check;
+		this.correctText = correct;
+
 		this.a = check.length > correct.length ? correct : check;
 		this.b = check.length > correct.length ? check : correct;
 		this.m = this.a.length;
@@ -140,41 +149,83 @@ export class Diff_ONP {
 			}
 		}
 
-		// Parse indexCheck to give an index for the diffed text
+		this.calcDiffIndex();
+		this.consolidatePunctuationWhitespaces();
+		this.sequence = this.parseSubstitutions(this.sequence);
+		this.cleanEMDashes();
+
+		this.dist = this.sequence.length;
+	}
+
+	// Parse indexCheck to give an index for the diffed text
+	// Writes to original array
+	private calcDiffIndex() {
 		// IMO this solution is pretty garbage, but I can't really be bothered to come up with a better one rn
 		// TODO: Improve this piece of shit
-		let checkText = this.stringsReversed ? this.b : this.a;
+
+		let checkTextCopy = this.checkText;
 
 		// Add the characters in the checkText, and mark each character with an ID
 		for (let i = this.sequence.length - 1; i >= 0; i--) {
 			const a = this.sequence[i];
 
-			const contentBefore = checkText.substring(0, a.indexCheck);
-			const contentAfter = checkText.substring(a.indexCheck + (a.type === "DEL" ? 1 : 0)); // if DEL, replace the existing character
+			const contentBefore = checkTextCopy.substring(0, a.indexCheck);
+			const contentAfter = checkTextCopy.substring(a.indexCheck + (a.type === "DEL" ? 1 : 0)); // if DEL, replace the existing character
 
-			checkText = `${contentBefore}<loc id="${i}">${a.char}</loc>${contentAfter}`;
+			checkTextCopy = `${contentBefore}<loc id="${i}">${a.char}</loc>${contentAfter}`;
 		}
 
 		let locMatch: RegExpMatchArray;
 
 		// Iterate over all marked characters and set .indexDiff to their index of their corresponding action
 		do {
-			locMatch = checkText.match(/(?<tag1><loc id="(?<id>\d+?)">)(?<char>.+?|\n)(?<tag2><\/loc>)/m);
+			locMatch = checkTextCopy.match(/(?<tag1><loc id="(?<id>\d+?)">)(?<char>.+?|\n)(?<tag2><\/loc>)/m);
 
 			if (!locMatch) break;
 
 			const action = this.sequence[Number(locMatch.groups.id)];
 			action.indexDiff = locMatch.index;
 
-			checkText = `${checkText.substring(0, locMatch.index)}${locMatch.groups.char}${checkText.substring(locMatch.index + locMatch[0].length)}`;
+			checkTextCopy = `${checkTextCopy.substring(0, locMatch.index)}${locMatch.groups.char}${checkTextCopy.substring(locMatch.index + locMatch[0].length)}`;
 		} while(locMatch);
+	}
 
-		// Parse substitutions
+	private consolidatePunctuationWhitespaces() {
+		for (const a of this.sequence) {
+			if (!charIsPunctuation(a.char)) continue;
+
+			// Merge any space errors around this character
+			const spaceBefore = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === a.indexDiff - 1);
+			const spaceAfter = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === a.indexDiff + 1);
+
+			if (spaceBefore !== -1) {
+				a.char = ` ${a.char}`;
+				// Decrement the indices to accomodate the space
+				a.indexDiff--;
+				a.indexCheck--;
+
+				this.sequence.splice(spaceBefore, 1);
+			} else if (a.char === "—" && this.checkText[a.indexCheck - 1] === " ") {
+				a.char = ` ${a.char}`;
+				// Decrement the indices to accomodate the space
+				a.indexDiff--;
+				a.indexCheck--;
+			}
+
+			if (spaceAfter !== -1) {
+				a.char = `${a.char} `;
+				this.sequence.splice(spaceAfter, 1);
+			}
+		}
+	}
+
+	// Returns a copy
+	private parseSubstitutions(seq: Action[]) {
 		// Find DEL and ADD actions that are next to eachother
 		const seqCopy: Action[] = [];
 
-		const addActions = this.sequence.filter((a) => a.type === "ADD");
-		const delActions = this.sequence.filter((a) => a.type === "DEL");
+		const addActions = seq.filter((a) => a.type === "ADD");
+		const delActions = seq.filter((a) => a.type === "DEL");
 
 		// They should already be sorted, but just in case
 		addActions.sort((a, b) => a.indexDiff - b.indexDiff);
@@ -185,31 +236,46 @@ export class Diff_ONP {
 
 			if (nextDel !== -1) {
 				const delA = delActions[nextDel];
+				let newChar = a.char;
+
+				// Special case, as the EM dash consumes both spaces around it
+				if (charIsPunctuation(a.char) && delA.char.match(/—/g)) {
+					newChar = `${a.char} `;
+				}
 
 				seqCopy.push({
 					type: "SUB",
 					indexCheck: delA.indexCheck,
 					indexCorrect: a.indexCorrect,
 					indexDiff: a.indexDiff,
-					char: a.char,
+					char: newChar,
 					charBefore: delA.char
 				});
 
 				delActions.splice(nextDel, 1);
 
 				// Decrement indexDiff from later actions, as a SUB removes one character
-				for (const otherA of [...addActions, ...delActions].filter((otherA) => otherA.indexDiff > a.indexDiff)) {
-					otherA.indexDiff--;
-				}
+				this.shiftIndexDiff([...addActions, ...delActions], a.indexDiff, -1);
 			} else {
 				seqCopy.push(a);
-
 			}
 		}
 
 		seqCopy.push(...delActions);
-		this.sequence = seqCopy;
-		this.dist = seqCopy.length;
+		return seqCopy;
+	}
+
+	private cleanEMDashes() {
+		// Remove the 2nd whitespace for EM dashes from the DEL action
+		for (const a of this.sequence.filter((action) => action.char.match(/—/g) && action.type !== "SUB")) {
+			a.char = a.char.substring(0, a.char.length - 1);
+		}
+	}
+
+	private shiftIndexDiff(arrRef: Action[], shiftStartIndex: number, shiftAmount: number) {
+		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff > shiftStartIndex)) {
+			otherA.indexDiff += shiftAmount;
+		}
 	}
 
 	getDistance() {

@@ -82,10 +82,11 @@
 					}
 					break;
 				case "DEL":
-					id = highlightText(error.indexCheck, 1, 1);
+					// Do error.char.length instead of 1, as error.char may contain spaces
+					id = highlightText(error.indexCheck, error.char.length, 1);
 					break;
 				case "SUB":
-					id = highlightText(error.indexCheck, 1, 0);
+					id = highlightText(error.indexCheck, error.charBefore.length, 0);
 					break;
 				default:
 					continue;

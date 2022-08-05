@@ -18,4 +18,6 @@ export function processString(text: string) {
 		.replace(/"[^"]*"/, (x) => x.replace(/"/g, '')) // Remove the title being in quotes
 		.replace(/(?<=[s])( |(, )|( — )|(.[\n ]))(?=[M])/, "\n") // Replace Author, Title with Author
 									   							 //                            Title
+		// Quotation marks
+		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
 }
