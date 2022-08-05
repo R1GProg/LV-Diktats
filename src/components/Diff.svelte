@@ -8,15 +8,17 @@
 	<table>
 		<tr>
 			<th>Type</th>
-			<th>Index check</th>
 			<th>Index correct</th>
+			<th>Index check</th>
+			<th>Index diff</th>
 			<th>Characters</th>
 		</tr>
 		{#each diff as entry}
 		<tr>
 			<td>{entry.type}</td>
-			<td>{entry.indexCheck}</td>
 			<td>{entry.indexCorrect}</td>
+			<td>{entry.indexCheck}</td>
+			<td>{entry.indexDiff !== undefined ? entry.indexDiff : ""}</td>
 			{#if entry.type !== "SUB"}
 			<td>{entry.char}</td>
 			{:else}

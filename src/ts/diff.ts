@@ -1,8 +1,3 @@
-export interface Cell {
-	distance: number,
-	actions: Action[],
-}
-
 // The action done to go from target to source character
 export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
 
@@ -10,83 +5,9 @@ export interface Action {
 	type: ActionType,
 	indexCheck: number,
 	indexCorrect: number,
+	indexDiff?: number,
 	char: string, // The character to delete, to add, or to substitute with, depending on the action type
 	charBefore?: string, // Defined only for type=SUB
-}
-
-export function getDiff_BasicLevenshtein(correct: string, check: string) {
-	let n = correct.length;
-	let m = check.length;
-	let mat: Cell[][] = [];
-
-	for (let i = 0; i < m; i++) {
-		mat.push(new Array(n).fill(0));
-	}
-
-	for (let i = 0; i < n; i++) {
-		mat[0][i] = { distance: i, actions: [] };
-	}
-
-	for (let i = 0; i < m; i++) {
-		mat[i][0] = { distance: i, actions: [] };
-	}
-
-	for (let i = 1; i < m; i++) {
-		let checkChar = check.charAt(i);
-
-		for (let j = 1; j < n; j++) {
-			let cost = correct.charAt(j) === checkChar ? 0 : 1;
-
-			const delDist = mat[i - 1][j].distance + 1; // deletion
-			const insDist = mat[i][j - 1].distance + 1; // insertion
-			const subDist = mat[i - 1][j - 1].distance + cost; // substitution
-			const minDist = Math.min(delDist, insDist, subDist);
-
-			// Set a value just so TS doesnt scream at me about undefined before assigned,
-			// even though the variable will get assigned in any case in the switch statement
-			let aType: ActionType = "NONE";
-			let prevActions: Action[] = [];
-			let deltaChar: string = "";
-
-			switch (minDist) {
-				case delDist:
-					aType = "DEL";
-					prevActions = mat[i - 1][j].actions;
-					deltaChar = check.charAt(i);
-					break;
-				case insDist:
-					aType = "ADD";
-					prevActions = mat[i][j - 1].actions;
-					deltaChar = correct.charAt(j);
-					break;
-				case subDist:
-					prevActions = mat[i - 1][j - 1].actions;
-
-					if (cost === 0) {
-						aType = "NONE";
-					} else {
-						aType = "SUB";
-						deltaChar = correct.charAt(j);
-					}
-
-					break;
-			}
-
-			const action: Action = {
-				type: aType,
-				indexCheck: i,
-				indexCorrect: j,
-				char: deltaChar,
-			}
-
-			mat[i][j] = {
-				distance: minDist,
-				actions: aType === "NONE" ? prevActions : [ ...prevActions, action ]
-			}
-		}
-	}
-
-	return mat[m - 1][n - 1];
 }
 
 interface GridPoint {
@@ -219,38 +140,76 @@ export class Diff_ONP {
 			}
 		}
 
+		// Parse indexCheck to give an index for the diffed text
+		// IMO this solution is pretty garbage, but I can't really be bothered to come up with a better one rn
+		// TODO: Improve this piece of shit
+		let checkText = this.stringsReversed ? this.b : this.a;
+
+		// Add the characters in the checkText, and mark each character with an ID
+		for (let i = this.sequence.length - 1; i >= 0; i--) {
+			const a = this.sequence[i];
+
+			const contentBefore = checkText.substring(0, a.indexCheck);
+			const contentAfter = checkText.substring(a.indexCheck + (a.type === "DEL" ? 1 : 0)); // if DEL, replace the existing character
+
+			checkText = `${contentBefore}<loc id="${i}">${a.char}</loc>${contentAfter}`;
+		}
+
+		let locMatch: RegExpMatchArray;
+
+		// Iterate over all marked characters and set .indexDiff to their index of their corresponding action
+		do {
+			locMatch = checkText.match(/(?<tag1><loc id="(?<id>\d+?)">)(?<char>.+?|\n)(?<tag2><\/loc>)/m);
+
+			if (!locMatch) break;
+
+			const action = this.sequence[Number(locMatch.groups.id)];
+			action.indexDiff = locMatch.index;
+
+			checkText = `${checkText.substring(0, locMatch.index)}${locMatch.groups.char}${checkText.substring(locMatch.index + locMatch[0].length)}`;
+		} while(locMatch);
+
 		// Parse substitutions
-		// Find ADD actions whose indexCorrect matches with a DEL action's indexCheck
+		// Find DEL and ADD actions that are next to eachother
+		const seqCopy: Action[] = [];
 
-		// const sequenceCopy: Action[] = [];
-		// const addActions = this.sequence.filter((a) => a.type === "ADD");
-		// const delActions = this.sequence.filter((a) => a.type === "DEL");
+		const addActions = this.sequence.filter((a) => a.type === "ADD");
+		const delActions = this.sequence.filter((a) => a.type === "DEL");
 
-		// for (const action of addActions) {
-		// 	const iCorrect = action.indexCorrect;
-		// 	const delPair = delActions.findIndex((a) => a.indexCheck === iCorrect)
+		// They should already be sorted, but just in case
+		addActions.sort((a, b) => a.indexDiff - b.indexDiff);
+		delActions.sort((a, b) => a.indexDiff - b.indexDiff);
 
-		// 	if (delPair !== -1) {
-		// 		// ADD/DEL Sub pair found
+		for (const a of addActions) {
+			const nextDel = delActions.findIndex((delA) => delA.indexDiff === a.indexDiff + 1 || delA.indexDiff === a.indexDiff - 1);
 
-		// 		const delAction = delActions[delPair];
+			if (nextDel !== -1) {
+				const delA = delActions[nextDel];
 
-		// 		sequenceCopy.push({
-		// 			type: "SUB",
-		// 			indexCheck: delAction.indexCheck,
-		// 			indexCorrect: iCorrect,
-		// 			char: action.char,
-		// 			charBefore: delAction.char,
-		// 		});
+				seqCopy.push({
+					type: "SUB",
+					indexCheck: delA.indexCheck,
+					indexCorrect: a.indexCorrect,
+					indexDiff: a.indexDiff,
+					char: a.char,
+					charBefore: delA.char
+				});
 
-		// 		delActions.splice(delPair, 1); // Remove the delete action to prevent adding it twice
-		// 	} else {
-		// 		sequenceCopy.push(action);
-		// 	}
-		// }
+				delActions.splice(nextDel, 1);
 
-		// this.sequence = [...sequenceCopy, ...delActions];
-		// this.dist = this.sequence.length;
+				// Decrement indexDiff from later actions, as a SUB removes one character
+				for (const otherA of [...addActions, ...delActions].filter((otherA) => otherA.indexDiff > a.indexDiff)) {
+					otherA.indexDiff--;
+				}
+			} else {
+				seqCopy.push(a);
+
+			}
+		}
+
+		seqCopy.push(...delActions);
+		this.sequence = seqCopy;
+		this.dist = seqCopy.length;
 	}
 
 	getDistance() {

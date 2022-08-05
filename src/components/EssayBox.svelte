@@ -18,15 +18,17 @@
 	}
 
 	export function highlightText(start: number, length: number, styleID: number) {
+		if (start > text.length) return;
 		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
 
 		const id = uuidv4();
 		const parsedStartIndex = textIndexToHTMLIndex(start);
-		const parsedEndIndex = textIndexToHTMLIndex(start + length);
+		const parsedEndIndex = parsedStartIndex + length;
 		const html = highlightHTMLBuffer;
 		const tag1 = `<span class="highlight hl-${styleID} ${svelteClass}" data-highlight_id="${id}">`;
 		const tag2 = `</span>`;
-		const newHTML = `${html.substring(0, parsedStartIndex)}${tag1}${html.substring(parsedStartIndex, parsedEndIndex)}${tag2}${html.substring(parsedEndIndex)}`;
+		const content = html.substring(parsedStartIndex, parsedEndIndex);
+		const newHTML = `${html.substring(0, parsedStartIndex)}${tag1}${content}${tag2}${html.substring(parsedEndIndex)}`;
 
 		highlightHTMLBuffer = newHTML;
 
@@ -222,6 +224,13 @@
 		&.hl-2 { // ADD
 			color: black;
 			background-color: rgb(60, 225, 90);
+		}
+
+		// For debugging highlight overlaps
+		// To work, must have experimental browser features enabled
+		&:has(.highlight) {
+			background-color: blue !important;
+			color: white !important;
 		}
 	}
 </style>
