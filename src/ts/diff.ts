@@ -6,7 +6,7 @@ export type ActionSubtype = "PUNCT" | "ORTHO";
 
 export interface Action {
 	type: ActionType,
-	subtype?: ActionSubtype,
+	subtype: ActionSubtype,
 	indexCheck: number,
 	indexCorrect: number,
 	indexDiff?: number,
@@ -119,6 +119,7 @@ export class Diff_ONP {
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
 						char: this.b[y_b],
+						subtype: charIsPunctuation(this.b[y_b]) ? "PUNCT" : "ORTHO"
 					});
 
 					y_b++;
@@ -130,6 +131,7 @@ export class Diff_ONP {
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
 						char: this.a[x_a],
+						subtype: charIsPunctuation(this.a[x_a]) ? "PUNCT" : "ORTHO"
 					});
 
 					x_a++;
@@ -152,7 +154,7 @@ export class Diff_ONP {
 		this.calcDiffIndex();
 		this.consolidatePunctuationWhitespaces();
 		this.parseSubstitutions();
-		this.cleanEMDashes();
+		// this.cleanEMDashes();
 
 		// Make sure that the ADD operations are in order
 		this.sequence.sort((a, b) => a.indexDiff - b.indexDiff);
@@ -200,19 +202,28 @@ export class Diff_ONP {
 			const originalIndexDiff = a.indexDiff;
 
 			// Merge any space errors around this character
+
+			const spaceAfter = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff + 1);
+
+			if (spaceAfter !== -1) {
+				a.char = `${a.char} `;
+				this.sequence.splice(spaceAfter, 1);
+			}
+
 			const spaceBefore = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff - 1);
 
-			if (spaceBefore !== -1 && a.type === "DEL") {
+			if (spaceBefore !== -1 && a.type !== "SUB") {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
 				a.indexDiff--;
-				a.indexCheck--;
+				if (a.indexCheck !== this.checkText.length) a.indexCheck--;
 
 				this.sequence.splice(spaceBefore, 1);
 			} else if (
-				a.char === "—"
-				&& a.type === "DEL"
+				a.char.match(/—/)
+				// && a.type === "DEL"
 				&& this.checkText[a.indexCheck - 1] === " "
+				&& a.indexCheck !== this.checkText.length - 1
 				// The indexCorrect condition prevents .find() returning the same action as a
 				&& !this.sequence.find((other) => other.indexCheck === a.indexCheck && other.indexCorrect !== a.indexCorrect)
 			) {
@@ -220,13 +231,6 @@ export class Diff_ONP {
 				// Decrement the indices to accomodate the space
 				a.indexDiff--;
 				a.indexCheck--;
-			}
-
-			const spaceAfter = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff + 1);
-
-			if (spaceAfter !== -1) {
-				a.char = `${a.char} `;
-				this.sequence.splice(spaceAfter, 1);
 			}
 		}
 	}
@@ -244,26 +248,30 @@ export class Diff_ONP {
 		delActions.sort((a, b) => a.indexDiff - b.indexDiff);
 
 		for (const a of addActions) {
-			const nextDel = delActions.findIndex((delA) => delA.indexDiff === a.indexDiff + 1 || delA.indexDiff === a.indexDiff - 1);
+			const nextDel = delActions.findIndex((delA) => {
+				return (delA.indexDiff === a.indexDiff + 1||delA.indexDiff === a.indexDiff - 1)
+					&& delA.char !== " "
+					&& delA.subtype === a.subtype;
+			});
 			const delA = delActions[nextDel];
-			const isPunctuation = charIsPunctuation(a.char);
 
 			// Don't substitute spaces and substitute only letters for letters and punctuation for punctuation
-			if (nextDel !== -1 && delActions[nextDel].char !== " " && charIsPunctuation(delA.char) === isPunctuation) {
+			if (nextDel !== -1) {
 				let newChar = a.char;
 
 				// Special case, as the EM dash consumes both spaces around it
-				if (isPunctuation && delA.char.match(/—/g)) {
+				if (a.subtype === "PUNCT" && delA.char.match(/—/g)) {
 					newChar = `${a.char} `;
 				}
 
 				seqCopy.push({
 					type: "SUB",
+					subtype: a.subtype,
 					indexCheck: delA.indexCheck,
 					indexCorrect: a.indexCorrect,
 					indexDiff: a.indexDiff,
 					char: newChar,
-					charBefore: delA.char
+					charBefore: delA.char,
 				});
 
 				delActions.splice(nextDel, 1);
@@ -300,4 +308,3 @@ export class Diff_ONP {
 		return this.sequence;
 	}
 }
-
