@@ -151,7 +151,7 @@ export class Diff_ONP {
 
 		this.calcDiffIndex();
 		this.consolidatePunctuationWhitespaces();
-		this.sequence = this.parseSubstitutions(this.sequence);
+		this.parseSubstitutions();
 		this.cleanEMDashes();
 
 		this.dist = this.sequence.length;
@@ -220,12 +220,12 @@ export class Diff_ONP {
 	}
 
 	// Returns a copy
-	private parseSubstitutions(seq: Action[]) {
+	private parseSubstitutions() {
 		// Find DEL and ADD actions that are next to eachother
 		const seqCopy: Action[] = [];
 
-		const addActions = seq.filter((a) => a.type === "ADD");
-		const delActions = seq.filter((a) => a.type === "DEL");
+		const addActions = this.sequence.filter((a) => a.type === "ADD");
+		const delActions = this.sequence.filter((a) => a.type === "DEL");
 
 		// They should already be sorted, but just in case
 		addActions.sort((a, b) => a.indexDiff - b.indexDiff);
@@ -262,7 +262,7 @@ export class Diff_ONP {
 		}
 
 		seqCopy.push(...delActions);
-		return seqCopy;
+		this.sequence = seqCopy;
 	}
 
 	private cleanEMDashes() {
