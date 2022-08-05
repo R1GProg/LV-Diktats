@@ -1,3 +1,3 @@
 export function charIsPunctuation(char: string): boolean {
-	return char.match(/[,.\?!";:-—\(\)]/) !== null;
+	return char.match(/[,.\?!";:\-—\(\)]/) !== null;
 }

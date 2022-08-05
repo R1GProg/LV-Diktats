@@ -154,6 +154,9 @@ export class Diff_ONP {
 		this.parseSubstitutions();
 		this.cleanEMDashes();
 
+		// Make sure that the ADD operations are in order
+		this.sequence.sort((a, b) => a.indexDiff - b.indexDiff);
+
 		this.dist = this.sequence.length;
 	}
 
@@ -194,23 +197,32 @@ export class Diff_ONP {
 		for (const a of this.sequence) {
 			if (!charIsPunctuation(a.char)) continue;
 
-			// Merge any space errors around this character
-			const spaceBefore = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === a.indexDiff - 1);
-			const spaceAfter = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === a.indexDiff + 1);
+			const originalIndexDiff = a.indexDiff;
 
-			if (spaceBefore !== -1) {
+			// Merge any space errors around this character
+			const spaceBefore = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff - 1);
+
+			if (spaceBefore !== -1 && a.type === "DEL") {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
 				a.indexDiff--;
 				a.indexCheck--;
 
 				this.sequence.splice(spaceBefore, 1);
-			} else if (a.char === "—" && this.checkText[a.indexCheck - 1] === " ") {
+			} else if (
+				a.char === "—"
+				&& a.type === "DEL"
+				&& this.checkText[a.indexCheck - 1] === " "
+				// The indexCorrect condition prevents .find() returning the same action as a
+				&& !this.sequence.find((other) => other.indexCheck === a.indexCheck && other.indexCorrect !== a.indexCorrect)
+			) {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
 				a.indexDiff--;
 				a.indexCheck--;
 			}
+
+			const spaceAfter = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff + 1);
 
 			if (spaceAfter !== -1) {
 				a.char = `${a.char} `;
@@ -233,13 +245,15 @@ export class Diff_ONP {
 
 		for (const a of addActions) {
 			const nextDel = delActions.findIndex((delA) => delA.indexDiff === a.indexDiff + 1 || delA.indexDiff === a.indexDiff - 1);
+			const delA = delActions[nextDel];
+			const isPunctuation = charIsPunctuation(a.char);
 
-			if (nextDel !== -1) {
-				const delA = delActions[nextDel];
+			// Don't substitute spaces and substitute only letters for letters and punctuation for punctuation
+			if (nextDel !== -1 && delActions[nextDel].char !== " " && charIsPunctuation(delA.char) === isPunctuation) {
 				let newChar = a.char;
 
 				// Special case, as the EM dash consumes both spaces around it
-				if (charIsPunctuation(a.char) && delA.char.match(/—/g)) {
+				if (isPunctuation && delA.char.match(/—/g)) {
 					newChar = `${a.char} `;
 				}
 
@@ -267,7 +281,7 @@ export class Diff_ONP {
 
 	private cleanEMDashes() {
 		// Remove the 2nd whitespace for EM dashes from the DEL action
-		for (const a of this.sequence.filter((action) => action.char.match(/—/g) && action.type !== "SUB")) {
+		for (const a of this.sequence.filter((action) => action.char.match(/— $/g) && action.type === "DEL")) {
 			a.char = a.char.substring(0, a.char.length - 1);
 		}
 	}
