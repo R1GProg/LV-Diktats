@@ -343,7 +343,8 @@ export class Diff_ONP {
 
 				// Iterate over sequential ADD actions until space or punctuation found
 				while (
-					this.sequence[indexInMainSequence + curOffset].type === "ADD"
+					this.sequence[indexInMainSequence + curOffset]
+					&& this.sequence[indexInMainSequence + curOffset].type === "ADD"
 					&& this.sequence[indexInMainSequence + curOffset].indexDiff - a.indexDiff === curOffset
 				) {
 					const otherA = this.sequence[indexInMainSequence + curOffset];

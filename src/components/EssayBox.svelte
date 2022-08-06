@@ -173,7 +173,7 @@
 </script>
 
 <div class="textbox">
-	<span class="container" bind:this={textContainer} contenteditable={editable}>{text}</span>
+	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
 	<span class=".highlight hl-0 hl-1 hl-2"></span>
