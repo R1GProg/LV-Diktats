@@ -4,13 +4,13 @@
 	import Diff from "./components/Diff.svelte";
 	import { onMount } from "svelte";
 	import type { EssayEntry } from "./types";
-	import { Action, Diff_ONP } from "./ts/diff";
+	import { Action, Diff_ONP, Word } from "./ts/diff";
 	import { processString } from "./ts/normalization";
 
 	let correctText = "";
 	let checkText = "";
 	let checkID = "";
-	let activeDiff: Action[] = [];
+	let activeDiff: { char: Action[], words: Word[] } = { char: [], words: [] };
 	let checkEssayBox: EssayBox;
 	let editableCheckEssayBox: EssayBox;
 	let correctEssayBox: EssayBox;
@@ -22,9 +22,10 @@
 
 		const diff = new Diff_ONP(checkText, correctText);
 		diff.calc();
-		activeDiff = diff.getSequence();
+		activeDiff.char = diff.getSequence();
+		activeDiff.words = diff.getWords();
 
-		checkEssayBox.set(checkText, activeDiff);
+		checkEssayBox.set(checkText, activeDiff.char);
 	}
 
 	function onRecorrectClick() {
@@ -33,9 +34,10 @@
 
 		const diff = new Diff_ONP(checkText, correctText);
 		diff.calc();
-		activeDiff = diff.getSequence();
+		activeDiff.char = diff.getSequence();
+		activeDiff.words = diff.getWords();
 
-		checkEssayBox.set(checkText, activeDiff);
+		checkEssayBox.set(checkText, activeDiff.char);
 	}
 
 	async function loadCorrectText() {

@@ -2,7 +2,8 @@ import { charIsPunctuation } from "./langUtil";
 
 // The action done to go from target to source character
 export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
-export type ActionSubtype = "PUNCT" | "ORTHO";
+export type ActionSubtype = "PUNCT" | "ORTHO" | "SPACE";
+export type WordType = "ADD" | "DEL" | "ERR";
 
 export interface Action {
 	type: ActionType,
@@ -12,6 +13,17 @@ export interface Action {
 	indexDiff?: number,
 	char: string, // The character to delete, to add, or to substitute with, depending on the action type
 	charBefore?: string, // Defined only for type=SUB
+	wordIndex?: number, // Defined only for subtype=ORTHO
+}
+
+export interface Word {
+	type: WordType,
+	boundsCheck?: [number, number], // Defined only for type=ERR and type=DEL
+	boundsCorrect?: [number, number], // Defined only for type=ADD
+	// indexDiff: number,
+	word: string,
+	// wordCorrect: number,
+	actions: Action[],
 }
 
 interface GridPoint {
@@ -37,6 +49,7 @@ export class Diff_ONP {
 	private sequence: Action[] = [];
 	private checkText: string;
 	private correctText: string;
+	private words: Word[] = [];
 
 	constructor(check: string, correct: string) {
 		this.checkText = check;
@@ -114,24 +127,30 @@ export class Diff_ONP {
 				if (seqPath[i].y - seqPath[i].x > y_b - x_a) {
 					// Down
 
+					const char = this.b[y_b];
+					const subtype = char === " " || char === "\n" ? "SPACE" : (charIsPunctuation(char) ? "PUNCT" : "ORTHO");
+
 					this.sequence.push({
 						type: this.stringsReversed ? "DEL" : "ADD",
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
-						char: this.b[y_b],
-						subtype: charIsPunctuation(this.b[y_b]) ? "PUNCT" : "ORTHO"
+						char,
+						subtype,
 					});
 
 					y_b++;
 				} else if (seqPath[i].y - seqPath[i].x < y_b - x_a) {
 					// Right
 
+					const char = this.a[x_a];
+					const subtype = char === " " || char === "\n" ? "SPACE" : (charIsPunctuation(char) ? "PUNCT" : "ORTHO");
+
 					this.sequence.push({
 						type: this.stringsReversed ? "ADD" : "DEL",
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
-						char: this.a[x_a],
-						subtype: charIsPunctuation(this.a[x_a]) ? "PUNCT" : "ORTHO"
+						char,
+						subtype
 					});
 
 					x_a++;
@@ -151,13 +170,15 @@ export class Diff_ONP {
 			}
 		}
 
+		// Post-processing
 		this.calcDiffIndex();
 		this.consolidatePunctuationWhitespaces();
 		this.parseSubstitutions();
-		// this.cleanEMDashes();
+		this.cleanEMDashes();
 
-		// Make sure that the ADD operations are in order
-		this.sequence.sort((a, b) => a.indexDiff - b.indexDiff);
+		// Word recognition
+		this.words = this.parseWords();
+		this.setCharToWordReference();
 
 		this.dist = this.sequence.length;
 	}
@@ -294,6 +315,124 @@ export class Diff_ONP {
 		}
 	}
 
+	private parseWords() {
+		// Make sure that the ADD operations are in order
+		this.sequence.sort((a, b) => a.indexDiff - b.indexDiff);
+
+		const errWords: Word[] = [];
+		const seqCopy = [...this.sequence.filter((action) => action.subtype === "ORTHO")];
+		let seqLengthOffset = 0; // Increased when a word contains multiple actions
+
+		// Iterate over all letter errors
+		for (let i = 0; i < seqCopy.length - seqLengthOffset; i++) {
+			const a = seqCopy[i];
+			
+			// TODO: Implement for words added at the end of the text
+			if (a.indexCheck >= this.checkText.length) continue;
+
+			let bounds: [number, number] = [0, this.checkText.length];
+			
+			// Check if it is a completely new word being added
+			let isNewWord = false;
+			let newWordAddActions: Action[] = []; // Used only if it isNewWord=true
+			let newWord: string = a.char; // Used only if it isNewWord=true
+
+			if (a.type === "ADD") {
+				let curOffset = 1;
+				let indexInMainSequence = this.sequence.findIndex((other) => other.indexDiff === a.indexDiff);
+
+				// Iterate over sequential ADD actions until space or punctuation found
+				while (
+					this.sequence[indexInMainSequence + curOffset].type === "ADD"
+					&& this.sequence[indexInMainSequence + curOffset].indexDiff - a.indexDiff === curOffset
+				) {
+					const otherA = this.sequence[indexInMainSequence + curOffset];
+
+					if (otherA.subtype !== "ORTHO") {
+						isNewWord = true;
+						break;
+					} else {
+						newWordAddActions.push(otherA);
+						newWord += otherA.char;
+						curOffset++;
+					}
+				}
+			}
+
+			if (isNewWord) {
+				const word: Word = {
+					type: "ADD",
+					boundsCorrect: [a.indexCorrect, a.indexCorrect + newWord.length],
+					word: newWord,
+					actions: [a, ...newWordAddActions],
+				};
+
+				errWords.push(word);
+
+				// Remove the remaining ADD actions from seqCopy
+				seqCopy.splice(i + 1, newWordAddActions.length);
+
+				continue;
+			}
+
+			// Find closest spaces to the letter on the left and right
+			for (let j = a.indexCheck; j >= 0; j--) {
+				if (charIsPunctuation(this.checkText[j]) || this.checkText[j] === " ") {
+					bounds[0] = j + 1;
+					break;
+				}
+			}
+
+			for (let j = a.indexCheck; j < this.checkText.length; j++) {
+				if (charIsPunctuation(this.checkText[j]) || this.checkText[j] === " ") {
+					bounds[1] = j;
+					break;
+				}
+			}
+
+			if (bounds[0] - 1 === bounds[1]) continue; // In case it is some odd single character thing
+
+			const word: Word = {
+				type: "ERR",
+				boundsCheck: bounds,
+				word: this.checkText.substring(bounds[0], bounds[1]),
+				actions: [],
+			};
+
+			const actionsInWord = seqCopy.filter((action) => {
+				return (action.indexCheck >= bounds[0] && action.indexCheck < bounds[1])
+					// && action.indexCorrect !== a.indexCorrect;
+			});
+			
+			word.actions.push(...actionsInWord);
+			let allActionsAreDelete = true;
+
+			for (const action of actionsInWord) {
+				const ind = seqCopy.findIndex((other) => other.indexDiff === action.indexDiff);
+				if (action.type !== "DEL") allActionsAreDelete = false;
+
+				if (ind === i) continue;
+
+				seqCopy.splice(ind, 1);
+				seqLengthOffset++;
+			}
+
+			if (allActionsAreDelete && word.actions.length === word.word.length) word.type = "DEL";
+
+			errWords.push(word);
+		}
+
+		return errWords;
+	}
+
+	private setCharToWordReference() {
+		for (let i = 0; i < this.words.length; i++) {
+			for (let a of this.words[i].actions) {
+				a.wordIndex = i;
+			}
+		}
+	}
+
 	private shiftIndexDiff(arrRef: Action[], shiftStartIndex: number, shiftAmount: number) {
 		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff > shiftStartIndex)) {
 			otherA.indexDiff += shiftAmount;
@@ -306,5 +445,9 @@ export class Diff_ONP {
 
 	getSequence() {
 		return this.sequence;
+	}
+
+	getWords() {
+		return this.words;
 	}
 }
