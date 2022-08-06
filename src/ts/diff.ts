@@ -1,32 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
 import { charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
+import type { Action, Word } from "../types";
+import { actionRegister } from "./actionRegister";
 
 // The action done to go from target to source character
-export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
-export type ActionSubtype = "PUNCT" | "ORTHO" | "SPACE";
-export type WordType = "ADD" | "DEL" | "ERR";
-
-export interface Action {
-	id: string, // UUIDv4
-	type: ActionType,
-	subtype: ActionSubtype,
-	indexCheck: number,
-	indexCorrect: number,
-	indexDiff?: number,
-	char: string, // The character to delete, to add, or to substitute with, depending on the action type
-	charBefore?: string, // Defined only for type=SUB
-	wordIndex?: number, // Defined only for subtype=ORTHO
-}
-
-export interface Word {
-	type: WordType,
-	boundsCheck?: [number, number], // Defined only for type=ERR and type=DEL
-	boundsCorrect?: [number, number], // Defined only for type=ADD and type=ERR
-	// indexDiff: number,
-	word: string,
-	wordCorrect?: string, // Defined only for type=ERR
-	actions: Action[],
-}
 
 interface GridPoint {
 	x: number,
@@ -443,6 +420,19 @@ export class Diff_ONP {
 		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff > shiftStartIndex)) {
 			otherA.indexDiff += shiftAmount;
 		}
+	}
+
+	checkRegister() {
+		const checkPromises: Promise<void>[] = [];
+
+		for (const a of this.sequence) {
+			checkPromises.push(new Promise(async (res, rej) => {
+				a.inRegister = await actionRegister.isActionInRegister(a);
+				res();
+			}));
+		}
+
+		return Promise.all(checkPromises);
 	}
 
 	getDistance() {

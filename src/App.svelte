@@ -4,7 +4,8 @@
 	import Diff from "./components/Diff.svelte";
 	import { onMount } from "svelte";
 	import type { EssayEntry } from "./types";
-	import { Action, Diff_ONP, Word } from "./ts/diff";
+	import { Diff_ONP } from "./ts/diff";
+	import type { Action, Word } from "./types";
 	import { processString } from "./ts/normalization";
 
 	let correctText = "";
@@ -20,20 +21,20 @@
 		checkText = entry.text;
 		checkID = entry.id;
 
-		const diff = new Diff_ONP(checkText, correctText);
-		diff.calc();
-		activeDiff.char = diff.getSequence();
-		activeDiff.words = diff.getWords();
-
-		checkEssayBox.set(checkText, activeDiff.char);
+		updateDiff();
 	}
 
 	function onRecorrectClick() {
 		correctText = correctEssayBox.getText();
 		checkText = editableCheckEssayBox.getText();
 
+		updateDiff();
+	}
+
+	async function updateDiff() {
 		const diff = new Diff_ONP(checkText, correctText);
 		diff.calc();
+		await diff.checkRegister();
 		activeDiff.char = diff.getSequence();
 		activeDiff.words = diff.getWords();
 

@@ -1,5 +1,7 @@
 <script lang="ts">
-	import type { Action, Word } from "../ts/diff";
+import { actionRegister } from "../ts/actionRegister";
+
+	import type { Action, Word } from "../types";
 	import type EssayBox from "./EssayBox.svelte";
 
 	export let diff: { char: Action[], words: Word[] } = { char: [], words: [] };
@@ -37,13 +39,20 @@
 				essays.correct.setTextActive(action.indexCorrect, 1, 0);
 				essays.check.setTextActive(action.indexCheck, action.charBefore.length, 0);
 				break;
-		}		
+		}
 	}
 
 	function onEntryHoverLeave() {
 		essays.diff.clearAllActiveHighlights();
 		essays.check.clearAllActiveHighlights(true);
 		essays.correct.clearAllActiveHighlights(true);
+	}
+
+	async function onCharEntryClick(action: Action) {
+		const desc = `TempDesc: ${JSON.stringify(action)}`;
+		actionRegister.addActionToRegister(action, desc);
+
+		console.log("registered");
 	}
 </script>
 
@@ -89,7 +98,12 @@
 			<th>Characters</th>
 		</tr>
 		{#each diff.char as entry}
-		<tr on:mouseenter={() => { onCharEntryHover(entry); }} on:mouseleave={onEntryHoverLeave}>
+		<tr
+			class:marked={entry.inRegister}
+			on:mouseenter={() => { onCharEntryHover(entry); }}
+			on:mouseleave={onEntryHoverLeave}
+			on:click={() => { onCharEntryClick(entry); }}
+		>
 			<td>{entry.type}</td>
 			<td>{entry.subtype}</td>
 			<td>{entry.subtype === "ORTHO" ? entry.wordIndex : ""}</td>
@@ -134,6 +148,10 @@
 					background-color: #DADADA;
 				}
 			}
+		}
+
+		&.marked {
+			background-color: rgb(15, 220, 110);
 		}
 	}
 
