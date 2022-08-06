@@ -51,6 +51,14 @@
 		diffList.onEssayErrorClick(e.detail.id);
 	}
 
+	function onEssayErrorEnter(e: CustomEvent) {
+		diffList.externalEntryEnter(e.detail.id);
+	}
+
+	function onEssayErrorLeave(e: CustomEvent) {
+		diffList.externalEntryLeave();
+	}
+
 	onMount(() => {
 		loadCorrectText();
 	});
@@ -80,7 +88,12 @@
 			<h2>Izlabotais</h2>
 			<button on:click={onRecorrectClick}>Pārlabot</button>
 		</div>
-		<EssayBox bind:this={checkEssayBox} on:errorclick={onEssayErrorClick}/>
+		<EssayBox
+			bind:this={checkEssayBox}
+			on:errorclick={onEssayErrorClick}
+			on:errorenter={onEssayErrorEnter}
+			on:errorleave={onEssayErrorLeave}
+		/>
 	</div>
 
 	<div class="diff">

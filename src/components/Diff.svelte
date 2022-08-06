@@ -8,6 +8,7 @@
 	export let diff: { char: Action[], words: Word[] } = { char: [], words: [] };
 	export let essays: { check: EssayBox, correct: EssayBox, diff: EssayBox };
 	let popup: InputPopup;
+	let externalHoverId = "";
 	const dispatcher = createEventDispatcher();
 
 	export function onEssayErrorClick(id: string) {
@@ -60,6 +61,14 @@
 		essays.diff.clearAllActiveHighlights();
 		essays.check.clearAllActiveHighlights(true);
 		essays.correct.clearAllActiveHighlights(true);
+	}
+
+	export function externalEntryEnter(id: string) {
+		externalHoverId = id;
+	}
+
+	export function externalEntryLeave() {
+		externalHoverId = "";
 	}
 
 	async function onCharEntryClick(action: Action) {
@@ -118,6 +127,7 @@
 			on:mouseenter={() => { onCharEntryHover(entry); }}
 			on:mouseleave={onEntryHoverLeave}
 			on:click={() => { onCharEntryClick(entry); }}
+			class:external-hover={externalHoverId === entry.id}
 		>
 			<td>{entry.type}</td>
 			<td>{entry.subtype}</td>
@@ -156,7 +166,7 @@
 			transition: background-color 0.5s;
 			cursor: pointer;
 
-			&:hover {
+			&:hover, &.external-hover {
 				&:nth-child(odd) {
 					background-color: rgba(50, 150, 235, 0.4);
 				}

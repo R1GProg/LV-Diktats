@@ -31,7 +31,7 @@
 			container.style.left = "0";
 			container.style.top = "0";
 			content = "";
-		}, 300);
+		}, 400);
 	}
 
 	export function isActive() {

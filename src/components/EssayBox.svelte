@@ -71,7 +71,7 @@
 	}
 
 	function onErrorHighlightMouseLeave() {
-		tooltip.clearTooltip();
+		if (tooltip.isActive()) tooltip.clearTooltip();
 	}
 
 	function highlightErrors() {
@@ -116,10 +116,12 @@
 			}
 
 			el.addEventListener("mouseenter", () => {
+				dispatcher("errorenter", { id: err.id });
 				onErrorHighlightMouseEnter(el, err);
 			});
 
 			el.addEventListener("mouseleave", () => {
+				dispatcher("errorleave", { id: err.id });
 				onErrorHighlightMouseLeave();
 			});
 
@@ -208,7 +210,7 @@
 		}
 
 		if (clearShift) initTextToHTMLTranslation();
-		if (tooltip.isActive) onErrorHighlightMouseLeave();
+		if (tooltip.isActive) tooltip.clearTooltip();
 	}
 
 	export function setTextActive(start: number, length: number, style = 3) {
