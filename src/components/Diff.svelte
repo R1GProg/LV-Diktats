@@ -12,6 +12,7 @@
 			<th>Bounds Check</th>
 			<th>Bounds Correct</th>
 			<th>Word</th>
+			<th>Correct word</th>
 		</tr>
 		{#each diff.words as entry, i}
 		<tr>
@@ -25,6 +26,11 @@
 				<td>{entry.boundsCorrect}</td>
 			{/if}
 			<td>{entry.word}</td>
+			{#if entry.type === "ERR"}
+				<td>{entry.wordCorrect}</td>
+			{:else}
+				<td></td>
+			{/if}
 		</tr>
 		{/each}
 	</table>

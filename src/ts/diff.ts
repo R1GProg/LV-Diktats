@@ -1,4 +1,4 @@
-import { charIsPunctuation, charIsWordDelimeter } from "./langUtil";
+import { charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
 
 // The action done to go from target to source character
 export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
@@ -22,7 +22,7 @@ export interface Word {
 	boundsCorrect?: [number, number], // Defined only for type=ADD
 	// indexDiff: number,
 	word: string,
-	// wordCorrect: number,
+	wordCorrect?: string, // Defined only for type=ERR
 	actions: Action[],
 }
 
@@ -336,14 +336,8 @@ export class Diff_ONP {
 		// Iterate over all letter errors
 		for (let i = 0; i < seqCopy.length; i++) {
 			const a = seqCopy[i];
-
-			// TODO: Implement for words added at the end of the text
-			// if (a.indexCheck >= this.checkText.length) continue;
-
-			let bounds: [number, number] = [0, this.checkText.length];
 			
 			// Check if it is a completely new word being added
-
 			if (a.type === "ADD") {
 				// If the ADD starts on a word delimiter, it is probably a word
 				let isNewWord = charIsWordDelimeter(this.checkText[a.indexCheck]);
@@ -390,20 +384,7 @@ export class Diff_ONP {
 				}
 			}
 
-			// Find closest spaces to the letter on the left and right
-			for (let j = a.indexCheck; j >= 0; j--) {
-				if (charIsWordDelimeter(this.checkText[j])) {
-					bounds[0] = j + 1;
-					break;
-				}
-			}
-
-			for (let j = a.indexCheck; j < this.checkText.length; j++) {
-				if (charIsWordDelimeter(this.checkText[j])) {
-					bounds[1] = j;
-					break;
-				}
-			}
+			const bounds: [number, number] = getWordBounds(this.checkText, a.indexCheck);
 
 			if (bounds[0] - 1 === bounds[1]) continue; // In case it is some odd single character thing
 
@@ -431,7 +412,12 @@ export class Diff_ONP {
 				seqCopy.splice(ind, 1);
 			}
 
-			if (allActionsAreDelete && word.actions.length === word.word.length) word.type = "DEL";
+			if (allActionsAreDelete && word.actions.length === word.word.length) {
+				word.type = "DEL";
+			} else {
+				const correctBounds = getWordBounds(this.correctText, a.indexCorrect);
+				word.wordCorrect = this.correctText.substring(correctBounds[0], correctBounds[1]);
+			}
 
 			errWords.push(word);
 		}
