@@ -21,6 +21,7 @@
 		const entry = e.detail.entry as EssayEntry;
 		checkText = entry.text;
 		checkID = entry.id;
+		editableCheckEssayBox.setPlainText(checkText);
 
 		updateDiff();
 	}

@@ -145,6 +145,11 @@
 		}, 0);
 	}
 
+	export function setPlainText(newText: string) {
+		text = newText;
+		textContainer.innerHTML = newText;
+	}
+
 	export function initTextToHTMLTranslation() {
 		textToHTMLIndexTranslation = { 0: 0 };
 	}
