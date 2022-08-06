@@ -1,12 +1,55 @@
 <script lang="ts">
 	import type { Action, Word } from "../ts/diff";
+	import type EssayBox from "./EssayBox.svelte";
 
 	export let diff: { char: Action[], words: Word[] } = { char: [], words: [] };
+	export let essays: { check: EssayBox, correct: EssayBox, diff: EssayBox };
+
+	function onWordEntryHover(word: Word) {
+		// TODO: highlight word in diff
+		// essays.diff.setTextActive(word.actions[0].indexCheck, word.word.length, 3);
+
+		switch(word.type) {
+			case "ERR":
+				essays.check.setTextActive(word.boundsCheck[0], word.word.length, 0);
+				essays.correct.setTextActive(word.boundsCorrect[0], word.wordCorrect.length, 0);
+				break;
+			case "ADD":
+				essays.correct.setTextActive(word.boundsCorrect[0], word.word.length, 2);
+				break;
+			case "DEL":
+				essays.check.setTextActive(word.boundsCheck[0], word.word.length, 1);
+				break;
+		}
+	}
+
+	function onCharEntryHover(action: Action) {
+		essays.diff.setHighlightActive(action.id);
+
+		switch (action.type) {
+			case "ADD":
+				essays.correct.setTextActive(action.indexCorrect, 1, 2);
+				break;
+			case "DEL":
+				essays.check.setTextActive(action.indexCheck, action.char.length, 1);
+				break;
+			case "SUB":
+				essays.correct.setTextActive(action.indexCorrect, 1, 0);
+				essays.check.setTextActive(action.indexCheck, action.charBefore.length, 0);
+				break;
+		}		
+	}
+
+	function onEntryHoverLeave() {
+		essays.diff.clearAllActiveHighlights();
+		essays.check.clearAllActiveHighlights(true);
+		essays.correct.clearAllActiveHighlights(true);
+	}
 </script>
 
 <div class="container">
 	<table>
-		<tr>
+		<tr class="headRow">
 			<th>Index</th>
 			<th>Type</th>
 			<th>Bounds Check</th>
@@ -15,7 +58,7 @@
 			<th>Correct word</th>
 		</tr>
 		{#each diff.words as entry, i}
-		<tr>
+		<tr on:mouseenter={() => { onWordEntryHover(entry); }} on:mouseleave={onEntryHoverLeave}>
 			<td>{i}</td>
 			<td>{entry.type}</td>
 			{#if entry.boundsCheck}
@@ -36,7 +79,7 @@
 	</table>
 
 	<table>
-		<tr>
+		<tr class="headRow">
 			<th>Type</th>
 			<th>Subtype</th>
 			<th>Word index</th>
@@ -46,7 +89,7 @@
 			<th>Characters</th>
 		</tr>
 		{#each diff.char as entry}
-		<tr>
+		<tr on:mouseenter={() => { onCharEntryHover(entry); }} on:mouseleave={onEntryHoverLeave}>
 			<td>{entry.type}</td>
 			<td>{entry.subtype}</td>
 			<td>{entry.subtype === "ORTHO" ? entry.wordIndex : ""}</td>
@@ -76,6 +119,21 @@
 	tr {
 		&:nth-child(odd) {
 			background-color: rgba(50, 150, 235, 0.25);
+		}
+
+		&:not(.headRow) {
+			transition: background-color 0.5s;
+			cursor: pointer;
+
+			&:hover {
+				&:nth-child(odd) {
+					background-color: rgba(50, 150, 235, 0.4);
+				}
+
+				&:nth-child(even) {
+					background-color: #DADADA;
+				}
+			}
 		}
 	}
 

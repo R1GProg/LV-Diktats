@@ -79,7 +79,7 @@
 
 	<div class="diff">
 		<h2>Kļūdas (WIP)</h2>
-		<Diff diff={activeDiff}/>
+		<Diff diff={activeDiff} essays={{check: editableCheckEssayBox, diff: checkEssayBox, correct: correctEssayBox}}/>
 	</div>
 </main>
 

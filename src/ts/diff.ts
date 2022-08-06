@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import { charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
 
 // The action done to go from target to source character
@@ -6,6 +7,7 @@ export type ActionSubtype = "PUNCT" | "ORTHO" | "SPACE";
 export type WordType = "ADD" | "DEL" | "ERR";
 
 export interface Action {
+	id: string, // UUIDv4
 	type: ActionType,
 	subtype: ActionSubtype,
 	indexCheck: number,
@@ -19,7 +21,7 @@ export interface Action {
 export interface Word {
 	type: WordType,
 	boundsCheck?: [number, number], // Defined only for type=ERR and type=DEL
-	boundsCorrect?: [number, number], // Defined only for type=ADD
+	boundsCorrect?: [number, number], // Defined only for type=ADD and type=ERR
 	// indexDiff: number,
 	word: string,
 	wordCorrect?: string, // Defined only for type=ERR
@@ -131,6 +133,7 @@ export class Diff_ONP {
 					const subtype = char === " " || char === "\n" ? "SPACE" : (charIsPunctuation(char) ? "PUNCT" : "ORTHO");
 
 					this.sequence.push({
+						id: uuidv4(),
 						type: this.stringsReversed ? "DEL" : "ADD",
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
@@ -146,6 +149,7 @@ export class Diff_ONP {
 					const subtype = char === " " || char === "\n" ? "SPACE" : (charIsPunctuation(char) ? "PUNCT" : "ORTHO");
 
 					this.sequence.push({
+						id: uuidv4(),
 						type: this.stringsReversed ? "ADD" : "DEL",
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
@@ -297,6 +301,7 @@ export class Diff_ONP {
 				}
 
 				seqCopy.push({
+					id: uuidv4(),
 					type: "SUB",
 					subtype: a.subtype,
 					indexCheck: delA.indexCheck,
@@ -416,6 +421,7 @@ export class Diff_ONP {
 				word.type = "DEL";
 			} else {
 				const correctBounds = getWordBounds(this.correctText, a.indexCorrect);
+				word.boundsCorrect = correctBounds;
 				word.wordCorrect = this.correctText.substring(correctBounds[0], correctBounds[1]);
 			}
 

@@ -17,13 +17,13 @@
 		return textContainer.textContent;
 	}
 
-	export function highlightText(start: number, length: number, styleID: number) {
+	export function highlightText(start: number, length: number, styleID: number, pregenId = "") {
 		if (start > text.length) return;
 		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
 
-		const id = uuidv4();
+		const id = pregenId === "" ? uuidv4() : pregenId;
 		const parsedStartIndex = textIndexToHTMLIndex(start);
-		const parsedEndIndex = parsedStartIndex + length;
+		const parsedEndIndex = textIndexToHTMLIndex(start + length);
 		const html = highlightHTMLBuffer;
 		const tag1 = `<span class="highlight hl-${styleID} ${svelteClass}" data-highlight_id="${id}">`;
 		const tag2 = `</span>`;
@@ -38,9 +38,9 @@
 		return id;
 	}
 
-	function addHighlightedText(newText: string, start: number, styleID: number) {
+	function addHighlightedText(newText: string, start: number, styleID: number, pregenId = "") {
 		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
-		const id = uuidv4();
+		const id = pregenId === "" ? uuidv4() : pregenId;
 		const tag = `<span class="highlight hl-${styleID} ${svelteClass} tag-ignore" data-highlight_id="${id}">${newText}</span>`;
 
 		if (start === text.length) {
@@ -63,12 +63,8 @@
 	}
 
 	function highlightErrors() {
-		const tagRef: Record<string, Action> = {};
-
 		// Create the highlight elements
 		for (const error of diff) {
-			let id: string;
-
 			switch (error.type) {
 				case "ADD":
 					{ // In a block to scope the variable definition
@@ -78,29 +74,27 @@
 							char = `\\n\n`;
 						}
 
-						id = addHighlightedText(char, error.indexCheck, 2);
+						addHighlightedText(char, error.indexCheck, 2, error.id);
 					}
 					break;
 				case "DEL":
 					// Do error.char.length instead of 1, as error.char may contain spaces
-					id = highlightText(error.indexCheck, error.char.length, 1);
+					highlightText(error.indexCheck, error.char.length, 1, error.id);
 					break;
 				case "SUB":
-					id = highlightText(error.indexCheck, error.charBefore.length, 0);
+					highlightText(error.indexCheck, error.charBefore.length, 0, error.id);
 					break;
 				default:
 					continue;
 			}
-
-			tagRef[id] = error;
 		}
 
 		commitHighlightBuffer();
 
 		// Add event listeners to the tags
-		for (const id of Object.keys(tagRef)) {
+		for (const err of Object.values(diff)) {
+			const id = err.id;
 			const el = textContainer.querySelector<HTMLSpanElement>(`span[data-highlight_id="${id}"]`);
-			const err = tagRef[id];
 
 			if (!el) {
 				console.warn(`Unable to add event listener to highlight tag! UUID=${id}, Action=${JSON.stringify(err)}`);
@@ -131,7 +125,7 @@
 		}, 0);
 	}
 
-	function initTextToHTMLTranslation() {
+	export function initTextToHTMLTranslation() {
 		textToHTMLIndexTranslation = { 0: 0 };
 	}
 
@@ -165,6 +159,45 @@
 		return textToHTMLIndexTranslation[activeShiftIndex] + index;
 	}
 
+	export function setHighlightActive(id: string) {
+		const el = textContainer.querySelector(`[data-highlight_id="${id}"]`);
+
+		if (!el) {
+			console.warn(`Attempt to set active a highlight with an unknown ID ${id}`);
+			return;
+		}
+
+		el.scrollIntoView({ behavior: "smooth" });
+		el.classList.add("active");
+	}
+
+	function removeHighlight(id: string) {
+		const regex = new RegExp(`<span class="highlight .+?" data-highlight_id="${id}">((?:.|\n)+)<\/span>`);
+		textContainer.innerHTML = textContainer.innerHTML.replace(regex, "$1");
+	}
+
+	export function clearAllActiveHighlights(clearShift = false) {
+		for (const el of textContainer.querySelectorAll<HTMLElement>(".highlight.active")) {
+			if (el.classList.contains("temp")) {
+				removeHighlight(el.dataset.highlight_id);
+			} else {
+				el.classList.remove("active");
+			}
+		}
+
+		if (clearShift) initTextToHTMLTranslation();
+	}
+
+	export function setTextActive(start: number, length: number, style = 3) {
+		const id = highlightText(start, length, style);
+		commitHighlightBuffer();
+
+		const el = document.querySelector(`.highlight[data-highlight_id="${id}"]`);
+		el.classList.add("active", "temp");
+
+		el.scrollIntoView({ behavior: "smooth"});
+	}
+
 	onMount(() => {
 		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
 
@@ -176,7 +209,7 @@
 	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class=".highlight hl-0 hl-1 hl-2"></span>
+	<span class=".highlight hl-0 hl-1 hl-2 hl-3 active"></span>
 </div>
 
 <HighlightTooltip bind:this={tooltip}/>
@@ -205,7 +238,7 @@
 
 	:global(.highlight) {
 		cursor: pointer;
-		transition: filter 0.3s;
+		transition: filter 0.3s, transform 0.3s, background-color 0.3s, color 0.3s;
 		
 		&:hover {
 			filter: brightness(85%);
@@ -227,11 +260,20 @@
 			background-color: rgb(60, 225, 90);
 		}
 
+		&.active:not(.temp), &.hl-3 {
+			filter: drop-shadow(0 0 0.5em black);
+			background-color: yellow !important;
+			color: black !important;
+
+			// transform: scale(1.25);
+			// display: inline-block;
+		}
+
 		// For debugging highlight overlaps
 		// To work, must have experimental browser features enabled
-		&:has(.highlight) {
-			background-color: blue !important;
-			color: white !important;
-		}
+		// &:has(.highlight) {
+		// 	background-color: blue !important;
+		// 	color: white !important;
+		// }
 	}
 </style>
