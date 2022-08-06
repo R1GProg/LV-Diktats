@@ -1,4 +1,4 @@
-import { charIsPunctuation } from "./langUtil";
+import { charIsPunctuation, charIsWordDelimeter } from "./langUtil";
 
 // The action done to go from target to source character
 export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
@@ -224,20 +224,31 @@ export class Diff_ONP {
 
 			// Merge any space errors around this character
 
-			const spaceAfter = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff + 1);
+			const spaceAfter = this.sequence.findIndex((other) => {
+				return a.type === other.type
+					&& other.char === " "
+					&& other.indexDiff === originalIndexDiff + 1;
+			});
 
 			if (spaceAfter !== -1) {
 				a.char = `${a.char} `;
 				this.sequence.splice(spaceAfter, 1);
 			}
 
-			const spaceBefore = this.sequence.findIndex((other) => a.type === other.type && other.char === " " && other.indexDiff === originalIndexDiff - 1);
+			const spaceBefore = this.sequence.findIndex((other) => {
+				return a.type === other.type
+					&& other.char === " "
+					&& other.indexDiff === originalIndexDiff - 1;
+			});
 
 			if (spaceBefore !== -1 && a.type !== "SUB") {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
 				a.indexDiff--;
-				if (a.indexCheck !== this.checkText.length) a.indexCheck--;
+				// If there are other characters that need to be added at the same spot,
+				// decreasing indexCheck would break the order
+				// So the check here should fix that (Especially relevant at the end of the essays)
+				if (!this.sequence.find((other) => other.indexCheck === a.indexCheck && other.indexDiff !== a.indexDiff)) a.indexCheck--;
 
 				this.sequence.splice(spaceBefore, 1);
 			} else if (
@@ -245,8 +256,8 @@ export class Diff_ONP {
 				// && a.type === "DEL"
 				&& this.checkText[a.indexCheck - 1] === " "
 				&& a.indexCheck !== this.checkText.length - 1
-				// The indexCorrect condition prevents .find() returning the same action as a
-				&& !this.sequence.find((other) => other.indexCheck === a.indexCheck && other.indexCorrect !== a.indexCorrect)
+				// The indexDiff condition prevents .find() returning the same action as a
+				&& !this.sequence.find((other) => other.indexCheck === a.indexCheck && other.indexDiff !== a.indexDiff)
 			) {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
@@ -270,7 +281,7 @@ export class Diff_ONP {
 
 		for (const a of addActions) {
 			const nextDel = delActions.findIndex((delA) => {
-				return (delA.indexDiff === a.indexDiff + 1||delA.indexDiff === a.indexDiff - 1)
+				return (delA.indexDiff === a.indexDiff + 1 || delA.indexDiff === a.indexDiff - 1)
 					&& delA.char !== " "
 					&& delA.subtype === a.subtype;
 			});
@@ -321,23 +332,24 @@ export class Diff_ONP {
 
 		const errWords: Word[] = [];
 		const seqCopy = [...this.sequence.filter((action) => action.subtype === "ORTHO")];
-		let seqLengthOffset = 0; // Increased when a word contains multiple actions
 
 		// Iterate over all letter errors
-		for (let i = 0; i < seqCopy.length - seqLengthOffset; i++) {
+		for (let i = 0; i < seqCopy.length; i++) {
 			const a = seqCopy[i];
-			
+
 			// TODO: Implement for words added at the end of the text
-			if (a.indexCheck >= this.checkText.length) continue;
+			// if (a.indexCheck >= this.checkText.length) continue;
 
 			let bounds: [number, number] = [0, this.checkText.length];
 			
 			// Check if it is a completely new word being added
-			let isNewWord = false;
-			let newWordAddActions: Action[] = []; // Used only if it isNewWord=true
-			let newWord: string = a.char; // Used only if it isNewWord=true
 
 			if (a.type === "ADD") {
+				// If the ADD starts on a word delimiter, it is probably a word
+				let isNewWord = charIsWordDelimeter(this.checkText[a.indexCheck]);
+				let newWordAddActions: Action[] = []; // Used only if it isNewWord=true
+				let newWord: string = a.char; // Used only if it isNewWord=true
+
 				let curOffset = 1;
 				let indexInMainSequence = this.sequence.findIndex((other) => other.indexDiff === a.indexDiff);
 
@@ -358,34 +370,36 @@ export class Diff_ONP {
 						curOffset++;
 					}
 				}
-			}
 
-			if (isNewWord) {
-				const word: Word = {
-					type: "ADD",
-					boundsCorrect: [a.indexCorrect, a.indexCorrect + newWord.length],
-					word: newWord,
-					actions: [a, ...newWordAddActions],
-				};
-
-				errWords.push(word);
-
-				// Remove the remaining ADD actions from seqCopy
-				seqCopy.splice(i + 1, newWordAddActions.length);
-
-				continue;
+				// If it is just a stray letter ADD, i.e. only one sequential ADD action, then don't consider it a new word
+				if (isNewWord && newWord.length !== 1) {
+					const word: Word = {
+						type: "ADD",
+						boundsCorrect: [a.indexCorrect, a.indexCorrect + newWord.length],
+						word: newWord,
+						actions: [a, ...newWordAddActions],
+					};
+	
+					errWords.push(word);
+	
+					// Remove the remaining ADD actions from seqCopy
+					seqCopy.splice(i + 1, newWordAddActions.length);
+					// seqLengthOffset += newWordAddActions.length;
+	
+					continue;
+				}
 			}
 
 			// Find closest spaces to the letter on the left and right
 			for (let j = a.indexCheck; j >= 0; j--) {
-				if (charIsPunctuation(this.checkText[j]) || this.checkText[j] === " ") {
+				if (charIsWordDelimeter(this.checkText[j])) {
 					bounds[0] = j + 1;
 					break;
 				}
 			}
 
 			for (let j = a.indexCheck; j < this.checkText.length; j++) {
-				if (charIsPunctuation(this.checkText[j]) || this.checkText[j] === " ") {
+				if (charIsWordDelimeter(this.checkText[j])) {
 					bounds[1] = j;
 					break;
 				}
@@ -415,7 +429,6 @@ export class Diff_ONP {
 				if (ind === i) continue;
 
 				seqCopy.splice(ind, 1);
-				seqLengthOffset++;
 			}
 
 			if (allActionsAreDelete && word.actions.length === word.word.length) word.type = "DEL";

@@ -40,7 +40,7 @@
 <div class="container">
 	<div class="fileselect">
 		<h2>Izvēlēties CSV</h2>
-		<input type="file" bind:files={files}>
+		<input type="file" accept=".csv" bind:files={files}>
 	</div>
 
 	<div class="nav">

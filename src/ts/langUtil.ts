@@ -1,3 +1,7 @@
 export function charIsPunctuation(char: string): boolean {
-	return char.match(/[,.\?!";:\-—\(\)]/) !== null;
+	return char && char.match(/[,.\?!";:\-—\(\)]/) !== null;
+}
+
+export function charIsWordDelimeter(char: string): boolean {
+	return charIsPunctuation(char) || char === " " || char === "\n";
 }
