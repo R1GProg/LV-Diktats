@@ -25,6 +25,7 @@ export interface Action {
 	char: string, // The character to delete, to add, or to substitute with, depending on the action type
 	charBefore?: string, // Defined only for type=SUB
 	wordIndex?: number, // Defined only for subtype=ORTHO
+	hash?: string,
 	inRegister?: boolean,
 }
 

@@ -33,6 +33,10 @@
 			content = "";
 		}, 300);
 	}
+
+	export function isActive() {
+		return active;
+	}
 </script>
 
 <div class="container" class:active={active} bind:this={container}>
@@ -43,7 +47,7 @@
 	.container {
 		position: absolute;
 		opacity: 0;
-		transition: opacity 0.3s;
+		transition: opacity 0.3s, filter 0.3s;
 		background-color: white;
 		border: 1px solid black;
 		pointer-events: none;
@@ -55,5 +59,6 @@
 	.container.active {
 		opacity: 1;
 		pointer-events: all;
+		box-shadow: 0 0 5px rgba(0,0,0,0.5);
 	} 
 </style>

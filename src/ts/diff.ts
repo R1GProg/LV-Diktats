@@ -427,7 +427,7 @@ export class Diff_ONP {
 
 		for (const a of this.sequence) {
 			checkPromises.push(new Promise(async (res, rej) => {
-				a.inRegister = await actionRegister.isActionInRegister(a);
+				a.inRegister = await actionRegister.isActionInRegister(a, true);
 				res();
 			}));
 		}

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, createEventDispatcher } from "svelte";
 	import { v4 as uuidv4 } from "uuid";
+	import { actionRegister } from "../ts/actionRegister";
 	import type { Action } from "../types";
 	import HighlightTooltip from "./HighlightTooltip.svelte";
 	export let editable = false;
@@ -12,6 +13,8 @@
 
 	let textToHTMLIndexTranslation: Record<number, number> = {};
 	let highlightHTMLBuffer: string = "";
+
+	const dispatcher = createEventDispatcher();
 
 	export function getText() {
 		return textContainer.textContent;
@@ -62,6 +65,15 @@
 		highlightHTMLBuffer = "";
 	}
 
+	function onErrorHighlightMouseEnter(el: HTMLElement, err: Action) {
+		if (!err.inRegister) return;
+		tooltip.setTooltip(el, actionRegister.getActionDescriptor(err.hash).desc);
+	}
+
+	function onErrorHighlightMouseLeave() {
+		tooltip.clearTooltip();
+	}
+
 	function highlightErrors() {
 		// Create the highlight elements
 		for (const error of diff) {
@@ -104,11 +116,15 @@
 			}
 
 			el.addEventListener("mouseenter", () => {
-				tooltip.setTooltip(el, JSON.stringify(err));
+				onErrorHighlightMouseEnter(el, err);
 			});
 
 			el.addEventListener("mouseleave", () => {
-				tooltip.clearTooltip();
+				onErrorHighlightMouseLeave();
+			});
+
+			el.addEventListener("click", () => {
+				dispatcher("errorclick", { id: err.id });
 			});
 		}
 	}
@@ -161,8 +177,8 @@
 		return textToHTMLIndexTranslation[activeShiftIndex] + index;
 	}
 
-	export function setHighlightActive(id: string) {
-		const el = textContainer.querySelector(`[data-highlight_id="${id}"]`);
+	export function setHighlightActive(id: string, tooltip = false) {
+		const el = textContainer.querySelector<HTMLElement>(`[data-highlight_id="${id}"]`);
 
 		if (!el) {
 			console.warn(`Attempt to set active a highlight with an unknown ID ${id}`);
@@ -171,6 +187,10 @@
 
 		el.scrollIntoView({ behavior: "smooth" });
 		el.classList.add("active");
+
+		if (tooltip) {
+			onErrorHighlightMouseEnter(el, diff.find((a) => a.id === id));
+		}
 	}
 
 	function removeHighlight(id: string) {
@@ -188,6 +208,7 @@
 		}
 
 		if (clearShift) initTextToHTMLTranslation();
+		if (tooltip.isActive) onErrorHighlightMouseLeave();
 	}
 
 	export function setTextActive(start: number, length: number, style = 3) {

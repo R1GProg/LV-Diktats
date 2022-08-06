@@ -1,11 +1,25 @@
 <script lang="ts">
-import { actionRegister } from "../ts/actionRegister";
-
+	import { createEventDispatcher } from "svelte";
+	import { actionRegister } from "../ts/actionRegister";
 	import type { Action, Word } from "../types";
 	import type EssayBox from "./EssayBox.svelte";
+	import InputPopup from "./InputPopup.svelte";
 
 	export let diff: { char: Action[], words: Word[] } = { char: [], words: [] };
 	export let essays: { check: EssayBox, correct: EssayBox, diff: EssayBox };
+	let popup: InputPopup;
+	const dispatcher = createEventDispatcher();
+
+	export function onEssayErrorClick(id: string) {
+		const action = diff.char.find((a) => a.id === id);
+
+		if (!action) {
+			console.warn(`Attempt to handle unknown action ID ${id}`);
+			return;
+		}
+
+		onCharEntryClick(action);
+	}
 
 	function onWordEntryHover(word: Word) {
 		// TODO: highlight word in diff
@@ -26,7 +40,7 @@ import { actionRegister } from "../ts/actionRegister";
 	}
 
 	function onCharEntryHover(action: Action) {
-		essays.diff.setHighlightActive(action.id);
+		essays.diff.setHighlightActive(action.id, true);
 
 		switch (action.type) {
 			case "ADD":
@@ -49,10 +63,11 @@ import { actionRegister } from "../ts/actionRegister";
 	}
 
 	async function onCharEntryClick(action: Action) {
-		const desc = `TempDesc: ${JSON.stringify(action)}`;
-		actionRegister.addActionToRegister(action, desc);
-
-		console.log("registered");
+		try {
+			const desc = await popup.promptForValue({ title: "Kļūdas reģistrācija", text: "Kļūdas apraksts" });
+			actionRegister.addActionToRegister(action, desc);
+			dispatcher("actionregister", { id: action.id });
+		} catch {}
 	}
 </script>
 
@@ -119,6 +134,8 @@ import { actionRegister } from "../ts/actionRegister";
 		{/each}
 	</table>
 </div>
+
+<InputPopup bind:this={popup}/>
 
 <style lang="scss">
 	.container {

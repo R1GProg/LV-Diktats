@@ -15,6 +15,7 @@
 	let checkEssayBox: EssayBox;
 	let editableCheckEssayBox: EssayBox;
 	let correctEssayBox: EssayBox;
+	let diffList: Diff;
 	
 	function onSelect(e: CustomEvent) {
 		const entry = e.detail.entry as EssayEntry;
@@ -46,6 +47,10 @@
 		correctText = processString(await req.text());
 	}
 
+	function onEssayErrorClick(e: CustomEvent) {
+		diffList.onEssayErrorClick(e.detail.id);
+	}
+
 	onMount(() => {
 		loadCorrectText();
 	});
@@ -75,12 +80,17 @@
 			<h2>Izlabotais</h2>
 			<button on:click={onRecorrectClick}>Pārlabot</button>
 		</div>
-		<EssayBox bind:this={checkEssayBox}/>
+		<EssayBox bind:this={checkEssayBox} on:errorclick={onEssayErrorClick}/>
 	</div>
 
 	<div class="diff">
 		<h2>Kļūdas (WIP)</h2>
-		<Diff diff={activeDiff} essays={{check: editableCheckEssayBox, diff: checkEssayBox, correct: correctEssayBox}}/>
+		<Diff
+			diff={activeDiff}
+			essays={{check: editableCheckEssayBox, diff: checkEssayBox, correct: correctEssayBox}}
+			bind:this={diffList}
+			on:actionregister={onRecorrectClick}
+		/>
 	</div>
 </main>
 

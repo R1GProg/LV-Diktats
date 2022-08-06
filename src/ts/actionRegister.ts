@@ -18,17 +18,20 @@ export class ActionRegister {
 		this.hashes[await this.getActionHash(action)] = { desc };
 	}
 
-	async isActionInRegister(action: Action) {
+	async isActionInRegister(action: Action, writeHashToAction: boolean = false) {
 		const hash = await this.getActionHash(action);
+		if (writeHashToAction) action.hash = hash;
 
 		return hash in this.hashes;
 	}
 
-	getAction(hash: string) {
+	getActionDescriptor(hash: string) {
 		return this.hashes[hash];
 	}
 
-	private async getActionHash(action: Action) {
+	private async getActionHash(action: Action, force = false) {
+		if (action.hash && !force) return action.hash;
+
 		const dict: Record<ActionType, number> = {
 			"NONE": 0,
 			"ADD": 1,
