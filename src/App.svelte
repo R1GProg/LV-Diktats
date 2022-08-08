@@ -7,6 +7,7 @@
 	import { Diff_ONP } from "./ts/diff";
 	import type { Action, Word } from "./types";
 	import { processString } from "./ts/normalization";
+	import config from "./config.json";
 
 	let correctText = "";
 	let checkText = "";
@@ -44,7 +45,7 @@
 	}
 
 	async function loadCorrectText() {
-		const req = await fetch("/resources/correct.txt");
+		const req = await fetch(config.endpointUrl + "/api/getTemplate");
 		correctText = processString(await req.text());
 	}
 
