@@ -229,6 +229,7 @@
 	}
 
 	onMount(() => {
+		actionRegister.loadActionRegister();
 		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
 
 		initTextToHTMLTranslation();

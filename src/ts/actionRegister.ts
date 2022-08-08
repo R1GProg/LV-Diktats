@@ -9,7 +9,7 @@ function buf2hex(buffer: ArrayBuffer): string {
 }
 
 export class ActionRegister {
-	private hashes: Record<ActionHash, ActionDescriptor> = {};
+	private hashes: ActionHash[] = null;
 
 	constructor() {
 		
@@ -26,14 +26,16 @@ export class ActionRegister {
 		});
 	}
 
+	async loadActionRegister() {
+		this.hashes = await (await fetch(`${config.endpointUrl}/api/listMistakes`)).json();
+		console.log(this.hashes);
+	}
+
 	async isActionInRegister(action: Action, writeHashToAction: boolean = false) {
 		const hash = await this.getActionHash(action);
 		if (writeHashToAction) action.hash = hash;
 
-		let request = await fetch(config.endpointUrl + "/api/getMistake?hash=" + hash);
-		let result = await request.text();
-
-		return result !== "null";
+		return this.hashes.includes(hash);
 	}
 
 	async getActionDescriptor(hash: string) {
