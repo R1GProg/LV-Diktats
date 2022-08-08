@@ -2,7 +2,7 @@
 	import { createEventDispatcher, onMount } from "svelte";
 	import { parseCSV } from "../ts/csv";
 	import { processString } from "../ts/normalization";
-	import config from "../config.json"
+	import config from "../config.json";
 	import type { EssayEntry } from "../types";
 
 	const dispatch = createEventDispatcher();
@@ -21,13 +21,6 @@
 			text: processString(result.data.message),
 		};
 	});
-
-	/*
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: `{"correct":[${correct}]}`
-	*/
 
 	onMount(async () => {
 		console.log(config.endpointUrl + "/api/listSubmissions");

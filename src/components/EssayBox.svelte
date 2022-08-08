@@ -65,9 +65,9 @@
 		highlightHTMLBuffer = "";
 	}
 
-	function onErrorHighlightMouseEnter(el: HTMLElement, err: Action) {
+	async function onErrorHighlightMouseEnter(el: HTMLElement, err: Action) {
 		if (!err.inRegister) return;
-		tooltip.setTooltip(el, actionRegister.getActionDescriptor(err.hash).desc);
+		tooltip.setTooltip(el, (await actionRegister.getActionDescriptor(err.hash)).desc);
 	}
 
 	function onErrorHighlightMouseLeave() {

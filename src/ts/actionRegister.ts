@@ -1,4 +1,5 @@
 import type { ActionDescriptor, ActionHash } from "../types";
+import config from "../config.json"
 import type { Action, ActionType } from "../types";
 
 function buf2hex(buffer: ArrayBuffer): string {
@@ -15,18 +16,32 @@ export class ActionRegister {
 	}
 
 	async addActionToRegister(action: Action, desc: string) {
-		this.hashes[await this.getActionHash(action)] = { desc };
+		// this.hashes[await this.getActionHash(action)] = { desc };
+		await fetch(config.endpointUrl + "/api/submitMistake", {
+			method: "POST",
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: `{"hash":"${action.hash}", "description": "${desc}"}`
+		});
 	}
 
 	async isActionInRegister(action: Action, writeHashToAction: boolean = false) {
 		const hash = await this.getActionHash(action);
 		if (writeHashToAction) action.hash = hash;
 
-		return hash in this.hashes;
+		let request = await fetch(config.endpointUrl + "/api/getMistake?hash=" + hash);
+		let result = await request.text();
+
+		return result !== "null";
 	}
 
-	getActionDescriptor(hash: string) {
-		return this.hashes[hash];
+	async getActionDescriptor(hash: string) {
+		let request = await fetch(config.endpointUrl + "/api/getMistake?hash=" + hash);
+		let result = await request.json();
+		return {
+			desc: result.description
+		} as ActionDescriptor;
 	}
 
 	private async getActionHash(action: Action, force = false) {
