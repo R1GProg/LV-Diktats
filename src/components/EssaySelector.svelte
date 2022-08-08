@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { createEventDispatcher } from "svelte";
+	import { createEventDispatcher, onMount } from "svelte";
 	import { parseCSV } from "../ts/csv";
 	import { processString } from "../ts/normalization";
+	import config from "../config.json"
 	import type { EssayEntry } from "../types";
 
 	const dispatch = createEventDispatcher();
@@ -21,9 +22,43 @@
 		};
 	});
 
+	/*
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: `{"correct":[${correct}]}`
+	*/
+
+	onMount(async () => {
+		console.log(config.endpointUrl + "/api/listSubmissions");
+		let raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
+			mode: "cors",
+			method: "GET"
+		});
+		let result: number[] = await raw.json();
+		result.forEach((x) => {
+			entries[x.toString()] = {
+				id: x.toString(),
+					text: null
+			}
+		});
+	});
+
 	function onSelect(id: string) {
 		activeID = id;
-		dispatch("select", { entry: entries[id] })
+		if(entries[id].text === null) {
+			fetch(config.endpointUrl + "/api/getSubmission?id=" + id, {
+				method: "GET"
+			}).then((data) => data.text()).then((result: string) => {
+				entries[id] = {
+					id,
+					text: processString(result)
+				}
+				dispatch("select", { entry: entries[id] });
+			});
+		} else {
+			dispatch("select", { entry: entries[id] });
+		}
 	}
 
 	export function changeSelectionBy(delta: number) {
