@@ -4,7 +4,7 @@ import { parse } from 'csv-parse';
 import { Submission, SubmissionStates } from '../models/submission';
 import mongoose from 'mongoose';
 import { Template } from '../models/template';
-import { Mistake } from '../models/error';
+import { Mistake } from '../models/register';
 import cors from 'cors';
 
 const logger = new Logger();

@@ -72,7 +72,8 @@ const submissionSchema = new mongoose.Schema({
 		type: String,
 		enum: SubmissionStates,
 		default: SubmissionStates
-	}
+	},
+	mistakes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mistake' }]
 });
 
 submissionSchema.statics.build = (attr: ISubmission) => {
