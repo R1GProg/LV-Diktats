@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { IMistake } from "./mistake";
 
 enum SubmissionStates {
 	UNGRADED = "UNGRADED",
@@ -19,6 +20,7 @@ interface ISubmission {
 	country: string;
 	city: string;
 	state: SubmissionStates;
+	mistakes: IMistake[];
 }
 
 interface SubmissionDoc extends mongoose.Document {
@@ -32,6 +34,7 @@ interface SubmissionDoc extends mongoose.Document {
 	country: string;
 	city: string;
 	state: SubmissionStates;
+	mistakes: IMistake[];
 }
 
 interface submissionModelInterface extends mongoose.Model<SubmissionDoc> {

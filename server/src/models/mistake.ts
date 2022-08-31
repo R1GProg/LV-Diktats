@@ -3,7 +3,7 @@ import { Bounds } from '@shared/diff-engine/langUtil';
 import { MistakeType } from '@shared/diff-engine/Mistake';
 import mongoose from "mongoose";
 
-interface IAction {
+export interface IAction {
 	// hash: string;
 	id: string;
 	type: ActionType;
@@ -16,7 +16,7 @@ interface IAction {
 	hash: string;
 }
 
-interface IMistake {
+export interface IMistake {
 	// hash: string;
 	actions: IAction[];
 	type: MistakeType;
