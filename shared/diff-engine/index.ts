@@ -1,7 +1,6 @@
-import { v4 as uuidv4 } from "uuid";
-import { charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
-import type { Action, Word } from "./types";
-// import { actionRegister } from "./actionRegister";
+import { Bounds, charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
+import Action from "./Action";
+import Mistake from "./Mistake";
 
 // The action done to go from target to source character
 
@@ -28,7 +27,7 @@ export class Diff_ONP {
 	private sequence: Action[] = [];
 	private checkText: string;
 	private correctText: string;
-	private words: Word[] = [];
+	private mistakes: Mistake[] = [];
 
 	constructor(check: string, correct: string) {
 		this.checkText = check;
@@ -109,14 +108,13 @@ export class Diff_ONP {
 					const char = this.b[y_b];
 					const subtype = char === " " || char === "\n" ? "SPACE" : (charIsPunctuation(char) ? "PUNCT" : "ORTHO");
 
-					this.sequence.push({
-						id: uuidv4(),
+					this.sequence.push(new Action({
 						type: this.stringsReversed ? "DEL" : "ADD",
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
 						char,
-						subtype,
-					});
+						subtype
+					}));
 
 					y_b++;
 				} else if (seqPath[i].y - seqPath[i].x < y_b - x_a) {
@@ -125,14 +123,13 @@ export class Diff_ONP {
 					const char = this.a[x_a];
 					const subtype = char === " " || char === "\n" ? "SPACE" : (charIsPunctuation(char) ? "PUNCT" : "ORTHO");
 
-					this.sequence.push({
-						id: uuidv4(),
+					this.sequence.push(new Action({
 						type: this.stringsReversed ? "ADD" : "DEL",
 						indexCheck: this.stringsReversed ? y_b : x_a,
 						indexCorrect: this.stringsReversed ? x_a : y_b,
 						char,
 						subtype
-					});
+					}));
 
 					x_a++;
 				} else {
@@ -157,9 +154,11 @@ export class Diff_ONP {
 		this.parseSubstitutions();
 		this.cleanEMDashes();
 
-		// Word recognition
-		this.words = this.parseWords();
-		this.setCharToWordReference();
+		// Mistake-level PP
+
+		this.mistakes = this.parseWords();
+
+		console.log(this.sequence);
 
 		this.dist = this.sequence.length;
 	}
@@ -191,7 +190,7 @@ export class Diff_ONP {
 			if (!locMatch) break;
 
 			const action = this.sequence[Number(locMatch.groups!.id)];
-			action.indexDiff = locMatch.index;
+			action.indexDiff = locMatch.index!;
 
 			checkTextCopy = `${checkTextCopy.substring(0, locMatch.index)}${locMatch.groups!.char}${checkTextCopy.substring(locMatch.index! + locMatch[0].length)}`;
 		} while(locMatch);
@@ -201,7 +200,7 @@ export class Diff_ONP {
 		for (const a of this.sequence) {
 			if (!charIsPunctuation(a.char)) continue;
 
-			const originalIndexDiff = a.indexDiff!;
+			const originalIndexDiff = a.indexDiff;
 
 			// Merge any space errors around this character
 
@@ -277,8 +276,7 @@ export class Diff_ONP {
 					newChar = `${a.char} `;
 				}
 
-				seqCopy.push({
-					id: uuidv4(),
+				seqCopy.push(new Action({
 					type: "SUB",
 					subtype: a.subtype,
 					indexCheck: delA.indexCheck,
@@ -286,7 +284,7 @@ export class Diff_ONP {
 					indexDiff: a.indexDiff,
 					char: newChar,
 					charBefore: delA.char,
-				});
+				}));
 
 				delActions.splice(nextDel, 1);
 
@@ -312,7 +310,7 @@ export class Diff_ONP {
 		// Make sure that the ADD operations are in order
 		this.sequence.sort((a, b) => a.indexDiff! - b.indexDiff!);
 
-		const errWords: Word[] = [];
+		const errWords: Mistake[] = [];
 		const seqCopy = [...this.sequence.filter((action) => action.subtype === "ORTHO")];
 
 		// Iterate over all letter errors
@@ -349,12 +347,13 @@ export class Diff_ONP {
 
 				// If it is just a stray letter ADD, i.e. only one sequential ADD action, then don't consider it a new word
 				if (isNewWord && newWord.length !== 1) {
-					const word: Word = {
+					const word: Mistake = new Mistake({
 						type: "ADD",
-						boundsCorrect: [a.indexCorrect, a.indexCorrect + newWord.length],
-						word: newWord,
+						boundsCorrect: { start: a.indexCorrect, end: a.indexCorrect + newWord.length },
+						boundsDiff: { start: a.indexDiff, end: a.indexDiff + newWord.length },
+						// word: newWord,
 						actions: [a, ...newWordAddActions],
-					};
+					});
 	
 					errWords.push(word);
 	
@@ -366,19 +365,20 @@ export class Diff_ONP {
 				}
 			}
 
-			const bounds: [number, number] = getWordBounds(this.checkText, a.indexCheck);
+			const bounds: Bounds = getWordBounds(this.checkText, a.indexCheck);
 
-			if (bounds[0] - 1 === bounds[1]) continue; // In case it is some odd single character thing
+			if (bounds.start - 1 === bounds.end) continue; // In case it is some odd single character thing
 
-			const word: Word = {
-				type: "ERR",
+			const word = new Mistake({
+				type: "MIXED",
 				boundsCheck: bounds,
-				word: this.checkText.substring(bounds[0], bounds[1]),
+				boundsDiff: { start: 0, end: 0 }, // TBI
+				// word: this.checkText.substring(bounds.start, bounds.end),
 				actions: [],
-			};
+			});
 
 			const actionsInWord = seqCopy.filter((action) => {
-				return (action.indexCheck >= bounds[0] && action.indexCheck < bounds[1])
+				return (action.indexCheck >= bounds.start && action.indexCheck < bounds.end)
 					// && action.indexCorrect !== a.indexCorrect;
 			});
 			
@@ -394,12 +394,12 @@ export class Diff_ONP {
 				seqCopy.splice(ind, 1);
 			}
 
-			if (allActionsAreDelete && word.actions.length === word.word.length) {
+			if (allActionsAreDelete && word.actions.length === bounds.end - bounds.start) {
 				word.type = "DEL";
 			} else {
 				const correctBounds = getWordBounds(this.correctText, a.indexCorrect);
 				word.boundsCorrect = correctBounds;
-				word.wordCorrect = this.correctText.substring(correctBounds[0], correctBounds[1]);
+				// word.wordCorrect = this.correctText.substring(correctBounds[0], correctBounds[1]);
 			}
 
 			errWords.push(word);
@@ -408,32 +408,11 @@ export class Diff_ONP {
 		return errWords;
 	}
 
-	private setCharToWordReference() {
-		for (let i = 0; i < this.words.length; i++) {
-			for (let a of this.words[i].actions) {
-				a.wordIndex = i;
-			}
-		}
-	}
-
 	private shiftIndexDiff(arrRef: Action[], shiftStartIndex: number, shiftAmount: number) {
 		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff! > shiftStartIndex)) {
 			otherA.indexDiff! += shiftAmount;
 		}
 	}
-
-	// checkRegister() {
-	// 	const checkPromises: Promise<void>[] = [];
-
-	// 	for (const a of this.sequence) {
-	// 		checkPromises.push(new Promise(async (res, rej) => {
-	// 			a.inRegister = await actionRegister.isActionInRegister(a, true);
-	// 			res();
-	// 		}));
-	// 	}
-
-	// 	return Promise.all(checkPromises);
-	// }
 
 	getDistance() {
 		return this.dist;
@@ -443,7 +422,7 @@ export class Diff_ONP {
 		return this.sequence;
 	}
 
-	getWords() {
-		return this.words;
+	getMistakes() {
+		return this.mistakes;
 	}
 }

@@ -6,7 +6,9 @@
   "types": "./build/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "postinstall": "patch-package --exclude='(package\\.json)|(build.*)$'",
+    "patch-xxhash": "patch-package xxhash --exclude='(package\\.json)|(build.*)$'"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +18,9 @@
     "typescript": "^4.8.2"
   },
   "dependencies": {
-    "uuid": "^8.3.2"
+    "patch-package": "^6.4.7",
+    "uuid": "^8.3.2",
+    "xxhash": "^0.3.0",
+    "xxhash-wasm": "^1.0.1"
   }
 }
