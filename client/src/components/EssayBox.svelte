@@ -1,8 +1,8 @@
 <script lang="ts">
+	import type Action from "@shared/diff-engine/build/Action";
 	import { onMount, createEventDispatcher } from "svelte";
 	import { v4 as uuidv4 } from "uuid";
 	import { actionRegister } from "../ts/actionRegister";
-	import type { Action } from "../types";
 	import HighlightTooltip from "./HighlightTooltip.svelte";
 	export let editable = false;
 	export let text = "";
@@ -66,8 +66,8 @@
 	}
 
 	async function onErrorHighlightMouseEnter(el: HTMLElement, err: Action) {
-		if (!err.inRegister) return;
-		tooltip.setTooltip(el, (await actionRegister.getActionDescriptor(err.hash)).desc);
+		// if (!err.inRegister) return;
+		// tooltip.setTooltip(el, (await actionRegister.getActionDescriptor(err.hash)).desc);
 	}
 
 	function onErrorHighlightMouseLeave() {
@@ -77,7 +77,8 @@
 	function highlightErrors() {
 		// Create the highlight elements
 		for (const error of diff) {
-			const statusId = error.inRegister ? 1 : 0;
+			// const statusId = error.inRegister ? 1 : 0;
+			const statusId = 0;
 			
 			switch (error.type) {
 				case "ADD":
@@ -96,6 +97,7 @@
 					highlightText(error.indexCheck, error.char.length, 1, statusId, error.id);
 					break;
 				case "SUB":
+					console.log(error);
 					highlightText(error.indexCheck, error.charBefore.length, 0, statusId, error.id);
 					break;
 				default:

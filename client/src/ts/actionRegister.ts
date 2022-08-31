@@ -1,6 +1,10 @@
-import type { ActionDescriptor, ActionHash } from "../types";
+import type { ActionHash, ActionType } from "@shared/diff-engine/build/Action";
+import type Action from "@shared/diff-engine/build/Action";
 import config from "../config.json"
-import type { Action, ActionType } from "../types";
+
+export interface ActionDescriptor {
+	desc: string,
+}
 
 function buf2hex(buffer: ArrayBuffer): string {
 	return [...new Uint8Array(buffer)]
@@ -28,14 +32,11 @@ export class ActionRegister {
 
 	async loadActionRegister() {
 		this.hashes = await (await fetch(`${config.endpointUrl}/api/listMistakes`)).json();
-		console.log(this.hashes);
+		// console.log(this.hashes);
 	}
 
-	async isActionInRegister(action: Action, writeHashToAction: boolean = false) {
-		const hash = await this.getActionHash(action);
-		if (writeHashToAction) action.hash = hash;
-
-		return this.hashes.includes(hash);
+	async isActionInRegister(action: Action) {
+		return this.hashes.includes(await action.hash);
 	}
 
 	async getActionDescriptor(hash: string) {
@@ -44,26 +45,6 @@ export class ActionRegister {
 		return {
 			desc: result.description
 		} as ActionDescriptor;
-	}
-
-	private async getActionHash(action: Action, force = false) {
-		if (action.hash && !force) return action.hash;
-
-		const dict: Record<ActionType, number> = {
-			"NONE": 0,
-			"ADD": 1,
-			"DEL": 2,
-			"SUB": 3,
-		}
-	
-		const keyObject = {
-			type: dict[action.type],
-			index: action.indexCorrect,
-			char: action.char.trim().charCodeAt(0)
-		};
-	
-		const hash = await crypto.subtle.digest("SHA-256", Uint8Array.from(Object.values(keyObject)));
-		return buf2hex(hash) as ActionHash;
 	}
 }
 

@@ -21,7 +21,10 @@ A container class for Actions. May contain one or more actions that are part of 
 #### Members
 - `Action[] actions` -  The array of actions that the Mistake instance contains
 - `MistakeType type` - "ADD" | "DEL" | "MIXED" - `type=ADD` if the mistake is a missing set of punctuation or a missing word, i.e. all actions are `type=ADD` surrounded by word delimiters; `type=DEL` if the mistake is an unnecessary set of punctuation or an unnecessary word, i.e. all actions are `type=DEL` surrounded by word delimiters; `type=MIXED` if the mistake has actions with different types.
-- `string? id` - To allow for multiple variations of the same registered mistake, each mistake is linked to a registered mistake with a UUIDv4 (Or Mongo ObjectID?).
+- `string? registerId` - To allow for multiple variations of the same registered mistake, each mistake is linked to a registered mistake with a UUIDv4 (Or Mongo ObjectID?).
+- `Bounds boundsCorrect` - The bounds of the mistake in the correct essay
+- `Bounds boundsCheck` - The bounds of the mistake in the check essay
+- `Bounds boundsDiff` - The bounds of the mistake in the diff
 
 ### interface RegisterEntry
 To allow for multiple variations of the same mistake, the register entry is separate from a Mistake instance.

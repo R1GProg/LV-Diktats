@@ -1,0 +1,11 @@
+diff --git a/node_modules/xxhash/index.d.ts b/node_modules/xxhash/index.d.ts
+new file mode 100644
+index 0000000..c040524
+--- /dev/null
++++ b/node_modules/xxhash/index.d.ts
+@@ -0,0 +1,4 @@
++declare module "xxhash" {
++	export function hash(data: ArrayBuffer, seed: number): string;
++	export function hash64(data: ArrayBuffer, seed: number): string;
++}
+\ No newline at end of file

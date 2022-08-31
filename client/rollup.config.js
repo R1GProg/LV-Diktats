@@ -38,8 +38,12 @@ export default {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'public/build/bundle.js'
+		file: 'public/build/bundle.js',
+		globals: {
+			"xxhash": "window", // A pretty hacky solution to not importing the node xxhash module
+		}
 	},
+	external: ["xxhash"],
 	plugins: [
 		svelte({
 			preprocess: sveltePreprocess({ sourceMap: !production }),
@@ -67,11 +71,6 @@ export default {
 			sourceMap: !production,
 			inlineSources: !production
 		}),
-		// alias({
-		// 	entries: [
-		// 		{ find: /^@shared(\/|$)/, replacement: `${__dirname}/../shared/`}
-		// 	]
-		// }),
 		json(),
 
 		// In dev mode, call `npm run start` once

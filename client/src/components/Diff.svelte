@@ -1,11 +1,13 @@
 <script lang="ts">
+import type Action from "@shared/diff-engine/build/Action";
+import type Mistake from "@shared/diff-engine/build/Mistake";
+
 	import { createEventDispatcher } from "svelte";
 	import { actionRegister } from "../ts/actionRegister";
-	import type { Action, Word } from "../types";
 	import type EssayBox from "./EssayBox.svelte";
 	import InputPopup from "./InputPopup.svelte";
 
-	export let diff: { char: Action[], words: Word[] } = { char: [], words: [] };
+	export let diff: { char: Action[], words: Mistake[] } = { char: [], words: [] };
 	export let essays: { check: EssayBox, correct: EssayBox, diff: EssayBox };
 	let popup: InputPopup;
 	let externalHoverId = "";
@@ -22,20 +24,20 @@
 		onCharEntryClick(action);
 	}
 
-	function onWordEntryHover(word: Word) {
+	function onWordEntryHover(word: Mistake) {
 		// TODO: highlight word in diff
 		// essays.diff.setTextActive(word.actions[0].indexCheck, word.word.length, 3);
 
 		switch(word.type) {
-			case "ERR":
-				essays.check.setTextActive(word.boundsCheck[0], word.word.length, 0);
-				essays.correct.setTextActive(word.boundsCorrect[0], word.wordCorrect.length, 0);
+			case "MIXED":
+				essays.check.setTextActive(word.boundsCheck.start, word.boundsCheck.end - word.boundsCheck.start, 0);
+				essays.correct.setTextActive(word.boundsCorrect.start, word.boundsCorrect.end - word.boundsCorrect.start, 0);
 				break;
 			case "ADD":
-				essays.correct.setTextActive(word.boundsCorrect[0], word.word.length, 2);
+				essays.correct.setTextActive(word.boundsCorrect.start, word.boundsCorrect.end - word.boundsCorrect.start, 2);
 				break;
 			case "DEL":
-				essays.check.setTextActive(word.boundsCheck[0], word.word.length, 1);
+				essays.check.setTextActive(word.boundsCheck.start, word.boundsCheck.end - word.boundsCheck.start, 1);
 				break;
 		}
 	}
@@ -74,7 +76,7 @@
 	async function onCharEntryClick(action: Action) {
 		try {
 			const desc = await popup.promptForValue({ title: "Kļūdas reģistrācija", text: "Kļūdas apraksts" });
-			actionRegister.addActionToRegister(action, desc);
+			// actionRegister.addActionToRegister(action, desc);
 			dispatcher("actionregister", { id: action.id });
 		} catch {}
 	}
@@ -94,19 +96,14 @@
 		<tr on:mouseenter={() => { onWordEntryHover(entry); }} on:mouseleave={onEntryHoverLeave}>
 			<td>{i}</td>
 			<td>{entry.type}</td>
-			{#if entry.boundsCheck}
-				<td>{entry.boundsCheck}</td>
-				<td></td>
-			{:else}
-				<td></td>
-				<td>{entry.boundsCorrect}</td>
-			{/if}
-			<td>{entry.word}</td>
-			{#if entry.type === "ERR"}
+			<td>[{entry.boundsCheck.start}, {entry.boundsCheck.end}]</td>
+			<td>[{entry.boundsCorrect.start}, {entry.boundsCorrect.end}]</td>
+			<!-- <td>{entry.word}</td> -->
+			<!-- {#if entry.type === "MIXED"}
 				<td>{entry.wordCorrect}</td>
 			{:else}
 				<td></td>
-			{/if}
+			{/if} -->
 		</tr>
 		{/each}
 	</table>
@@ -122,8 +119,9 @@
 			<th>Characters</th>
 		</tr>
 		{#each diff.char as entry}
+		<!-- class:marked={entry.inRegister} -->
 		<tr
-			class:marked={entry.inRegister}
+			
 			on:mouseenter={() => { onCharEntryHover(entry); }}
 			on:mouseleave={onEntryHoverLeave}
 			on:click={() => { onCharEntryClick(entry); }}
@@ -131,7 +129,7 @@
 		>
 			<td>{entry.type}</td>
 			<td>{entry.subtype}</td>
-			<td>{entry.subtype === "ORTHO" ? entry.wordIndex : ""}</td>
+			<td>{entry?.mistake?.registerId}</td>
 			<td>{entry.indexCorrect}</td>
 			<td>{entry.indexCheck}</td>
 			<td>{entry.indexDiff !== undefined ? entry.indexDiff : ""}</td>

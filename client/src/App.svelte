@@ -6,19 +6,20 @@
 	import Diff from "./components/Diff.svelte";
 	import { onMount } from "svelte";
 	import type { EssayEntry } from "./types";
-	import type { Action, Word } from "./types";
 	import config from "./config.json";
 	import { actionRegister } from "./ts/actionRegister";
+	import type Mistake from "@shared/diff-engine/build/Mistake";
+	import type Action from "@shared/diff-engine/build/Action";
 
 	let correctText = "";
 	let checkText = "";
 	let checkID = "";
-	let activeDiff: { char: Action[], words: Word[] } = { char: [], words: [] };
+	let activeDiff: { char: Action[], words: Mistake[] } = { char: [], words: [] };
 	let checkEssayBox: EssayBox;
 	let editableCheckEssayBox: EssayBox;
 	let correctEssayBox: EssayBox;
 	let diffList: Diff;
-	
+
 	function onSelect(e: CustomEvent) {
 		const entry = e.detail.entry as EssayEntry;
 		checkText = entry.text;
@@ -40,7 +41,7 @@
 		diff.calc();
 		await checkRegister(diff)
 		activeDiff.char = diff.getSequence();
-		activeDiff.words = diff.getWords();
+		activeDiff.words = diff.getMistakes();
 
 		checkEssayBox.set(checkText, activeDiff.char);
 	}

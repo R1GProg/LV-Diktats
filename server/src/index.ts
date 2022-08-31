@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { Logger } from 'yatsl';
 import { debugRouter } from './routes/debug';
 import { submissionRouter } from './routes/submissions';
+import { hash } from "@shared/diff-engine/xxhash";
 
 const logger = new Logger();
 
