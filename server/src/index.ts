@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv'
+dotenv.config();
 import { json, text, urlencoded } from 'body-parser';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
@@ -9,8 +11,10 @@ import { hash } from "@shared/diff-engine/xxhash";
 
 const logger = new Logger();
 
-mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/?retryWrites=true&w=majority`, {}, () => {
+mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/test?retryWrites=true&w=majority`, {}).then(() => {
 	logger.info("Connected to MongoDB!");
+}).catch((e) => {
+	logger.error(e);
 });
 
 const app = express();

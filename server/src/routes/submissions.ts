@@ -42,7 +42,7 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 		}
 
 		logger.info("Removing previous records...");
-		mongoose.connection.db.dropCollection("submissions");
+		// mongoose.connection.db.dropCollection("submissions");
 
 
 		Template.find().exec((err, result) => {
@@ -61,7 +61,8 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 				let mistakes = diff.getMistakes();
 				let mistakesDb: any[] = [];
 				mistakes.forEach(async (val2) => {
-					let results = Mistake.find({ "actions.hash": val2.actions[0].hash });
+					let hash = await val2.genHash();
+					let results = Mistake.find({ "actions.hash": hash });
 					if (await results.count() === 0) {
 						let final: IMistake = {
 							actions: await Promise.all(val2.actions.map(async (x) => {
@@ -135,7 +136,7 @@ router.get('/api/getSubmission', (req: Request, res: Response) => {
 
 // Submits a template to check against
 router.post('/api/submitTemplate', async (req: Request, res: Response) => {
-	mongoose.connection.db.dropCollection("templates");
+	// mongoose.connection.db.dropCollection("templates");
 	let template = Template.build({ message: req.body });
 	await template.save();
 	return res.send("Loaded!");
