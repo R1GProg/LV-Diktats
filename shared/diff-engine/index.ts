@@ -176,7 +176,7 @@ export class Diff_ONP {
 
 			this.mistakes.push(new Mistake(mistakeOpts));
 		}
-
+		
 		console.log(this.mistakes);
 
 		this.dist = this.sequence.length;
@@ -405,7 +405,7 @@ export class Diff_ONP {
 
 			actionsInWord.sort((a, b) => a.indexDiff - b.indexDiff);
 			word.boundsDiff = {
-				start: actionsInWord[0].indexDiff,
+				start: a.indexDiff,
 				end: actionsInWord[actionsInWord.length - 1].indexDiff + actionsInWord[actionsInWord.length - 1].char.length
 			};
 
