@@ -1,3 +1,4 @@
+import { IAction, IMistake } from './../models/mistake';
 import { Logger } from 'yatsl';
 import express, { Request, response, Response } from 'express';
 import { parse } from 'csv-parse';
@@ -6,6 +7,8 @@ import mongoose from 'mongoose';
 import { Template } from '../models/template';
 import { Mistake } from '../models/mistake';
 import cors from 'cors';
+import { processString } from '@shared/normalization';
+import { Diff_ONP } from '@shared/diff-engine';
 
 const logger = new Logger();
 const router = express.Router();
@@ -41,14 +44,64 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 		logger.info("Removing previous records...");
 		mongoose.connection.db.dropCollection("submissions");
 
-		records.forEach(async (val) => {
-			// logger.debug(`Writing submission #${val.id}...`);
-			// TODO: generate diff and categorise mistakes
-			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: [] } });
-			await record.save();
-		});
 
-		logger.info("Done!");
+		Template.find().exec((err, result) => {
+			if (err) {
+				logger.error(err);
+				return;
+			}
+
+			let template = result![0].message;
+			records.forEach(async (val) => {
+				// logger.debug(`Writing submission #${val.id}...`);
+				// TODO: generate diff and categorise mistakes
+				val.message = processString(val.message);
+				const diff = new Diff_ONP(val.message, template);
+				diff.calc();
+				let mistakes = diff.getMistakes();
+				let mistakesDb: any[] = [];
+				mistakes.forEach(async (val2) => {
+					let results = Mistake.find({ "actions.hash": val2.actions[0].hash });
+					if (await results.count() === 0) {
+						let final: IMistake = {
+							actions: await Promise.all(val2.actions.map(async (x) => {
+								let actionFinal: IAction = {
+									id: x.id,
+									type: x.type,
+									subtype: x.subtype,
+									indexCheck: x.indexCheck,
+									indexCorrect: x.indexCorrect,
+									indexDiff: x.indexDiff,
+									char: x.char,
+									charBefore: x.charBefore,
+									hash: await x.hash
+								};
+								return actionFinal;
+							})),
+							type: val2.type,
+							registerId: val2.registerId,
+							boundsCorrect: val2.boundsCorrect,
+							boundsCheck: val2.boundsCheck,
+							boundsDiff: val2.boundsDiff
+						};
+						mistakesDb.push(final);
+					} else {
+						results.exec((err, res) => {
+							if (err) {
+								logger.error(err);
+								return;
+							}
+
+							mistakesDb.push(res[0]);
+						});
+					}
+				})
+				let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb } });
+				await record.save();
+			});
+
+			logger.info("Done!");
+		});
 	});
 	return res.send("Loaded!");
 });
@@ -140,7 +193,7 @@ router.get('/api/listMistakes', (req: Request, res: Response) => {
 });
 
 // Shows number of mistakes in a submission
-router.get('/api/listMistakes', (req: Request, res: Response) => {
+router.get('/api/getMistakeCount', (req: Request, res: Response) => {
 	if (req.query.id === undefined || (req.query.id! as string).match(/\D/)) return res.send("Invalid ID!");
 	let id: number = parseInt(req.query.id! as string);
 	Submission.find({ id: id }).exec((err, data) => {
