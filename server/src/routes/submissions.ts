@@ -4,7 +4,7 @@ import { parse } from 'csv-parse';
 import { Submission, SubmissionStates } from '../models/submission';
 import mongoose from 'mongoose';
 import { Template } from '../models/template';
-import { Mistake } from '../models/error';
+import { Mistake } from '../models/mistake';
 import cors from 'cors';
 
 const logger = new Logger();
@@ -43,7 +43,8 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 
 		records.forEach(async (val) => {
 			// logger.debug(`Writing submission #${val.id}...`);
-			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED } });
+			// TODO: generate diff and categorise mistakes
+			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: [] } });
 			await record.save();
 		});
 
@@ -108,7 +109,7 @@ router.post('/api/submitMistake', async (req: Request, res: Response) => {
 
 // Gets the mistake
 router.get('/api/getMistake', async (req: Request, res: Response) => {
-	if (await Mistake.find({ hash: req.query.hash }).count() === 0) return res.send("null");
+	if (await Mistake.find({ "actions.hash": req.query.hash }).count() === 0) return res.send("null");
 	Mistake.findOne({ hash: req.query.hash }).exec((err, result) => {
 		if (err) {
 			logger.error(err);
@@ -121,7 +122,7 @@ router.get('/api/getMistake', async (req: Request, res: Response) => {
 
 // Gets the mistake
 router.delete('/api/deleteMistake', async (req: Request, res: Response) => {
-	Mistake.findOneAndDelete({ hash: req.query.hash });
+	Mistake.findOneAndDelete({ "actions.hash": req.query.hash });
 	res.send("Gone.");
 });
 
@@ -133,8 +134,23 @@ router.get('/api/listMistakes', (req: Request, res: Response) => {
 			return;
 		}
 
-		let ids = data.map((a) => a.hash);
+		let ids = data.map((a) => a.actions[0].hash);
 		res.send(ids);
+	});
+});
+
+// Shows number of mistakes in a submission
+router.get('/api/listMistakes', (req: Request, res: Response) => {
+	if (req.query.id === undefined || (req.query.id! as string).match(/\D/)) return res.send("Invalid ID!");
+	let id: number = parseInt(req.query.id! as string);
+	Submission.find({ id: id }).exec((err, data) => {
+		if (err) {
+			logger.error(err);
+			return;
+		}
+		if (data.length === 0) return res.send("Invalid ID!");
+
+		res.send(data[0].mistakes.length);
 	});
 });
 
