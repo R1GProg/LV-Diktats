@@ -12,7 +12,7 @@ export interface IAction {
 	indexCorrect: number;
 	indexDiff: number;
 	char: string;
-	charBefore: string | null;
+	charBefore: string | undefined;
 	hash: string;
 }
 
@@ -20,19 +20,19 @@ export interface IMistake {
 	// hash: string;
 	actions: IAction[];
 	type: MistakeType;
-	registerId: string | null;
-	boundsCorrect: Bounds;
-	boundsCheck: Bounds;
-	boundsDiff: Bounds;
+	registerId: string | undefined;
+	boundsCorrect: Bounds | undefined;
+	boundsCheck: Bounds | undefined;
+	boundsDiff: Bounds | undefined;
 }
 
 interface MistakeDoc extends mongoose.Document {
 	actions: IAction[];
 	type: MistakeType;
-	registerId: string | null;
-	boundsCorrect: Bounds;
-	boundsCheck: Bounds;
-	boundsDiff: Bounds;
+	registerId: string | undefined;
+	boundsCorrect: Bounds | undefined;
+	boundsCheck: Bounds | undefined;
+	boundsDiff: Bounds | undefined;
 }
 
 interface mistakeModelInterface extends mongoose.Model<MistakeDoc> {
