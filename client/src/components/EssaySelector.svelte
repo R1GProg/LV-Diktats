@@ -105,6 +105,10 @@
 		border: 1px solid black;
 		height: 100%;
 		padding-left: 10px;
+		
+		input {
+			width: 100%;
+		}
 	}
 
 	.fileselect h2 {

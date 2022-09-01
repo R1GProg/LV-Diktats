@@ -169,7 +169,7 @@ export class Diff_ONP {
 			};
 
 			if (action.type === "ADD" || action.type === "SUB")
-				mistakeOpts.boundsCorrect = { start: action.indexCorrect, end: action.indexDiff + action.char.length };
+				mistakeOpts.boundsCorrect = { start: action.indexCorrect, end: action.indexCorrect + action.char.length };
 
 			if (action.type === "DEL" || action.type === "SUB")
 				mistakeOpts.boundsCheck = { start: action.indexCheck, end: action.indexCheck + (action.charBefore?.length ?? 1) };
@@ -335,7 +335,7 @@ export class Diff_ONP {
 		// Iterate over all letter errors
 		for (let i = 0; i < seqCopy.length; i++) {
 			const a = seqCopy[i];
-			
+
 			// Check if it is a completely new word being added
 			if (a.type === "ADD") {
 				// If the ADD starts on a word delimiter, it is probably a word
@@ -402,6 +402,13 @@ export class Diff_ONP {
 			});
 			
 			word.actions.push(...actionsInWord);
+
+			actionsInWord.sort((a, b) => a.indexDiff - b.indexDiff);
+			word.boundsDiff = {
+				start: actionsInWord[0].indexDiff,
+				end: actionsInWord[actionsInWord.length - 1].indexDiff + actionsInWord[actionsInWord.length - 1].char.length
+			};
+
 			let allActionsAreDelete = true;
 
 			for (const action of actionsInWord) {
@@ -412,6 +419,8 @@ export class Diff_ONP {
 
 				seqCopy.splice(ind, 1);
 			}
+
+			console.log(word);
 
 			if (allActionsAreDelete && word.actions.length === bounds.end - bounds.start) {
 				word.type = "DEL";
