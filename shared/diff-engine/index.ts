@@ -1,6 +1,6 @@
 import { Bounds, charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
 import Action from "./Action";
-import Mistake from "./Mistake";
+import Mistake, { MistakeOpts } from "./Mistake";
 
 // The action done to go from target to source character
 
@@ -158,7 +158,26 @@ export class Diff_ONP {
 
 		this.mistakes = this.parseWords();
 
-		console.log(this.sequence);
+		// Add mistake containers to the rest of the actions
+		for (const action of this.sequence) {
+			if (action.mistake) continue;
+
+			const mistakeOpts: MistakeOpts = {
+				actions: [ action ],
+				type: action.type === "SUB" || action.type === "NONE" ? "MIXED" : action.type,
+				boundsDiff: { start: action.indexDiff, end: action.indexDiff + action.char.length }
+			};
+
+			if (action.type === "ADD" || action.type === "SUB")
+				mistakeOpts.boundsCorrect = { start: action.indexCorrect, end: action.indexDiff + action.char.length };
+
+			if (action.type === "DEL" || action.type === "SUB")
+				mistakeOpts.boundsCheck = { start: action.indexCheck, end: action.indexCheck + (action.charBefore?.length ?? 1) };
+
+			this.mistakes.push(new Mistake(mistakeOpts));
+		}
+
+		console.log(this.mistakes);
 
 		this.dist = this.sequence.length;
 	}
@@ -224,7 +243,7 @@ export class Diff_ONP {
 			if (spaceBefore !== -1 && a.type !== "SUB") {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
-				a.indexDiff!--;
+				a.indexDiff--;
 				// If there are other characters that need to be added at the same spot,
 				// decreasing indexCheck would break the order
 				// So the check here should fix that (Especially relevant at the end of the essays)
@@ -241,7 +260,7 @@ export class Diff_ONP {
 			) {
 				a.char = ` ${a.char}`;
 				// Decrement the indices to accomodate the space
-				a.indexDiff!--;
+				a.indexDiff--;
 				a.indexCheck--;
 			}
 		}
@@ -256,12 +275,12 @@ export class Diff_ONP {
 		const delActions = this.sequence.filter((a) => a.type === "DEL");
 
 		// They should already be sorted, but just in case
-		addActions.sort((a, b) => a.indexDiff! - b.indexDiff!);
-		delActions.sort((a, b) => a.indexDiff! - b.indexDiff!);
+		addActions.sort((a, b) => a.indexDiff - b.indexDiff);
+		delActions.sort((a, b) => a.indexDiff - b.indexDiff);
 
 		for (const a of addActions) {
 			const nextDel = delActions.findIndex((delA) => {
-				return (delA.indexDiff === a.indexDiff! + 1 || delA.indexDiff === a.indexDiff! - 1)
+				return (delA.indexDiff === a.indexDiff + 1 || delA.indexDiff === a.indexDiff - 1)
 					&& delA.char !== " "
 					&& delA.subtype === a.subtype;
 			});
@@ -289,7 +308,7 @@ export class Diff_ONP {
 				delActions.splice(nextDel, 1);
 
 				// Decrement indexDiff from later actions, as a SUB removes one character
-				this.shiftIndexDiff([...addActions, ...delActions], a.indexDiff!, -1);
+				this.shiftIndexDiff([...addActions, ...delActions], a.indexDiff, -1);
 			} else {
 				seqCopy.push(a);
 			}
@@ -308,7 +327,7 @@ export class Diff_ONP {
 
 	private parseWords() {
 		// Make sure that the ADD operations are in order
-		this.sequence.sort((a, b) => a.indexDiff! - b.indexDiff!);
+		this.sequence.sort((a, b) => a.indexDiff - b.indexDiff);
 
 		const errWords: Mistake[] = [];
 		const seqCopy = [...this.sequence.filter((action) => action.subtype === "ORTHO")];
@@ -331,7 +350,7 @@ export class Diff_ONP {
 				while (
 					this.sequence[indexInMainSequence + curOffset]
 					&& this.sequence[indexInMainSequence + curOffset].type === "ADD"
-					&& this.sequence[indexInMainSequence + curOffset].indexDiff! - a.indexDiff! === curOffset
+					&& this.sequence[indexInMainSequence + curOffset].indexDiff - a.indexDiff === curOffset
 				) {
 					const otherA = this.sequence[indexInMainSequence + curOffset];
 
@@ -409,8 +428,8 @@ export class Diff_ONP {
 	}
 
 	private shiftIndexDiff(arrRef: Action[], shiftStartIndex: number, shiftAmount: number) {
-		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff! > shiftStartIndex)) {
-			otherA.indexDiff! += shiftAmount;
+		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff > shiftStartIndex)) {
+			otherA.indexDiff += shiftAmount;
 		}
 	}
 

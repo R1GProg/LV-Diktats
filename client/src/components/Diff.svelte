@@ -96,8 +96,8 @@ import type Mistake from "@shared/diff-engine/build/Mistake";
 		<tr on:mouseenter={() => { onWordEntryHover(entry); }} on:mouseleave={onEntryHoverLeave}>
 			<td>{i}</td>
 			<td>{entry.type}</td>
-			<td>[{entry.boundsCheck.start}, {entry.boundsCheck.end}]</td>
-			<td>[{entry.boundsCorrect.start}, {entry.boundsCorrect.end}]</td>
+			<td>[{entry.boundsCheck?.start}, {entry.boundsCheck?.end}]</td>
+			<td>[{entry.boundsCorrect?.start}, {entry.boundsCorrect?.end}]</td>
 			<!-- <td>{entry.word}</td> -->
 			<!-- {#if entry.type === "MIXED"}
 				<td>{entry.wordCorrect}</td>
