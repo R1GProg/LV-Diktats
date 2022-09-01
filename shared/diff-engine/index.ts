@@ -406,7 +406,9 @@ export class Diff_ONP {
 			actionsInWord.sort((a, b) => a.indexDiff - b.indexDiff);
 			word.boundsDiff = {
 				start: a.indexDiff,
-				end: actionsInWord[actionsInWord.length - 1].indexDiff + actionsInWord[actionsInWord.length - 1].char.length
+				end: actionsInWord.length === 0
+					? a.indexDiff + a.char.length
+					: actionsInWord[actionsInWord.length - 1].indexDiff + actionsInWord[actionsInWord.length - 1].char.length
 			};
 
 			let allActionsAreDelete = true;
