@@ -1,5 +1,6 @@
 import type Action from "./Action";
 import { Bounds } from "./langUtil";
+import { hash } from "./xxhash";
 
 export type MistakeType = "ADD" | "DEL" | "MIXED";
 
@@ -11,6 +12,8 @@ export interface MistakeOpts {
 	boundsCorrect?: Bounds,
 	boundsDiff: Bounds,
 }
+
+export type MistakeHash = string;
 
 export default class Mistake {
 	actions: Action[] = [];
@@ -36,5 +39,15 @@ export default class Mistake {
 		for (const action of this.actions) {
 			action.mistake = this;
 		}
+	}
+
+	async genHash(): Promise<MistakeHash> {
+		const actionCopy = [...this.actions];
+		actionCopy.sort((a, b) => a.indexDiff - b.indexDiff); // Sorting by indexDiff, as the order should always be consistent
+		const hashPromises = actionCopy.map((a) => a.hash);
+		const hashData = (await Promise.all(hashPromises)).join("");
+		const enc = new TextEncoder();
+
+		return hash(enc.encode(hashData));
 	}
 }
