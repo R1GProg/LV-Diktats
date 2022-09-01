@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IMistake } from "./mistake";
+import { IMistake, Mistake } from "./mistake";
 
 enum SubmissionStates {
 	UNGRADED = "UNGRADED",
@@ -76,7 +76,7 @@ const submissionSchema = new mongoose.Schema({
 		enum: SubmissionStates,
 		default: SubmissionStates
 	},
-	mistakes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mistake' }]
+	mistakes: [Mistake.schema]
 });
 
 submissionSchema.statics.build = (attr: ISubmission) => {
