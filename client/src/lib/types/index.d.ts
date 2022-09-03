@@ -1,4 +1,4 @@
 export interface EssayEntry {
 	id: string,
-	text: string,
+	text: string | null,
 }

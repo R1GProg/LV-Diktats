@@ -1,0 +1,22 @@
+$dark-theme: true !default;
+
+// Declarations
+$COL_BG_REG: null;
+$COL_BG_LIGHT: null;
+$COL_BG_DARK: null;
+
+$COL_FG_REG: null;
+$COL_FG_LIGHT: null;
+$COL_FG_DARK: null;
+
+@if $dark-theme {
+	$COL_BG_REG: #212121;
+	$COL_BG_LIGHT: #2A2A2A;
+	$COL_BG_DARK: #1A1A1A;
+
+	$COL_FG_REG: #CCC;
+	$COL_FG_LIGHT: #DDD;
+	$COL_FG_DARK: #AAA;
+} @else {
+	
+}

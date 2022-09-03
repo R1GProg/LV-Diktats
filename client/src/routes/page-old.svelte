@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { Diff_ONP } from "@shared/diff-engine";
 	import { processString } from "@shared/normalization";
-	import EssayBox from "./components/EssayBox.svelte";
-	import EssaySelector from "./components/EssaySelector.svelte";
-	import Diff from "./components/Diff.svelte";
+	import EssayBox from "$lib/components/EssayBox.svelte";
+	import EssaySelector from "$lib/components/EssaySelector.svelte";
+	import Diff from "$lib/components/Diff.svelte";
 	import { onMount } from "svelte";
-	import type { EssayEntry } from "./types";
-	import config from "./config.json";
-	import { actionRegister } from "./ts/actionRegister";
+	import type { EssayEntry } from "$lib/types";
+	import config from "$lib/config.json";
+	import { actionRegister } from "$lib/ts/actionRegister";
 	import type Mistake from "@shared/diff-engine/build/Mistake";
 	import type Action from "@shared/diff-engine/build/Action";
 
@@ -22,7 +22,7 @@
 
 	function onSelect(e: CustomEvent) {
 		const entry = e.detail.entry as EssayEntry;
-		checkText = entry.text;
+		checkText = entry.text!;
 		checkID = entry.id;
 		editableCheckEssayBox.setPlainText(checkText);
 
@@ -30,8 +30,8 @@
 	}
 
 	function onRecorrectClick() {
-		correctText = correctEssayBox.getText();
-		checkText = editableCheckEssayBox.getText();
+		correctText = correctEssayBox.getText()!;
+		checkText = editableCheckEssayBox.getText()!;
 
 		updateDiff();
 	}
@@ -51,7 +51,7 @@
 
 		for (const a of diff.getSequence()) {
 			checkPromises.push(new Promise(async (res, rej) => {
-				a.inRegister = await actionRegister.isActionInRegister(a, true);
+				// a.inRegister = await actionRegister.isActionInRegister(a, true);
 				res();
 			}));
 		}

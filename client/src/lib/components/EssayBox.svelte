@@ -2,8 +2,8 @@
 	import type Action from "@shared/diff-engine/build/Action";
 	import { onMount, createEventDispatcher } from "svelte";
 	import { v4 as uuidv4 } from "uuid";
-	import { actionRegister } from "../ts/actionRegister";
-	import HighlightTooltip from "./HighlightTooltip.svelte";
+	import { actionRegister } from "$lib/ts/actionRegister";
+	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
 	export let editable = false;
 	export let text = "";
 	export let diff: Action[] = [];
@@ -98,7 +98,7 @@
 					break;
 				case "SUB":
 					console.log(error);
-					highlightText(error.indexCheck, error.charBefore.length, 0, statusId, error.id);
+					highlightText(error.indexCheck, error!.charBefore!.length, 0, statusId, error.id);
 					break;
 				default:
 					continue;
@@ -198,7 +198,7 @@
 		el.classList.add("active");
 
 		if (tooltip) {
-			onErrorHighlightMouseEnter(el, diff.find((a) => a.id === id));
+			onErrorHighlightMouseEnter(el, diff.find((a) => a.id === id)!);
 		}
 	}
 
@@ -210,21 +210,21 @@
 	export function clearAllActiveHighlights(clearShift = false) {
 		for (const el of textContainer.querySelectorAll<HTMLElement>(".highlight.active")) {
 			if (el.classList.contains("temp")) {
-				removeHighlight(el.dataset.highlight_id);
+				removeHighlight(el.dataset.highlight_id!);
 			} else {
 				el.classList.remove("active");
 			}
 		}
 
 		if (clearShift) initTextToHTMLTranslation();
-		if (tooltip.isActive) tooltip.clearTooltip();
+		if (tooltip.isActive()) tooltip.clearTooltip();
 	}
 
 	export function setTextActive(start: number, length: number, style = 3) {
 		const id = highlightText(start, length, style, 0);
 		commitHighlightBuffer();
 
-		const el = document.querySelector(`.highlight[data-highlight_id="${id}"]`);
+		const el = document.querySelector<HTMLElement>(`.highlight[data-highlight_id="${id}"]`)!;
 		el.classList.add("active", "temp");
 
 		el.scrollIntoView({ behavior: "smooth"});
@@ -232,7 +232,7 @@
 
 	onMount(() => {
 		actionRegister.loadActionRegister();
-		svelteClass = textContainer.className.match(/svelte-.+?( |$)/)[0].trim();
+		svelteClass = textContainer.className.match(/s-.+?( |$)/)![0].trim();
 
 		initTextToHTMLTranslation();
 	});
@@ -248,15 +248,22 @@
 <HighlightTooltip bind:this={tooltip}/>
 
 <style lang="scss">
+	@import "../scss/global.scss";
+
 	.textbox {
 		border: 1px solid rgba(0,0,0,0.15);
-		width: calc(100% - 10px);
+		width: calc(100% - 20px);
 		height: calc(100% - 10px);
 		text-align: justify;
 		font-size: 1rem;
-		font-family: 'Times New Roman', Times, serif;
+		font-family: $FONT_BODY;
 		overflow-y: auto;
-		padding: 5px;
+		padding: 10px;
+
+		background-color: $COL_BG_LIGHT;
+		color: $COL_FG_REG;
+
+		@include scrollbar;
 	}
 
 	.container {

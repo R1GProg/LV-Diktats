@@ -1,11 +1,10 @@
 <script lang="ts">
-import type Action from "@shared/diff-engine/build/Action";
-import type Mistake from "@shared/diff-engine/build/Mistake";
-
+	import type Action from "@shared/diff-engine/build/Action";
+	import type Mistake from "@shared/diff-engine/build/Mistake";
 	import { createEventDispatcher } from "svelte";
-	import { actionRegister } from "../ts/actionRegister";
-	import type EssayBox from "./EssayBox.svelte";
-	import InputPopup from "./InputPopup.svelte";
+	import { actionRegister } from "$lib/ts/actionRegister";
+	import type EssayBox from "$lib/components/EssayBox.svelte";
+	import InputPopup from "$lib/components/InputPopup.svelte";
 
 	export let diff: { char: Action[], words: Mistake[] } = { char: [], words: [] };
 	export let essays: { check: EssayBox, correct: EssayBox, diff: EssayBox };
