@@ -3,19 +3,31 @@
 	import EssaySelector from "$lib/components/EssaySelector.svelte";
 	import MistakeList from "$lib/components/MistakeList.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
-	import { processString } from "@shared/normalization";
-	import { onMount } from "svelte";
+	import { workspace } from "$lib/ts/stores";
 
 	let correctText = "";
+	let diffText = "";
+	let submissionText = "";
 
-	async function loadCorrectText() {
-		const req = await fetch("/correct.txt");
-		correctText = processString(await req.text());
+	$: if ($workspace !== null) {
+		correctText = $workspace.template;
+	} else {
+		correctText = "";
+		diffText = "";
+		submissionText = "";
 	}
 
-	onMount(() => {
-		loadCorrectText();
-	})
+	function onSubmissionSelect(ev: CustomEvent) {
+		if (!$workspace) {
+			console.error("Attempt to load submission text without workspace!");
+			return;
+		}
+
+		const id: string = ev.detail.entry;
+		const text = $workspace!.dataset[id].text!;
+		submissionText = text;
+		diffText = text;
+	}
 </script>
 
 <div class="container">
@@ -31,20 +43,20 @@
 	<div class="essay-container essay2">
 		<h2>Labošana</h2>
 		<div>
-			<EssayBox text={correctText}/>
+			<EssayBox text={diffText}/>
 		</div>
 	</div>
 
 	<div class="essay-container essay3">
 		<h2>Iesūtītais</h2>
 		<div>
-			<EssayBox text={correctText}/>
+			<EssayBox text={submissionText}/>
 		</div>
 	</div>
 
 	<div class="info-container">
 		<div class="info-selector">
-			<EssaySelector/>
+			<EssaySelector on:select={onSubmissionSelect}/>
 		</div>
 		<div class="info-mistakes">
 			<MistakeList/>

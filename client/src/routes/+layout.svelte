@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from "$lib/components/Header.svelte";
+	import ServerCheckStatus from "$lib/components/modals/status/ServerCheckStatus.svelte";
 	import "@fontsource/roboto-condensed/400.css";
 	import "@fontsource/roboto/400.css";
 </script>
@@ -10,6 +11,8 @@
 		<slot></slot>
 	</main>
 </div>
+
+<ServerCheckStatus/>
 
 <style lang="scss">
 	@import "../lib/scss/global.scss";

@@ -1,78 +1,85 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
-	import { parseCSV } from "$lib/ts/csv";
-	import { processString } from "@shared/normalization";
+	import { workspace } from "$lib/ts/stores";
 	import config from "$lib/config.json";
-	import type { EssayEntry } from "$lib/types";
+	import { processString } from "@shared/normalization";
 
 	const dispatch = createEventDispatcher();
 
-	let files: FileList;
-	let entries: Record<string, EssayEntry> = {};
 	let activeID = "";
+	let activeIndex = 0;
+	let totalEntries = 0;
+	let noData = true;
 
-	$: if (files) parseCSV(files[0], (result) => {
-		const id = result.data.id as string;
+	// async function fetchData() {
+	// 	const raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
+	// 		mode: "cors",
+	// 		method: "GET"
+	// 	});
 
-		if (!id) return;
+	// 	const result: number[] = await raw.json();
 
-		entries[id] = {
-			id,
-			text: processString(result.data.message),
-		};
-	});
+	// 	result.forEach((x) => {
+	// 		entries[x.toString()] = {
+	// 			id: x.toString(),
+	// 			text: null
+	// 		}
+	// 	});
+	// }
 
-	onMount(async () => {
-		// console.log(config.endpointUrl + "/api/listSubmissions");
-		// let raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
-		// 	mode: "cors",
-		// 	method: "GET"
-		// });
-		// let result: number[] = await raw.json();
-		// result.forEach((x) => {
-		// 	entries[x.toString()] = {
-		// 		id: x.toString(),
-		// 		text: null
-		// 	}
-		// });
-	});
+	async function onSelect(id: string) {
+		if ($workspace === null) return;
 
-	function onSelect(id: string) {
 		activeID = id;
-		if(entries[id].text === null) {
-			fetch(config.endpointUrl + "/api/getSubmission?id=" + id, {
-				method: "GET"
-			}).then((data) => data.text()).then((result: string) => {
-				entries[id] = {
-					id,
-					text: processString(result)
-				}
-				dispatch("select", { entry: entries[id] });
-			});
+
+		if (!$workspace.local && $workspace.dataset[id].text === null) {
+			const req = await fetch(`${config.endpointUrl}/api/getSubmission?id=${id}`);
+			const data = await req.text();
+
+			$workspace.dataset[id] = {
+				id,
+				text: processString(data)
+			};
+
+			dispatch("select", { entry: id });
 		} else {
-			dispatch("select", { entry: entries[id] });
+			dispatch("select", { entry: id });
 		}
 	}
 
 	export function changeSelectionBy(delta: number) {
-		const keys = Object.keys(entries);
-		const activeIndex = keys.findIndex((v) => v === activeID);
+		if ($workspace === null) return;
+
+		const keys = Object.keys($workspace.dataset);
 		const nextIndex = keys[activeIndex + delta];
 
-		if (entries[nextIndex]) {
-			onSelect(entries[nextIndex].id);
+		if ($workspace.dataset[nextIndex]) {
+			activeIndex += delta;
+			onSelect($workspace.dataset[nextIndex].id);
 		}
+	}
+
+	$: if ($workspace) {
+		noData = false;
+		const keys = Object.keys($workspace.dataset);
+		totalEntries = keys.length;
+		activeIndex = 0;
+		onSelect(keys[0]);
+	} else if ($workspace === null) {
+		noData = true;
 	}
 </script>
 
 <div class="container">
-	<h2 class="mainid">ID1234</h2>
+	<h2 class="mainid">{noData ? "Nav datu" : `ID${activeID}`}</h2>
+	{#if !noData}
 	<div class="selector">
-		<button class="prev"></button>
-		<span>1234/5678</span>
-		<button class="next"></button>
+		<button class="prev" on:click={() => { changeSelectionBy(-1) }}></button>
+		<span>{activeIndex + 1}/{totalEntries}</span>
+		<button class="next" on:click={() => { changeSelectionBy(1) }}></button>
 	</div>
 	<button class="openall">Apskatīt visus</button>
+	{/if}
 </div>
 
 <style lang="scss">

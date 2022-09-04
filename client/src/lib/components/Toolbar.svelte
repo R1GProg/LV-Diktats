@@ -16,7 +16,7 @@
 <style lang="scss">
 	@import "../scss/global.scss";
 
-	$TOOLBAR_ICON_SIZE: 2.5vw;
+	$TOOLBAR_ICON_SIZE: clamp(35px, 2.5vw, 200px);
 
 	div {
 		border: 1px solid $COL_ACCENT;

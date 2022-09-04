@@ -1,5 +1,6 @@
 <script>
 	import { page } from "$app/stores";
+	import WorkspaceSelector from "./WorkspaceSelector.svelte";
 </script>
 
 <header>
@@ -9,12 +10,7 @@
 		<a href="/settings" class:active={$page.url.pathname === "/settings"}>Iestatījumi</a>
 	</nav>
 
-	<div class="workspace-selector">
-		<select>
-			<option value="gurki">Mazsālīto gurķu blūzs</option>
-			<option value="custom">- Augšupielādēt datus -</option>
-		</select>
-	</div>
+	<WorkspaceSelector/>
 </header>
 
 <style lang="scss">
@@ -77,64 +73,6 @@
 
 			&.active::after {
 				width: 100%;
-			}
-		}
-	}
-
-	.workspace-selector {
-		grid-area: workspace;
-		display: grid;
-		height: 100%;
-		align-items: center;
-		grid-template-areas: "select";
-
-		select {
-			appearance: none;
-			border: none;
-
-			width: 100%;
-
-			margin: 0;
-			padding: 5px clamp(1.5em, 2vw , 2em) 5px 10px;
-
-			font-family: $FONT_HEADING;
-			font-size: calc(#{$HEADER_HEIGHT} / 3);
-			cursor: pointer;
-
-			color: $COL_FG_REG;
-			background-color: $COL_BG_LIGHT;
-			transition: background-color 0.3s;
-
-			grid-area: select;
-
-
-			&:focus {
-				outline: 1px solid $COL_FG_DARK;
-			}
-		}
-
-		&::after {
-			content: "";
-			width: 0.9em;
-			height: 0.6em;
-			justify-self: end;
-			margin-right: 0.5em;
-			margin-top: 0.15em;
-			background-color: $COL_FG_DARK;
-			clip-path: polygon(100% 0%, 0 0%, 50% 100%);
-
-			transition: background-color 0.3s;
-
-			grid-area: select;
-		}
-
-		&:hover {
-			select {
-				background-color: $COL_BG_REG;
-			}
-
-			&::after {
-				background-color: $COL_FG_REG;
 			}
 		}
 	}
