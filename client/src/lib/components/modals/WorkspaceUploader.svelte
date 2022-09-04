@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { parseCSV, parseCSVPromise } from "$lib/ts/csv";
+	import { parseCSVPromise } from "$lib/ts/csv";
 	import { readTextFile } from "$lib/ts/util";
+	import { saveLocalWorkspace } from "$lib/ts/WorkspaceLocalStorage";
 	import type { EssayEntry, Workspace } from "$lib/types";
 	import { processString } from "@shared/normalization";
 	import InputModal from "./InputModal.svelte";
@@ -11,6 +12,7 @@
 	let uploadData: { template?: FileList, dataset?: FileList, name?: string } = {};
 	let templateInput: HTMLInputElement;
 	let datasetInput: HTMLInputElement;
+	let saveToLocalStorage = false;
 
 	let promiseResolve: (data: Workspace) => void;
 	let promiseReject: () => void;
@@ -58,14 +60,21 @@
 				return;
 			}
 
-			modalResolve();
-			promiseResolve({
+			const key = encodeURIComponent(uploadData.name.toLowerCase());
+			const workspaceData = {
 				name: uploadData.name,
-				key: encodeURIComponent(uploadData.name.toLowerCase()),
+				key,
 				template: processString(data[0]),
 				dataset: entries,
 				local: true,
-			});
+			};
+
+			modalResolve();
+			promiseResolve(workspaceData);
+
+			if (saveToLocalStorage) {
+				saveLocalWorkspace(workspaceData);
+			}
 		}));
 	}
 
@@ -88,6 +97,8 @@
 		<input type="file" id="templateFile" accept=".txt" bind:files={uploadData.template} bind:this={templateInput}>
 		<label for="datasetFile">Dati</label>
 		<input type="file" id="datasetFile" accept=".csv" bind:files={uploadData.dataset} bind:this={datasetInput}>
+		<label for="saveLocalStorage">Atcerēties datu ierakstu</label>
+		<input type="checkbox" id="saveLocalStorage" bind:value={saveToLocalStorage}>
 	</div>
 </InputModal>
 
@@ -106,6 +117,10 @@
 
 		label {
 			font-family: $FONT_HEADING;
+		}
+
+		input {
+			justify-self: flex-start;
 		}
 	}
 </style>

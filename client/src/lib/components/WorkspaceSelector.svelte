@@ -4,6 +4,7 @@
 	import WorkspaceUploader from "./modals/WorkspaceUploader.svelte";
 	import { workspace } from "$lib/ts/stores";
 	import type { Workspace } from "$lib/types";
+	import { loadLocalWorkspaces } from "$lib/ts/WorkspaceLocalStorage";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
@@ -58,6 +59,14 @@
 	onMount(async () => {
 		if (await APP_ONLINE) {
 			fetchAvailableWorkspaces();
+		}
+
+		for (const entry of loadLocalWorkspaces()) {
+			data[entry.key] = {
+				key: entry.key,
+				name: entry.name,
+				data: entry,
+			}
 		}
 	});
 </script>
