@@ -9,6 +9,12 @@ $COL_FG_REG: null;
 $COL_FG_LIGHT: null;
 $COL_FG_DARK: null;
 
+$COL_ACCENT: null;
+
+$COL_MISTAKE_DEL: #E57373;
+$COL_MISTAKE_ADD: #66BB6A;
+$COL_MISTAKE_MIXED: #FFB74D;
+
 @if $dark-theme {
 	$COL_BG_REG: #212121;
 	$COL_BG_LIGHT: #2A2A2A;
@@ -17,6 +23,8 @@ $COL_FG_DARK: null;
 	$COL_FG_REG: #CCC;
 	$COL_FG_LIGHT: #DDD;
 	$COL_FG_DARK: #AAA;
+
+	$COL_ACCENT: black;
 } @else {
 	
 }

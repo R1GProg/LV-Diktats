@@ -23,18 +23,18 @@
 	});
 
 	onMount(async () => {
-		console.log(config.endpointUrl + "/api/listSubmissions");
-		let raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
-			mode: "cors",
-			method: "GET"
-		});
-		let result: number[] = await raw.json();
-		result.forEach((x) => {
-			entries[x.toString()] = {
-				id: x.toString(),
-				text: null
-			}
-		});
+		// console.log(config.endpointUrl + "/api/listSubmissions");
+		// let raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
+		// 	mode: "cors",
+		// 	method: "GET"
+		// });
+		// let result: number[] = await raw.json();
+		// result.forEach((x) => {
+		// 	entries[x.toString()] = {
+		// 		id: x.toString(),
+		// 		text: null
+		// 	}
+		// });
 	});
 
 	function onSelect(id: string) {

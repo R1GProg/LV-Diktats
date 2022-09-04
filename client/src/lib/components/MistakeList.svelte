@@ -201,10 +201,6 @@
 <style lang="scss">
 	@import "../scss/global.scss";
 
-	$COL_MISTAKE_DEL: #E57373;
-	$COL_MISTAKE_ADD: #66BB6A;
-	$COL_MISTAKE_MIXED: #FFB74D;
-
 	.container {
 		width: 100%;
 		height: calc(100% - 1px); // Accounts for the border

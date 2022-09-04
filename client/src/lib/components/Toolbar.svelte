@@ -16,7 +16,7 @@
 <style lang="scss">
 	@import "../scss/global.scss";
 
-	$TOOLBAR_ICON_SIZE: 3vw;
+	$TOOLBAR_ICON_SIZE: 2.5vw;
 
 	div {
 		border: 1px solid black;

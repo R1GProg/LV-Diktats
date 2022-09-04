@@ -1,18 +1,17 @@
 <script lang="ts">
-	import type Action from "@shared/diff-engine/build/Action";
 	import { onMount, createEventDispatcher } from "svelte";
 	import { v4 as uuidv4 } from "uuid";
 	import { actionRegister } from "$lib/ts/actionRegister";
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
+	import type Action from "@shared/diff-engine/Action";
+	import type Highlighter from "web-highlighter";
+
 	export let editable = false;
 	export let text = "";
 	export let diff: Action[] = [];
 	let textContainer: HTMLElement;
-	let svelteClass: string;
 	let tooltip: HighlightTooltip;
-
-	let textToHTMLIndexTranslation: Record<number, number> = {};
-	let highlightHTMLBuffer: string = "";
+	let highlighter: Highlighter;
 
 	const dispatcher = createEventDispatcher();
 
@@ -20,130 +19,45 @@
 		return textContainer.textContent;
 	}
 
-	export function highlightText(start: number, length: number, styleID: number, statusID: number, pregenId = "") {
-		if (start > text.length) return;
-		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
-
-		const id = pregenId === "" ? uuidv4() : pregenId;
-		const parsedStartIndex = textIndexToHTMLIndex(start);
-		const parsedEndIndex = textIndexToHTMLIndex(start + length);
-		const html = highlightHTMLBuffer;
-		const tag1 = `<span class="highlight hl-${styleID} hl-status-${statusID} ${svelteClass}" data-highlight_id="${id}">`;
-		const tag2 = `</span>`;
-		const content = html.substring(parsedStartIndex, parsedEndIndex);
-		const newHTML = `${html.substring(0, parsedStartIndex)}${tag1}${content}${tag2}${html.substring(parsedEndIndex)}`;
-
-		highlightHTMLBuffer = newHTML;
-
-		shiftTextToHTMLTranslation(start, tag1.length);
-		shiftTextToHTMLTranslation(start + length, tag2.length);
-
-		return id;
-	}
-
-	function addHighlightedText(newText: string, start: number, styleID: number, statusID: number, pregenId = "") {
-		if (highlightHTMLBuffer === "") highlightHTMLBuffer = textContainer.innerHTML;
-		const id = pregenId === "" ? uuidv4() : pregenId;
-		const tag = `<span class="highlight hl-${styleID} hl-status-${statusID} ${svelteClass} tag-ignore" data-highlight_id="${id}">${newText}</span>`;
-
-		if (start === text.length) {
-			highlightHTMLBuffer += tag;
-		} else {
-			const parsedStartIndex = textIndexToHTMLIndex(start);
-			const html = highlightHTMLBuffer;
-			const newHTML = `${html.substring(0, parsedStartIndex)}${tag}${html.substring(parsedStartIndex)}`;
-			highlightHTMLBuffer = newHTML;
-		
-			shiftTextToHTMLTranslation(start, tag.length);
-		}
-
-		return id;
-	}
-
-	function commitHighlightBuffer() {
-		textContainer.innerHTML = highlightHTMLBuffer;
-		highlightHTMLBuffer = "";
-	}
-
-	async function onErrorHighlightMouseEnter(el: HTMLElement, err: Action) {
-		// if (!err.inRegister) return;
-		// tooltip.setTooltip(el, (await actionRegister.getActionDescriptor(err.hash)).desc);
-	}
-
-	function onErrorHighlightMouseLeave() {
-		if (tooltip.isActive()) tooltip.clearTooltip();
-	}
-
-	function highlightErrors() {
 		// Create the highlight elements
-		for (const error of diff) {
-			// const statusId = error.inRegister ? 1 : 0;
-			const statusId = 0;
+		// for (const error of diff) {
+		// 	// const statusId = error.inRegister ? 1 : 0;
+		// 	const statusId = 0;
 			
-			switch (error.type) {
-				case "ADD":
-					{ // In a block to scope the variable definition
-						let char = error.char;
+		// 	switch (error.type) {
+		// 		case "ADD":
+		// 			{ // In a block to scope the variable definition
+		// 				let char = error.char;
 
-						if (error.char === "\n") {
-							char = `\\n\n`;
-						}
+		// 				if (error.char === "\n") {
+		// 					char = `\\n\n`;
+		// 				}
 
-						addHighlightedText(char, error.indexCheck, 2, statusId, error.id);
-					}
-					break;
-				case "DEL":
-					// Do error.char.length instead of 1, as error.char may contain spaces
-					highlightText(error.indexCheck, error.char.length, 1, statusId, error.id);
-					break;
-				case "SUB":
-					console.log(error);
-					highlightText(error.indexCheck, error!.charBefore!.length, 0, statusId, error.id);
-					break;
-				default:
-					continue;
-			}
-		}
-
-		commitHighlightBuffer();
-
-		// Add event listeners to the tags
-		for (const err of Object.values(diff)) {
-			const id = err.id;
-			const el = textContainer.querySelector<HTMLSpanElement>(`span[data-highlight_id="${id}"]`);
-
-			if (!el) {
-				console.warn(`Unable to add event listener to highlight tag! UUID=${id}, Action=${JSON.stringify(err)}`);
-				continue;
-			}
-
-			el.addEventListener("mouseenter", () => {
-				dispatcher("errorenter", { id: err.id });
-				onErrorHighlightMouseEnter(el, err);
-			});
-
-			el.addEventListener("mouseleave", () => {
-				dispatcher("errorleave", { id: err.id });
-				onErrorHighlightMouseLeave();
-			});
-
-			el.addEventListener("click", () => {
-				dispatcher("errorclick", { id: err.id });
-			});
-		}
-	}
+		// 				addHighlightedText(char, error.indexCheck, 2, statusId, error.id);
+		// 			}
+		// 			break;
+		// 		case "DEL":
+		// 			// Do error.char.length instead of 1, as error.char may contain spaces
+		// 			highlightText(error.indexCheck, error.char.length, 1, statusId, error.id);
+		// 			break;
+		// 		case "SUB":
+		// 			console.log(error);
+		// 			highlightText(error.indexCheck, error!.charBefore!.length, 0, statusId, error.id);
+		// 			break;
+		// 		default:
+		// 			continue;
+		// 	}
+		// }
 
 	export function set(newText: string, newDiff: Action[]) {
 		text = newText;
 		textContainer.innerHTML = newText;
 		diff = newDiff;
 
-		initTextToHTMLTranslation();
-
 		// Do it on the next event cycle to allow the HTML to render
 		// No idea whether it is necessary, but it seems to be more consistently correct with this?
 		setTimeout(() => {
-			highlightErrors();
+			// highlightErrors();
 		}, 0);
 	}
 
@@ -152,89 +66,148 @@
 		textContainer.innerHTML = newText;
 	}
 
-	export function initTextToHTMLTranslation() {
-		textToHTMLIndexTranslation = { 0: 0 };
-	}
+	function getHighlightStartNode(offset: number) {
+		let walkedOffset = 0;
+		let startNode: Node | null = null;
+		let startNodeIndex: number = -1;
 
-	// Returns the defined index that is before `index`
-	function getPrevDefinedIndex(index: number) {
-		return Math.max(...Object.keys(textToHTMLIndexTranslation)
-			.map((k) => Number(k))
-			.filter((k) => k <= index)
-		);
-	}
+		for (let i = 0; i < textContainer.childNodes.length; i++) {
+			const node = textContainer.childNodes[i];
+			const nodeLen = node.textContent!.length;
 
-	function shiftTextToHTMLTranslation(startIndex: number, shiftNumber: number) {
-		if (startIndex in textToHTMLIndexTranslation) {
-			textToHTMLIndexTranslation[startIndex] += shiftNumber;
-		} else {
-			textToHTMLIndexTranslation[startIndex] = shiftNumber + textToHTMLIndexTranslation[getPrevDefinedIndex(startIndex)];
-		}
+			// If the node is added text, skip it
+			if (node.nodeType !== Node.TEXT_NODE) {
+				const el = node as HTMLElement;
+				
+				if (el.classList.contains("added-text")) {
+					continue;
+				}
+			}
 
-		// Shift all indices that are after the new offset
-		for (let k of Object.keys(textToHTMLIndexTranslation)) {
-			const i = Number(k);
-
-			if (startIndex >= i) continue;
-
-			textToHTMLIndexTranslation[i] += shiftNumber;
-		}
-	}
-
-	function textIndexToHTMLIndex(index: number) {
-		const activeShiftIndex = getPrevDefinedIndex(index);
-		return textToHTMLIndexTranslation[activeShiftIndex] + index;
-	}
-
-	export function setHighlightActive(id: string, tooltip = false) {
-		const el = textContainer.querySelector<HTMLElement>(`[data-highlight_id="${id}"]`);
-
-		if (!el) {
-			console.warn(`Attempt to set active a highlight with an unknown ID ${id}`);
-			return;
-		}
-
-		el.scrollIntoView({ behavior: "smooth" });
-		el.classList.add("active");
-
-		if (tooltip) {
-			onErrorHighlightMouseEnter(el, diff.find((a) => a.id === id)!);
-		}
-	}
-
-	function removeHighlight(id: string) {
-		const regex = new RegExp(`<span class="highlight .+?" data-highlight_id="${id}">((?:.|\n)+)<\/span>`);
-		textContainer.innerHTML = textContainer.innerHTML.replace(regex, "$1");
-	}
-
-	export function clearAllActiveHighlights(clearShift = false) {
-		for (const el of textContainer.querySelectorAll<HTMLElement>(".highlight.active")) {
-			if (el.classList.contains("temp")) {
-				removeHighlight(el.dataset.highlight_id!);
+			if (walkedOffset + nodeLen > offset) {
+				startNode = node.nodeType === Node.TEXT_NODE ? node : node.firstChild;
+				startNodeIndex = i;
+				break;
 			} else {
-				el.classList.remove("active");
+				walkedOffset += nodeLen;
 			}
 		}
 
-		if (clearShift) initTextToHTMLTranslation();
-		if (tooltip.isActive()) tooltip.clearTooltip();
+		return { node: startNode, index: startNodeIndex, offset: offset - walkedOffset };
 	}
 
-	export function setTextActive(start: number, length: number, style = 3) {
-		const id = highlightText(start, length, style, 0);
-		commitHighlightBuffer();
+	function highlightText(offset: number, length: number, style = "") {
+		if (!highlighter) {
+			console.warn("Attempt to highlight before web-highlighter has been imported!");
+			return;
+		}
 
-		const el = document.querySelector<HTMLElement>(`.highlight[data-highlight_id="${id}"]`)!;
-		el.classList.add("active", "temp");
+		const {
+			node: startNode,
+			index: startNodeIndex,
+			offset: startOffset
+		} = getHighlightStartNode(offset);
 
-		el.scrollIntoView({ behavior: "smooth"});
+		if (startNode === null) {
+			console.warn("Attempt to highlight out of range!");
+			return;
+		}
+
+		const startNodeLen = startNode.textContent!.length;
+
+		let endOffset = startOffset + length;
+		let endNode = startNode;
+
+		if (startOffset + length > startNodeLen) {
+			// Search for the end node
+			let walkedLength = length - (startNodeLen - startOffset);
+
+			for (let i = startNodeIndex + 1; i < textContainer.childNodes.length; i++) {
+				const node = textContainer.childNodes[i];
+				const nodeLen = node.textContent!.length;
+
+				if (walkedLength <= nodeLen) {
+					endNode = node.nodeType === Node.TEXT_NODE ? node : node.firstChild!;
+					endOffset = walkedLength;
+					break;
+				} else {
+					walkedLength -= nodeLen;
+				}
+			}
+		}
+
+		const range = document.createRange();
+		range.setStart(startNode, startOffset);
+		range.setEnd(endNode, endOffset);
+
+		const id = highlighter.fromRange(range).id;
+		
+		if (style !== "") {
+			highlighter.addClass(style, id);
+		}
 	}
 
-	onMount(() => {
-		actionRegister.loadActionRegister();
-		svelteClass = textContainer.className.match(/s-.+?( |$)/)![0].trim();
+	function addHighlightedText(offset: number, text: string, style = "") {
+		if (!highlighter) {
+			console.warn("Attempt to highlight before web-highlighter has been imported!");
+			return;
+		}
 
-		initTextToHTMLTranslation();
+		const {
+			node: startNode,
+			index: startNodeIndex,
+			offset: startOffset
+		} = getHighlightStartNode(offset);
+
+		if (startNode === null) {
+			console.warn("Attempt to highlight out of range!");
+			return;
+		}
+
+		const parentRange = document.createRange();
+		parentRange.setStart(startNode, startOffset);
+
+		const textNode = document.createTextNode(text);
+		parentRange.insertNode(textNode);
+
+		const range = document.createRange();
+		range.setStart(textNode, 0);
+		range.setEnd(textNode, text.length);
+
+		const id = highlighter.fromRange(range).id;
+		
+		if (style !== "") {
+			highlighter.addClass(style, id);
+		}
+
+		highlighter.addClass("added-text", id);
+	}
+
+	async function initHighlighting() {
+		const svelteClass = textContainer.className.match(/s-.+?( |$)/)![0].trim();
+		const Highlighter = (await import("web-highlighter")).default;
+
+		highlighter = new Highlighter({
+			wrapTag: "span",
+			$root: textContainer,
+			style: {
+				className: ["highlight", svelteClass]
+			}
+		});
+
+		highlighter.on(Highlighter.event.HOVER, ({ id }) => {
+			highlighter.addClass("hover", id);
+		});
+
+		highlighter.on(Highlighter.event.HOVER_OUT, ({ id }) => {
+			highlighter.removeClass("hover", id);
+		});
+	}
+
+	onMount(async () => {
+		// actionRegister.loadActionRegister();
+
+		await initHighlighting();
 	});
 </script>
 
@@ -242,7 +215,7 @@
 	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class=".highlight hl-0 hl-1 hl-2 hl-3 hl-status-1 active"></span>
+	<span class=".highlight hl-0 hl-1 hl-2 hl-3 hl-status-1 active hover"></span>
 </div>
 
 <HighlightTooltip bind:this={tooltip}/>
@@ -279,25 +252,26 @@
 	:global(.highlight) {
 		cursor: pointer;
 		transition: filter 0.3s, transform 0.3s, background-color 0.3s, color 0.3s;
-		
-		&:hover {
+		background-color: rgba(255, 255, 0, 0.35);
+
+		&.hover {
 			filter: brightness(85%);
 		}
 
 		// !!! Note when adding new styles: add the class to the workaround span in the component body !!!
-		&.hl-0 { // SUB
-			color: white;
-			background-color: rgb(225, 125, 50);
-		}
-
-		&.hl-1 { // DEL
-			color: white;
-			background-color: rgb(215, 45, 45);
-		}
-
-		&.hl-2 { // ADD
+		&.hl-0 { // DEL
 			color: black;
-			background-color: rgb(60, 225, 90);
+			background-color: $COL_MISTAKE_DEL;
+		}
+
+		&.hl-1 { // ADD
+			color: black;
+			background-color: $COL_MISTAKE_ADD;
+		}
+
+		&.hl-2 { // MIXED
+			color: black;
+			background-color: $COL_MISTAKE_MIXED;
 		}
 
 		&.active:not(.temp), &.hl-3 {

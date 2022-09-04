@@ -12,6 +12,7 @@
 	<div class="workspace-selector">
 		<select>
 			<option value="gurki">Mazsālīto gurķu blūzs</option>
+			<option value="custom">- Augšupielādēt datus -</option>
 		</select>
 	</div>
 </header>
