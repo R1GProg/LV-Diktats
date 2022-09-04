@@ -108,8 +108,8 @@
 		position: absolute;
 		top: $HEADER_HEIGHT;
 		right: 0;
-		border-top: 1px solid black;
-		border-left: 1px solid black;
+		border-top: 1px solid $COL_ACCENT;
+		border-left: 1px solid $COL_ACCENT;
 
 		padding-top: 2vh;
 

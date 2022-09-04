@@ -23,7 +23,7 @@
 	header {
 		grid-area: header;
 		background-color: $COL_BG_DARK;
-		border-bottom: 1px solid black;
+		border-bottom: 1px solid $COL_ACCENT;
 
 		height: $HEADER_HEIGHT;
 

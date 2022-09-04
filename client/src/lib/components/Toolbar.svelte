@@ -19,7 +19,7 @@
 	$TOOLBAR_ICON_SIZE: 2.5vw;
 
 	div {
-		border: 1px solid black;
+		border: 1px solid $COL_ACCENT;
 		border-left: none;
 		background-color: $COL_BG_DARK;
 		grid-area: "toolbar";

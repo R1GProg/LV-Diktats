@@ -204,14 +204,14 @@
 	.container {
 		width: 100%;
 		height: calc(100% - 1px); // Accounts for the border
-		border-top: 1px solid black;
+		border-top: 1px solid $COL_ACCENT;
 		display: grid;
 		grid-template-rows: 1fr auto;
 		position: relative;
 	}
 
 	.list-footer {
-		border-top: 1px solid black;
+		border-top: 1px solid $COL_ACCENT;
 		font-family: $FONT_HEADING;
 		color: $COL_FG_DARK;
 		background-color: $COL_BG_REG;
