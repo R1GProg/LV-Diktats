@@ -1,16 +1,42 @@
 <script lang="ts">
-	let mode = 0;
+	import { ToolbarMode } from "$lib/ts/toolbar";
+	import { createEventDispatcher } from "svelte";
+	import { mode } from "$lib/ts/stores";
 
-	function onBtnClick(newMode: number) {
-		mode = newMode;
+	const dispatch = createEventDispatcher();
+
+	function onBtnClick(newMode: ToolbarMode) {
+		$mode = newMode;
+
+		dispatch("change", { $mode });
 	}
 </script>
 
 <div>
-	<button class="btn-read" class:active={mode === 0} on:click={() => { onBtnClick(0); }}></button>
-	<button class="btn-edit" class:active={mode === 1} on:click={() => { onBtnClick(1); }}></button>
-	<button class="btn-merge" class:active={mode === 2} on:click={() => { onBtnClick(2); }}></button>
-	<button class="btn-register" class:active={mode === 3} on:click={() => { onBtnClick(3); }}></button>
+	<button
+		class="btn-read"
+		class:active={$mode === ToolbarMode.READ}
+		on:click={() => { onBtnClick(ToolbarMode.READ); }}
+		title="Lasīt"
+	></button>
+	<button
+		class="btn-edit"
+		class:active={$mode === ToolbarMode.EDIT}
+		on:click={() => { onBtnClick(ToolbarMode.EDIT); }}
+		title="Rediģēt"
+	></button>
+	<button
+		class="btn-merge"
+		class:active={$mode === ToolbarMode.MERGE}
+		on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
+		title="Apvienot kļūdas"
+	></button>
+	<button
+		class="btn-register"
+		class:active={$mode === ToolbarMode.REGISTER}
+		on:click={() => { onBtnClick(ToolbarMode.REGISTER); }}
+		title="Reģistrēt kļūdas"
+	></button>
 </div>
 
 <style lang="scss">

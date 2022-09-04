@@ -3,18 +3,21 @@
 	import EssaySelector from "$lib/components/EssaySelector.svelte";
 	import MistakeList from "$lib/components/MistakeList.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
-	import { workspace } from "$lib/ts/stores";
+	import { workspace, mode } from "$lib/ts/stores";
+	import { ToolbarMode } from "$lib/ts/toolbar";
+	import DiffONP from "@shared/diff-engine";
 
 	let correctText = "";
-	let diffText = "";
 	let submissionText = "";
+	let diffEssayBox: EssayBox;
+	let mistakeList: MistakeList;
 
 	$: if ($workspace !== null) {
 		correctText = $workspace.template;
 	} else {
 		correctText = "";
-		diffText = "";
 		submissionText = "";
+		diffEssayBox?.setPlainText("");
 	}
 
 	function onSubmissionSelect(ev: CustomEvent) {
@@ -26,7 +29,17 @@
 		const id: string = ev.detail.entry;
 		const text = $workspace!.dataset[id].text!;
 		submissionText = text;
-		diffText = text;
+		updateDiff();
+	}
+
+	async function updateDiff() {
+		const diff = new DiffONP(submissionText, correctText);
+		diff.calc();
+		// await diff.checkRegister();
+		const mistakes = diff.getMistakes()
+
+		mistakeList.set(mistakes);
+		diffEssayBox.set(submissionText, mistakes);
 	}
 </script>
 
@@ -36,21 +49,21 @@
 	<div class="essay-container essay1">
 		<h2>Paraugs</h2>
 		<div>
-			<EssayBox text={correctText}/>
+			<EssayBox text={correctText} editable={$mode === ToolbarMode.EDIT}/>
 		</div>
 	</div>
 
 	<div class="essay-container essay2">
 		<h2>Labošana</h2>
 		<div>
-			<EssayBox text={diffText}/>
+			<EssayBox bind:this={diffEssayBox}/>
 		</div>
 	</div>
 
 	<div class="essay-container essay3">
 		<h2>Iesūtītais</h2>
 		<div>
-			<EssayBox text={submissionText}/>
+			<EssayBox text={submissionText} editable={$mode === ToolbarMode.EDIT}/>
 		</div>
 	</div>
 
@@ -59,7 +72,7 @@
 			<EssaySelector on:select={onSubmissionSelect}/>
 		</div>
 		<div class="info-mistakes">
-			<MistakeList/>
+			<MistakeList bind:this={mistakeList}/>
 		</div>
 	</div>
 </div>

@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from "svelte";
-	import { v4 as uuidv4 } from "uuid";
-	import { actionRegister } from "$lib/ts/actionRegister";
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
-	import type Action from "@shared/diff-engine/Action";
 	import type Highlighter from "web-highlighter";
+	import type Mistake from "@shared/diff-engine/Mistake";
 
 	export let editable = false;
 	export let text = "";
-	export let diff: Action[] = [];
+	export let diff: Mistake[] = [];
 	let textContainer: HTMLElement;
 	let tooltip: HighlightTooltip;
 	let highlighter: Highlighter;
@@ -19,37 +17,7 @@
 		return textContainer.textContent;
 	}
 
-		// Create the highlight elements
-		// for (const error of diff) {
-		// 	// const statusId = error.inRegister ? 1 : 0;
-		// 	const statusId = 0;
-			
-		// 	switch (error.type) {
-		// 		case "ADD":
-		// 			{ // In a block to scope the variable definition
-		// 				let char = error.char;
-
-		// 				if (error.char === "\n") {
-		// 					char = `\\n\n`;
-		// 				}
-
-		// 				addHighlightedText(char, error.indexCheck, 2, statusId, error.id);
-		// 			}
-		// 			break;
-		// 		case "DEL":
-		// 			// Do error.char.length instead of 1, as error.char may contain spaces
-		// 			highlightText(error.indexCheck, error.char.length, 1, statusId, error.id);
-		// 			break;
-		// 		case "SUB":
-		// 			console.log(error);
-		// 			highlightText(error.indexCheck, error!.charBefore!.length, 0, statusId, error.id);
-		// 			break;
-		// 		default:
-		// 			continue;
-		// 	}
-		// }
-
-	export function set(newText: string, newDiff: Action[]) {
+	export function set(newText: string, newDiff: Mistake[]) {
 		text = newText;
 		textContainer.innerHTML = newText;
 		diff = newDiff;
@@ -57,13 +25,58 @@
 		// Do it on the next event cycle to allow the HTML to render
 		// No idea whether it is necessary, but it seems to be more consistently correct with this?
 		setTimeout(() => {
-			// highlightErrors();
+			highlightMistakes();
 		}, 0);
 	}
 
 	export function setPlainText(newText: string) {
 		text = newText;
 		textContainer.innerHTML = newText;
+	}
+
+	function highlightMistakes() {
+		// Create the highlight elements
+		for (const mistake of diff) {
+			if (mistake.subtype === "WORD") {
+				const start = mistake.boundsDiff.start;
+				const end = mistake.boundsDiff.end;
+
+				switch (mistake.type) {
+					case "DEL":
+						highlightText(start, end - start, "hl-0");
+						break;
+					case "ADD":
+						addHighlightedText(start, "Hello world!", "hl-1");
+						break;
+					case "MIXED":
+						highlightText(start, end - start, "hl-2");
+						break;
+				}
+			} else {
+				for (const action of mistake.actions) {
+					switch(action.type) {
+						case "DEL":
+							// Do error.char.length instead of 1, as error.char may contain spaces
+							highlightText(action.indexCheck, action.char.length, "hl-0");
+							break;
+						case "ADD":
+							{ // In a block to scope the variable definition
+								let char = action.char;
+
+								if (action.char === "\n") {
+									char = "\\n\n";
+								}
+
+								addHighlightedText(action.indexCheck, char, "hl-1");
+							}
+							break;
+						case "SUB":
+							highlightText(action.indexCheck, action.charBefore!.length, "hl-2");
+							break;
+					}
+				}
+			}
+		}
 	}
 
 	function getHighlightStartNode(offset: number) {

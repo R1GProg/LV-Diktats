@@ -100,7 +100,7 @@
 		column-gap: 1rem;
 		border-bottom: 1px solid $COL_BG_LIGHT;
 		margin-bottom: 5%;
-		padding-bottom: 3%;
+		padding-bottom: 1.5%;
 
 		h4 {
 			font-family: $FONT_HEADING;

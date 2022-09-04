@@ -3,14 +3,18 @@ import { Bounds } from "./langUtil";
 import { hash } from "./xxhash";
 
 export type MistakeType = "ADD" | "DEL" | "MIXED";
+export type MistakeSubtype = "WORD" | "OTHER";
 
 export interface MistakeOpts {
 	actions: Action[],
 	type: MistakeType,
+	subtype: MistakeSubtype,
 	registerId?: string,
 	boundsCheck?: Bounds,
 	boundsCorrect?: Bounds,
 	boundsDiff: Bounds,
+	correctText: string, // Used for word substring
+	checkText: string,
 }
 
 export type MistakeHash = string;
@@ -20,6 +24,8 @@ export default class Mistake {
 
 	type: MistakeType;
 
+	subtype: MistakeSubtype;
+
 	registerId?: string;
 
 	boundsCheck?: Bounds;
@@ -28,13 +34,24 @@ export default class Mistake {
 
 	boundsDiff: Bounds;
 
+	word?: string; // Defined only for subtype=WORD
+
 	constructor(opts: MistakeOpts) {
 		this.actions = opts.actions;
 		this.type = opts.type;
+		this.subtype = opts.subtype;
 		this.registerId = opts.registerId;
 		this.boundsCheck = opts.boundsCheck;
 		this.boundsCorrect = opts.boundsCorrect;
 		this.boundsDiff = opts.boundsDiff;
+		
+		if (this.subtype === "WORD") {
+			if (this.type === "ADD") {
+				this.word = opts.correctText.substring(this.boundsCorrect!.start, this.boundsCorrect!.end);
+			} else {
+				this.word = opts.checkText.substring(this.boundsCheck!.start, this.boundsCheck!.end);
+			}
+		}
 
 		for (const action of this.actions) {
 			action.mistake = this;

@@ -1,39 +1,30 @@
 <script lang="ts">
+	import type Mistake from "@shared/diff-engine/Mistake";
 
+	let mistakes: Mistake[] = [];
+
+	export function set(mistakeArr: Mistake[]) {
+		mistakes = mistakeArr;
+	}
 </script>
 
 <div class="container">
 	<div class="list">
-		<div class="mistake del">
-			<span>konservējis</span>
-			<span class="mistake-target">—</span>
-			<span>ne dārzeņus</span>
-		</div>
-
-		<div class="mistake add">
-			<span>konservējis</span>
-			<span class="mistake-target">—</span>
-			<span>ne dārzeņus</span>
-		</div>
-
-		<div class="mistake mixed">
-			<span>konservējis</span>
-			<span class="mistake-target">—</span>
-			<span>ne dārzeņus</span>
-		</div>
-
-		<div class="mistake mixed registered">
-			<span>konservējis</span>
-			<span class="mistake-target">—</span>
-			<span>ne dārzeņus</span>
-		</div>
+		{#each mistakes as mistake}
+			<div class="mistake {mistake.type}">
+				<!-- <span>konservējis</span> -->
+				<span class="mistake-target">{mistake.subtype === "WORD" ? mistake.word : mistake.actions[0].char}</span>
+				<!-- <span>ne dārzeņus</span> -->
+			</div>
+		{/each}
 	</div>
 	<div class="list-footer">
 		<div class="footer-visibility">
-			<input type="checkbox" id="listHideRegistered">
-			<label for="listHideRegistered">slēpt atpazītās</label>
+			<input type="checkbox" id="listHideRegistered" title="Slēpt atpazītās kļūdas">
+			<label for="listHideRegistered" title="Slēpt atpazītās kļūdas">slēpt atpazītās</label>
 		</div>
-		<span class="footer-mistakes">69 (42) kļūdas</span>
+		<!-- TODO: <NumLength> (<NumRecognized>) kļūdas -->
+		<span class="footer-mistakes">{mistakes.length} kļūdas</span>
 	</div>
 </div>
 
@@ -125,15 +116,15 @@
 			font-size: 1.5em;
 		}
 
-		&.del {
+		&.DEL {
 			background-color: $COL_MISTAKE_DEL;
 		}
 
-		&.add {
+		&.ADD {
 			background-color: $COL_MISTAKE_ADD;
 		}
 
-		&.mixed {
+		&.MIXED {
 			background-color: $COL_MISTAKE_MIXED;
 		}
 
