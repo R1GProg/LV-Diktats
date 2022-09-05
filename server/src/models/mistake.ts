@@ -24,6 +24,7 @@ export interface IMistake {
 	boundsCorrect: Bounds | undefined;
 	boundsCheck: Bounds | undefined;
 	boundsDiff: Bounds | undefined;
+	hash: string;
 }
 
 interface MistakeDoc extends mongoose.Document {
@@ -33,6 +34,7 @@ interface MistakeDoc extends mongoose.Document {
 	boundsCorrect: Bounds | undefined;
 	boundsCheck: Bounds | undefined;
 	boundsDiff: Bounds | undefined;
+	hash: string;
 }
 
 interface mistakeModelInterface extends mongoose.Model<MistakeDoc> {
@@ -101,6 +103,9 @@ const mistakeSchema = new mongoose.Schema({
 		end: {
 			type: Number
 		}
+	},
+	hash: {
+		type: String
 	}
 });
 
