@@ -1,19 +1,58 @@
 <script lang="ts">
-	import type Mistake from "@shared/diff-engine/Mistake";
+	import type { MistakeId } from "@shared/diff-engine/src/Mistake";
+	import type Mistake from "@shared/diff-engine/src/Mistake";
+	import { createEventDispatcher } from "svelte";
+	import Diff from "./Diff.svelte";
 
 	let mistakes: Mistake[] = [];
+	let hoverId: MistakeId | null = null;
+	let listContainer: HTMLElement;
+	const dispatch = createEventDispatcher();
 
 	export function set(mistakeArr: Mistake[]) {
 		mistakes = mistakeArr;
 	}
+
+	export function setMistakeHover(id: MistakeId) {
+		hoverId = id;
+		listContainer.querySelector(`[data-id='${hoverId}']`)!.scrollIntoView({ behavior: "smooth" });
+	}
+
+	export function clearMistakeHover() {
+		hoverId = null;
+	}
+
+	function onMistakeHover(ev: Event) {
+		const id = (ev.target as HTMLElement).dataset.id!;
+		hoverId = id;
+		dispatch("hover", { source: "LIST", id });
+	}
+
+	function onMistakeHoverOut(ev: Event) {
+		const id = (ev.target as HTMLElement).dataset.id!;
+		hoverId = null;
+		dispatch("hoverout", { source: "LIST", id });
+	}
 </script>
 
 <div class="container">
-	<div class="list">
-		{#each mistakes as mistake}
-			<div class="mistake {mistake.type}">
+	<div class="list" bind:this={listContainer}>
+		{#each mistakes as m (m.id)}
+			<div
+				data-id={m.id}
+				class="mistake {m.type}"
+				class:hover={hoverId === m.id}
+				on:mouseenter={onMistakeHover}
+				on:focus={onMistakeHover}
+				on:mouseleave={onMistakeHoverOut}
+				on:blur={onMistakeHoverOut}
+				title={JSON.stringify(m.actions.map((a) => ({char: a.char, charBefore: a.charBefore, type: a.type, indexDiff: a.indexDiff})), null, 2)}
+			>
+
 				<!-- <span>konservējis</span> -->
-				<span class="mistake-target">{mistake.subtype === "WORD" ? mistake.word : mistake.actions[0].char}</span>
+				<span class="mistake-target">
+					{m.subtype === "WORD" ? m.word : (m.actions[0].char === " " ? "\" \"" : m.actions[0].char)}
+				</span>
 				<!-- <span>ne dārzeņus</span> -->
 			</div>
 		{/each}
@@ -104,6 +143,10 @@
 
 		&:not(.registered) {
 			@include hover_filter;
+		}
+
+		&.hover {
+			filter: brightness(70%);
 		}
 
 		span {

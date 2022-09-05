@@ -20,5 +20,5 @@ export function processString(text: string) {
 									   							 //                            Title
 		// Quotation marks
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
-		.replace(/  /g, " ");
+		.replace(/ {2,}/g, " ");
 }

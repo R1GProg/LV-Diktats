@@ -8,7 +8,7 @@ import { Template } from '../models/template';
 import { Mistake } from '../models/mistake';
 import cors from 'cors';
 import { processString } from '@shared/normalization';
-import { Diff_ONP } from '@shared/diff-engine';
+import DiffONP from '@shared/diff-engine';
 
 const logger = new Logger();
 const router = express.Router();
@@ -56,7 +56,7 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 				// logger.debug(`Writing submission #${val.id}...`);
 				// TODO: generate diff and categorise mistakes
 				val.message = processString(val.message);
-				const diff = new Diff_ONP(val.message, template);
+				const diff = new DiffONP(val.message, template);
 				diff.calc();
 				let mistakes = diff.getMistakes();
 				let mistakesDb: any[] = [];

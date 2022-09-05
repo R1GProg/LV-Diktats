@@ -1,9 +1,11 @@
 import type Action from "./Action";
 import { Bounds } from "./langUtil";
 import { hash } from "./xxhash";
+import { v4 as uuidv4 } from "uuid";
 
 export type MistakeType = "ADD" | "DEL" | "MIXED";
 export type MistakeSubtype = "WORD" | "OTHER";
+export type MistakeId = string;
 
 export interface MistakeOpts {
 	actions: Action[],
@@ -36,7 +38,10 @@ export default class Mistake {
 
 	word?: string; // Defined only for subtype=WORD
 
+	id: MistakeId;
+
 	constructor(opts: MistakeOpts) {
+		this.id = uuidv4();
 		this.actions = opts.actions;
 		this.type = opts.type;
 		this.subtype = opts.subtype;

@@ -3,6 +3,7 @@
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
 	import type Highlighter from "web-highlighter";
 	import type Mistake from "@shared/diff-engine/Mistake";
+	import type { MistakeId } from "@shared/diff-engine/Mistake";
 
 	export let editable = false;
 	export let text = "";
@@ -11,10 +12,13 @@
 	let tooltip: HighlightTooltip;
 	let highlighter: Highlighter;
 
-	const dispatcher = createEventDispatcher();
+	const highlightMap: Record<string, MistakeId> = {}; // HighlightID : MistakeID
+	const mistakeMap: Record<MistakeId, string[]> = {} // MistakeID : HighlightID[]
+
+	const dispatch = createEventDispatcher();
 
 	export function getText() {
-		return textContainer.textContent;
+		return textContainer.textContent!;
 	}
 
 	export function set(newText: string, newDiff: Mistake[]) {
@@ -35,29 +39,40 @@
 	}
 
 	function highlightMistakes() {
+		const diffCopy = [...diff];
+		diffCopy.sort((a, b) => b.boundsDiff.start - a.boundsDiff.start);
+
 		// Create the highlight elements
-		for (const mistake of diff) {
+		for (const mistake of diffCopy) {
 			if (mistake.subtype === "WORD") {
-				const start = mistake.boundsDiff.start;
-				const end = mistake.boundsDiff.end;
+				const start = mistake.boundsCheck?.start ?? mistake.actions[0].indexCheck;
+				const end = mistake.boundsCheck?.end ?? mistake.actions[mistake.actions.length - 1].indexCheck; 
+				let id: string | null;
 
 				switch (mistake.type) {
 					case "DEL":
-						highlightText(start, end - start, "hl-0");
+						id = highlightText(start, end - start, "hl-0");
 						break;
 					case "ADD":
-						addHighlightedText(start, "Hello world!", "hl-1");
+						id = addHighlightedText(start, mistake.word!, "hl-1");
 						break;
 					case "MIXED":
-						highlightText(start, end - start, "hl-2");
+						id = highlightText(start, end - start, "hl-2");
 						break;
+				}
+
+				if (id) {
+					highlightMap[id] = mistake.id;
+					mistakeMap[mistake.id] = [ id ];
 				}
 			} else {
 				for (const action of mistake.actions) {
+					let id: string | null;
+
 					switch(action.type) {
 						case "DEL":
 							// Do error.char.length instead of 1, as error.char may contain spaces
-							highlightText(action.indexCheck, action.char.length, "hl-0");
+							id = highlightText(action.indexCheck, action.char.length, "hl-0");
 							break;
 						case "ADD":
 							{ // In a block to scope the variable definition
@@ -67,12 +82,20 @@
 									char = "\\n\n";
 								}
 
-								addHighlightedText(action.indexCheck, char, "hl-1");
+								id = addHighlightedText(action.indexCheck, char, "hl-1");
 							}
 							break;
 						case "SUB":
-							highlightText(action.indexCheck, action.charBefore!.length, "hl-2");
+							id = highlightText(action.indexCheck, action.charBefore!.length, "hl-2");
 							break;
+						case "NONE":
+							id = null;
+							break;
+					}
+
+					if (id) {
+						highlightMap[id] = mistake.id;
+						mistakeMap[mistake.id] = [...(mistakeMap[mistake.id] ?? []), id];
 					}
 				}
 			}
@@ -97,7 +120,7 @@
 				}
 			}
 
-			if (walkedOffset + nodeLen > offset) {
+			if (walkedOffset + nodeLen >= offset) {
 				startNode = node.nodeType === Node.TEXT_NODE ? node : node.firstChild;
 				startNodeIndex = i;
 				break;
@@ -112,7 +135,7 @@
 	function highlightText(offset: number, length: number, style = "") {
 		if (!highlighter) {
 			console.warn("Attempt to highlight before web-highlighter has been imported!");
-			return;
+			return null;
 		}
 
 		const {
@@ -123,7 +146,7 @@
 
 		if (startNode === null) {
 			console.warn("Attempt to highlight out of range!");
-			return;
+			return null;
 		}
 
 		const startNodeLen = startNode.textContent!.length;
@@ -153,17 +176,19 @@
 		range.setStart(startNode, startOffset);
 		range.setEnd(endNode, endOffset);
 
-		const id = highlighter.fromRange(range).id;
-		
+		const highlight = highlighter.fromRange(range);
+
 		if (style !== "") {
-			highlighter.addClass(style, id);
+			highlighter.addClass(style, highlight.id);
 		}
+
+		return highlight.id;
 	}
 
 	function addHighlightedText(offset: number, text: string, style = "") {
 		if (!highlighter) {
 			console.warn("Attempt to highlight before web-highlighter has been imported!");
-			return;
+			return null;
 		}
 
 		const {
@@ -174,7 +199,7 @@
 
 		if (startNode === null) {
 			console.warn("Attempt to highlight out of range!");
-			return;
+			return null;
 		}
 
 		const parentRange = document.createRange();
@@ -194,6 +219,27 @@
 		}
 
 		highlighter.addClass("added-text", id);
+		return id;
+	}
+
+	export function setMistakeHover(id: MistakeId) {
+		for (const highlight of mistakeMap[id]) {
+			highlighter.addClass("hover-external", highlight);
+		}
+	}
+
+	export function clearMistakeHover(id: MistakeId) {
+		for (const highlight of mistakeMap[id]) {
+			highlighter.removeClass("hover-external", highlight);
+		}
+	}
+
+	function onHighlightHover(id: string) {
+		highlighter.addClass("hover", id);
+	}
+
+	function onHighlightHoverOut(id: string) {
+		highlighter.removeClass("hover", id);
 	}
 
 	async function initHighlighting() {
@@ -209,11 +255,13 @@
 		});
 
 		highlighter.on(Highlighter.event.HOVER, ({ id }) => {
-			highlighter.addClass("hover", id);
+			onHighlightHover(id);
+			dispatch("hover", { source: "TEXT", id: highlightMap[id] });
 		});
 
 		highlighter.on(Highlighter.event.HOVER_OUT, ({ id }) => {
-			highlighter.removeClass("hover", id);
+			onHighlightHoverOut(id);
+			dispatch("hoverout", { source: "TEXT", id: highlightMap[id] });
 		});
 	}
 
@@ -228,7 +276,7 @@
 	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class=".highlight hl-0 hl-1 hl-2 hl-3 hl-status-1 active hover"></span>
+	<span class=".highlight hl-0 hl-1 hl-2 hl-3 hl-status-1 active hover hover-external"></span>
 </div>
 
 <HighlightTooltip bind:this={tooltip}/>
@@ -269,6 +317,10 @@
 
 		&.hover {
 			filter: brightness(85%);
+		}
+
+		&.hover-external {
+			filter: brightness(50%);
 		}
 
 		// !!! Note when adding new styles: add the class to the workaround span in the component body !!!

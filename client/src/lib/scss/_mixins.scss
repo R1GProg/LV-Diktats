@@ -57,11 +57,11 @@
 	}
 }
 
-@mixin hover_filter($brightness: 85%) {
+@mixin hover_filter($brightness: 85%, $additional-selectors: "") {
 	cursor: pointer;
 	transition: filter 0.3s;
 
-	&:hover {
+	&:hover, &:focus, #{$additional-selectors} {
 		filter: brightness($brightness);
 	}
 }
