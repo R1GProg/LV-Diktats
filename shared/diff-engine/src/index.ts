@@ -157,7 +157,19 @@ export default class DiffONP {
 		// Mistake-level PP
 
 		this.mistakes = this.parseWords();
+		// const mistakes = this.parseWords();
+		// console.log(mistakes);
+		// this.mistakes = [];
 
+		// Remove duplicate actions from this.sequence
+		for (const mistake of this.mistakes) {
+			for (const action of mistake.actions) {
+				this.sequence.splice(this.sequence.findIndex((a) => a.id === action.id), 1);
+			}
+		}
+
+		console.log(this.mistakes.map((v) => v.word));
+		
 		// Add mistake containers to the rest of the actions
 		for (const action of this.sequence) {
 			if (action.mistake) continue;
@@ -342,8 +354,8 @@ export default class DiffONP {
 			if (a.type === "ADD") {
 				// If the ADD starts on a word delimiter, it is probably a word
 				let isNewWord = charIsWordDelimeter(this.checkText[a.indexCheck]);
-				let newWordAddActions: Action[] = []; // Used only if it isNewWord=true
-				let newWord: string = a.char; // Used only if it isNewWord=true
+				let newWordAddActions: Action[] = []; // Used only if isNewWord=true
+				let newWord: string = a.char; // Used only if isNewWord=true
 
 				let curOffset = 1;
 				let indexInMainSequence = this.sequence.findIndex((other) => other.indexDiff === a.indexDiff);
@@ -403,14 +415,34 @@ export default class DiffONP {
 				checkText: this.checkText
 			});
 
-			const actionsInWord = seqCopy.filter((action) => {
+			let actionsInWord = seqCopy.filter((action) => {
 				return (action.indexCheck >= bounds.start && action.indexCheck < bounds.end)
 					// && action.indexCorrect !== a.indexCorrect;
 			});
-			
-			word.actions.push(...actionsInWord);
 
 			actionsInWord.sort((a, b) => a.indexDiff - b.indexDiff);
+
+			// Check if some actions are split off by punctuation
+			const startIndex = this.sequence.findIndex((v) => v === actionsInWord[0]);
+			const endIndex = this.sequence.findIndex((v) => v === actionsInWord[actionsInWord.length - 1]);
+
+			// If the number of elements in both arrays don't match,
+			// then there must be punctuation in between the actions
+			if (endIndex - startIndex !== actionsInWord.length) {
+				// Split off actionsInWord at the point of punctuation
+				for (let i = startIndex; i < endIndex; i++) {
+					if (this.sequence[i].subtype !== "ORTHO") {
+						actionsInWord = actionsInWord.slice(0, i);
+						break;
+					}
+				}
+			}
+
+			console.log(actionsInWord);
+			console.log(seqCopy.map((v) => v.char));
+
+			word.actions.push(...actionsInWord);
+
 			word.boundsDiff = {
 				start: a.indexDiff,
 				end: actionsInWord.length === 0
@@ -434,7 +466,6 @@ export default class DiffONP {
 			} else {
 				const correctBounds = getWordBounds(this.correctText, a.indexCorrect);
 				word.boundsCorrect = correctBounds;
-				// word.wordCorrect = this.correctText.substring(correctBounds[0], correctBounds[1]);
 			}
 
 			errWords.push(word);

@@ -53,7 +53,7 @@ export default class Action {
 		this.hash = this.genHash();
 	}
 
-	private async genHash(): Promise<ActionHash> {
+	async genHash(): Promise<ActionHash> {
 		if (this.hash) return this.hash;
 
 		const dict: Record<ActionType, number> = {
