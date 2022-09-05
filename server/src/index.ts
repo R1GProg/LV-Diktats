@@ -7,7 +7,6 @@ import mongoose from 'mongoose';
 import { Logger } from 'yatsl';
 import { debugRouter } from './routes/debug';
 import { submissionRouter } from './routes/submissions';
-import { hash } from "@shared/diff-engine/xxhash";
 
 const logger = new Logger();
 
@@ -31,7 +30,7 @@ app.use(debugRouter);
 app.use(submissionRouter);
 
 app.get('/', (req: Request, res: Response) => {
-	res.send('This is a test web page!');
+	res.sendStatus(200);
 });
 
 let prod = process.env["PRODUCTION"] === "yes";

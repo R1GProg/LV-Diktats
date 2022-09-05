@@ -3,13 +3,18 @@ let hashFunc: any | null = null;
 async function initXXHash() {
 	if (hashFunc !== null) return;
 
-	if (typeof window === undefined) {
-		hashFunc = (await import("xxhash")).default.hash64;
-	} else {
-		const xxhash = (await import("xxhash-wasm")).default;
-		const api = await xxhash();
-		hashFunc = api.h64;
-	}
+	// TODO: Use the Native implementation when running in Node
+	const xxhash = (await import("xxhash-wasm")).default;
+	const api = await xxhash();
+	hashFunc = api.h64;
+	
+	// if (typeof window === undefined) {
+	// 	hashFunc = (await import("xxhash")).default.hash64;
+	// } else {
+	// 	const xxhash = (await import("xxhash-wasm")).default;
+	// 	const api = await xxhash();
+	// 	hashFunc = api.h64;
+	// }
 }
 
 export function hash(dataBuf: ArrayBuffer) {

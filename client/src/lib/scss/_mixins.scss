@@ -1,0 +1,67 @@
+@mixin scrollbar {
+	&::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: $COL_FG_DARK;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: $COL_BG_DARK;
+		box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.75);
+	}
+}
+
+@mixin button_icon($light: false) {
+	border: none;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-size: cover;
+	mask-repeat: no-repeat;
+	mask-size: cover;
+	mask-position: center;
+	-webkit-mask-position: center;
+
+	@if $light {
+		background-color: $COL_FG_REG;
+
+		&:hover {
+			background-color: $COL_FG_DARK;
+		}
+	
+		// Doesn't make sense to have an active light icon
+		// &.active {
+		// 	background-color: $COL_FG_REG;
+	
+		// 	&:hover {
+		// 		background-color: $COL_FG_DARK;
+		// 	}
+		// }
+	} @else {
+		background-color: $COL_BG_LIGHT;
+
+		&:hover {
+			background-color: $COL_BG_REG;
+		}
+	
+		&.active {
+			background-color: $COL_FG_REG;
+	
+			&:hover {
+				background-color: $COL_FG_DARK;
+			}
+		}
+	}
+}
+
+@mixin hover_filter($brightness: 85%) {
+	cursor: pointer;
+	transition: filter 0.3s;
+
+	&:hover {
+		filter: brightness($brightness);
+	}
+}

@@ -13,7 +13,7 @@ interface GridPoint {
 // Based on
 // https://github.com/cubicdaiya/onp/
 // https://www.sciencedirect.com/science/article/abs/pii/002001909090035V
-export class Diff_ONP {
+export default class DiffONP {
 	private a: string;
 	private b: string;
 	private m: number;
@@ -165,7 +165,10 @@ export class Diff_ONP {
 			const mistakeOpts: MistakeOpts = {
 				actions: [ action ],
 				type: action.type === "SUB" || action.type === "NONE" ? "MIXED" : action.type,
-				boundsDiff: { start: action.indexDiff, end: action.indexDiff + action.char.length }
+				boundsDiff: { start: action.indexDiff, end: action.indexDiff + action.char.length },
+				subtype: "OTHER",
+				correctText: this.correctText,
+				checkText: this.checkText
 			};
 
 			if (action.type === "ADD" || action.type === "SUB")
@@ -176,9 +179,8 @@ export class Diff_ONP {
 
 			this.mistakes.push(new Mistake(mistakeOpts));
 		}
-		
-		console.log(this.mistakes);
 
+		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 		this.dist = this.sequence.length;
 	}
 
@@ -372,6 +374,9 @@ export class Diff_ONP {
 						boundsDiff: { start: a.indexDiff, end: a.indexDiff + newWord.length },
 						// word: newWord,
 						actions: [a, ...newWordAddActions],
+						subtype: "WORD",
+						correctText: this.correctText,
+						checkText: this.checkText
 					});
 	
 					errWords.push(word);
@@ -392,8 +397,10 @@ export class Diff_ONP {
 				type: "MIXED",
 				boundsCheck: bounds,
 				boundsDiff: { start: 0, end: 0 }, // TBI
-				// word: this.checkText.substring(bounds.start, bounds.end),
 				actions: [],
+				subtype: "WORD",
+				correctText: this.correctText,
+				checkText: this.checkText
 			});
 
 			const actionsInWord = seqCopy.filter((action) => {
@@ -421,8 +428,6 @@ export class Diff_ONP {
 
 				seqCopy.splice(ind, 1);
 			}
-
-			console.log(word);
 
 			if (allActionsAreDelete && word.actions.length === bounds.end - bounds.start) {
 				word.type = "DEL";
