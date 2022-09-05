@@ -20,7 +20,7 @@ interface ISubmission {
 	country: string;
 	city: string;
 	state: SubmissionStates;
-	mistakes: IMistake[];
+	mistakes: mongoose.Schema.Types.ObjectId[];
 }
 
 interface SubmissionDoc extends mongoose.Document {
@@ -34,7 +34,7 @@ interface SubmissionDoc extends mongoose.Document {
 	country: string;
 	city: string;
 	state: SubmissionStates;
-	mistakes: IMistake[];
+	mistakes: mongoose.Schema.Types.ObjectId[];
 }
 
 interface submissionModelInterface extends mongoose.Model<SubmissionDoc> {
@@ -76,7 +76,10 @@ const submissionSchema = new mongoose.Schema({
 		enum: SubmissionStates,
 		default: SubmissionStates
 	},
-	mistakes: [Mistake.schema]
+	mistakes: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: "Mistake"
+	}]
 });
 
 submissionSchema.statics.build = (attr: ISubmission) => {
