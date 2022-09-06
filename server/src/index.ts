@@ -10,7 +10,7 @@ import { submissionRouter } from './routes/submissions';
 
 const logger = new Logger();
 
-mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/test?retryWrites=true&w=majority`, {}).catch((e) => {
+mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/?retryWrites=true&w=majority`, {}).catch((e) => {
 	logger.error(e);
 }).then(() => {
 	logger.info("Connected to MongoDB!");

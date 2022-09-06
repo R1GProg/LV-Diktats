@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 
-interface ITemplate {
+export interface ITemplate {
 	message: string;
+	workspace: string;
 }
 
 interface TemplateDoc extends mongoose.Document {
 	message: string;
+	workspace: string;
 }
 
 interface templateModelInterface extends mongoose.Model<TemplateDoc> {
@@ -16,7 +18,8 @@ const submissionSchema = new mongoose.Schema({
 	message: {
 		type: String,
 		required: true
-	}
+	},
+	workspace: String
 });
 
 submissionSchema.statics.build = (attr: ITemplate) => {

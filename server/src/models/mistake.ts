@@ -1,6 +1,9 @@
-import { ActionType, ActionSubtype } from '@shared/diff-engine/Action';
-import { Bounds } from '@shared/diff-engine/langUtil';
-import { MistakeType } from '@shared/diff-engine/Mistake';
+// import { ActionType, ActionSubtype } from '@shared/diff-engine/Action';
+// import { Bounds } from '@shared/diff-engine/langUtil';
+// import { MistakeType } from '@shared/diff-engine/Mistake';
+import type { ActionType, ActionSubtype } from "@shared/diff-engine/src/Action";
+import type { Bounds } from "@shared/diff-engine/src/langUtil";
+import type { MistakeType } from '@shared/diff-engine/src/Mistake';
 import mongoose from "mongoose";
 
 export interface IAction {
@@ -25,6 +28,8 @@ export interface IMistake {
 	boundsCheck: Bounds | undefined;
 	boundsDiff: Bounds | undefined;
 	hash: string;
+	workspace: string;
+	ocurrences: number;
 }
 
 interface MistakeDoc extends mongoose.Document {
@@ -35,6 +40,8 @@ interface MistakeDoc extends mongoose.Document {
 	boundsCheck: Bounds | undefined;
 	boundsDiff: Bounds | undefined;
 	hash: string;
+	workspace: string;
+	ocurrences: number;
 }
 
 interface mistakeModelInterface extends mongoose.Model<MistakeDoc> {
@@ -107,7 +114,9 @@ const mistakeSchema = new mongoose.Schema({
 	},
 	hash: {
 		type: String
-	}
+	},
+	workspace: String,
+	ocurrences: Number
 });
 
 mistakeSchema.statics.build = (attr: IMistake) => {
