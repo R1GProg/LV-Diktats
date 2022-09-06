@@ -2,14 +2,12 @@ import mongoose from "mongoose";
 
 interface IRegister {
 	// hash: string;
-	id: string;
 	description: string;
 	ignore: boolean;
 	// category: string; // TODO: Perhaps turn this into an enum?
 }
 
 interface RegisterDoc extends mongoose.Document {
-	id: string;
 	description: string;
 	ignore: boolean;
 }
@@ -19,10 +17,6 @@ interface registerModelInterface extends mongoose.Model<RegisterDoc> {
 }
 
 const registerSchema = new mongoose.Schema({
-	id: {
-		type: String,
-		required: true
-	},
 	description: {
 		type: String
 	},
