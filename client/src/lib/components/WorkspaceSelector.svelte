@@ -5,6 +5,7 @@
 	import { workspace } from "$lib/ts/stores";
 	import type { Workspace } from "$lib/types";
 	import { loadLocalWorkspaces } from "$lib/ts/WorkspaceLocalStorage";
+	import config from "$lib/config.json";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
@@ -77,7 +78,9 @@
 		{#each Object.values(data) as workspace}
 			<option value="{workspace.key}">{workspace.name}</option>
 		{/each}
+		{#if !config.pilotMode}
 		<option value="!upload">- Augšupielādēt datus -</option>
+		{/if}
 	</select>
 </div>
 

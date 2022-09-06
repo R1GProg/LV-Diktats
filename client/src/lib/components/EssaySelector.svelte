@@ -63,7 +63,7 @@
 		noData = false;
 		const keys = Object.keys($workspace.dataset);
 		totalEntries = keys.length;
-		activeIndex = 1761;
+		activeIndex = 0;
 		onSelect(keys[0]);
 	} else if ($workspace === null) {
 		noData = true;
