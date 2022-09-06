@@ -44,8 +44,6 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 
 		if ($mode !== ToolbarMode.MERGE) return;
 
-		console.log(mistakes.find((m) => m.id === id));
-
 		if (activeMergeIDs.includes(id)) {
 			activeMergeIDs.splice(activeMergeIDs.findIndex((el) => el === id), 1);
 		} else {

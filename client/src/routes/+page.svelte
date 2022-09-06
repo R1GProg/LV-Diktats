@@ -197,9 +197,11 @@
 		width: $INFO_WIDTH;
 		height: calc(100vh - $HEADER_HEIGHT - 1px - 2vh);
 		background-color: $COL_BG_DARK;
-		position: absolute;
-		top: $HEADER_HEIGHT;
-		right: 0;
+		// position: absolute;
+		margin-right: 0;
+		margin-top: -8.1vh; // TODO: Temporary?
+		// top: $HEADER_HEIGHT;
+		// right: 0;
 		border-top: 1px solid $COL_ACCENT;
 		border-left: 1px solid $COL_ACCENT;
 

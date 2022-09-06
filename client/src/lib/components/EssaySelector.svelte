@@ -3,6 +3,7 @@
 	import { workspace } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import { processString } from "@shared/normalization";
+import SubmissionModal from "./modals/SubmissionModal.svelte";
 
 	const dispatch = createEventDispatcher();
 
@@ -10,6 +11,7 @@
 	let activeIndex = 0;
 	let totalEntries = 0;
 	let noData = true;
+	let submissionModal: SubmissionModal;
 
 	// async function fetchData() {
 	// 	const raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
@@ -27,9 +29,21 @@
 	// 	});
 	// }
 
-	async function onSelect(id: string) {
+	async function onSelect(index: number | string) {
 		if ($workspace === null) return;
 
+		let id: string;
+
+		if (typeof index === "number") {
+			const keys = Object.keys($workspace.dataset);
+			id = keys[index];
+		} else {
+			id = index;
+		}
+
+		if (!$workspace.dataset[id]) return;
+
+		activeIndex = Object.values($workspace.dataset).findIndex((el) => el.id === id);
 		activeID = id;
 
 		if (!$workspace.local && $workspace.dataset[id].text === null) {
@@ -50,13 +64,7 @@
 	export function changeSelectionBy(delta: number) {
 		if ($workspace === null) return;
 
-		const keys = Object.keys($workspace.dataset);
-		const nextIndex = keys[activeIndex + delta];
-
-		if ($workspace.dataset[nextIndex]) {
-			activeIndex += delta;
-			onSelect($workspace.dataset[nextIndex].id);
-		}
+		onSelect(activeIndex + delta);
 	}
 
 	$: if ($workspace) {
@@ -64,9 +72,14 @@
 		const keys = Object.keys($workspace.dataset);
 		totalEntries = keys.length;
 		activeIndex = 0;
-		onSelect(keys[0]);
+		onSelect(0);
 	} else if ($workspace === null) {
 		noData = true;
+	}
+
+	function onEntryOpen(ev: CustomEvent) {
+		const id = ev.detail.id as string;
+		onSelect(id);
 	}
 </script>
 
@@ -78,9 +91,11 @@
 		<span>{activeIndex + 1}/{totalEntries}</span>
 		<button class="next" on:click={() => { changeSelectionBy(1) }}></button>
 	</div>
-	<button class="openall">Apskatīt visus</button>
+	<button class="openall" on:click={() => { submissionModal.open(); }}>Apskatīt visus</button>
 	{/if}
 </div>
+
+<SubmissionModal bind:this={submissionModal} on:open={onEntryOpen}/>
 
 <style lang="scss">
 	@import "../scss/global.scss";
