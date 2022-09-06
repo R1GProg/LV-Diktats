@@ -1,4 +1,7 @@
 <script lang="ts">
+import { mode } from "$lib/ts/stores";
+import { ToolbarMode } from "$lib/ts/toolbar";
+
 	import type { MistakeId } from "@shared/diff-engine/src/Mistake";
 	import type Mistake from "@shared/diff-engine/src/Mistake";
 	import { createEventDispatcher } from "svelte";
@@ -7,6 +10,8 @@
 	let mistakes: Mistake[] = [];
 	let hoverId: MistakeId | null = null;
 	let listContainer: HTMLElement;
+	let activeMergeIDs: string[] = [];
+
 	const dispatch = createEventDispatcher();
 
 	export function set(mistakeArr: Mistake[]) {
@@ -23,17 +28,45 @@
 	}
 
 	function onMistakeHover(ev: Event) {
-		const id = (ev.target as HTMLElement).dataset.id!;
+		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		hoverId = id;
 		dispatch("hover", { source: "LIST", id });
 	}
 
 	function onMistakeHoverOut(ev: Event) {
-		const id = (ev.target as HTMLElement).dataset.id!;
+		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		hoverId = null;
 		dispatch("hoverout", { source: "LIST", id });
 	}
+
+	function onMistakeClick(ev: Event) {
+		const id = (ev.currentTarget as HTMLElement).dataset.id!;
+
+		if ($mode !== ToolbarMode.MERGE) return;
+
+		console.log(mistakes.find((m) => m.id === id));
+
+		if (activeMergeIDs.includes(id)) {
+			activeMergeIDs.splice(activeMergeIDs.findIndex((el) => el === id), 1);
+		} else {
+			activeMergeIDs.push(id);
+		}
+
+		activeMergeIDs = activeMergeIDs;
+	}
+
+	function onBodyKeypress(ev: KeyboardEvent) {
+		if (ev.key !== "Enter") return;
+		if ($mode !== ToolbarMode.MERGE) return;
+		if (activeMergeIDs.length <= 1) return;
+
+		dispatch("merge", { ids: activeMergeIDs });
+
+		activeMergeIDs = [];
+	}
 </script>
+
+<svelte:body on:keypress={onBodyKeypress}/>
 
 <div class="container">
 	<div class="list" bind:this={listContainer}>
@@ -42,10 +75,12 @@
 				data-id={m.id}
 				class="mistake {m.type}"
 				class:hover={hoverId === m.id}
+				class:merging={activeMergeIDs.includes(m.id)}
 				on:mouseenter={onMistakeHover}
 				on:focus={onMistakeHover}
 				on:mouseleave={onMistakeHoverOut}
 				on:blur={onMistakeHoverOut}
+				on:click={onMistakeClick}
 				title={JSON.stringify({
 					actions: m.actions.map((a) => ({char: a.char, charCorrect: a.charCorrect, type: a.type, indexDiff: a.indexDiff})),
 					boundsCheck: m.boundsCheck ?? m.actions[0].indexCheck,
@@ -57,7 +92,7 @@
 
 				<!-- <span>konservējis</span> -->
 				<span class="mistake-target">
-					{m.subtype === "WORD" ? m.word : (m.actions[0].char === " " ? "\" \"" : m.actions[0].char)}
+					{m.word}
 				</span>
 				<!-- <span>ne dārzeņus</span> -->
 			</div>
@@ -181,6 +216,12 @@
 			filter: brightness(35%);
 			
 			@include hover_filter(50%);
+		}
+
+		&.merging {
+			outline: 3px solid yellow;
+			box-shadow: 0px 0px 5px 5px yellow;
+			z-index: 5;
 		}
 	}
 </style>

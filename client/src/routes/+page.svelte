@@ -1,14 +1,11 @@
 <script lang="ts">
-import { updated } from "$app/stores";
-
 	import EssayBox from "$lib/components/EssayBox.svelte";
 	import EssaySelector from "$lib/components/EssaySelector.svelte";
 	import MistakeList from "$lib/components/MistakeList.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
 	import { workspace, mode } from "$lib/ts/stores";
 	import { ToolbarMode } from "$lib/ts/toolbar";
-	import DiffONP from "@shared/diff-engine";
-	import type Mistake from "@shared/diff-engine/src/Mistake";
+	import DiffONP, { Mistake } from "@shared/diff-engine";
 
 	let correctText = "";
 	let submissionText = "";
@@ -51,9 +48,11 @@ import { updated } from "$app/stores";
 	async function updateDiff() {
 		const diff = new DiffONP(submissionText, correctText);
 		diff.calc();
-		// await diff.checkRegister();
-		mistakes = diff.getMistakes();
+		setMistakes(diff.getMistakes());
+	}
 
+	function setMistakes(newMistakes: Mistake[]) {
+		mistakes = newMistakes;
 		mistakeList.set(mistakes);
 		diffEssayBox.set(submissionText, mistakes);
 	}
@@ -87,6 +86,23 @@ import { updated } from "$app/stores";
 	}
 
 	$: onToolbarModeChange($mode);
+
+	function onMistakeMerge(ev: CustomEvent) {
+		const ids: string[] = ev.detail.ids;
+		const newMistakes = [...mistakes];
+		
+		const mergedMistakes = ids.map((id) => mistakes.find((m) => m.id === id));
+		const mergedMistake = Mistake.mergeMistakes(...mergedMistakes);
+
+		for (const id of ids) {
+			newMistakes.splice(newMistakes.findIndex((m) => m.id === id), 1);
+		}
+
+		newMistakes.push(mergedMistake);
+		newMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
+		setMistakes(newMistakes);
+	}
 </script>
 
 <div class="container">
@@ -118,7 +134,12 @@ import { updated } from "$app/stores";
 			<EssaySelector on:select={onSubmissionSelect}/>
 		</div>
 		<div class="info-mistakes">
-			<MistakeList bind:this={mistakeList} on:hover={onMistakeHover} on:hoverout={onMistakeHoverOut}/>
+			<MistakeList
+				bind:this={mistakeList}
+				on:hover={onMistakeHover}
+				on:hoverout={onMistakeHoverOut}
+				on:merge={onMistakeMerge}
+			/>
 		</div>
 	</div>
 </div>

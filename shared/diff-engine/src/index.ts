@@ -1,6 +1,6 @@
 import { Bounds, charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
 import Action from "./Action";
-import Mistake, { MistakeOpts, MistakeType } from "./Mistake";
+import DiffMistake, { MistakeOpts, MistakeType } from "./Mistake";
 import { getMaxElement, getMinElement } from "./util";
 
 // The action done to go from target to source character
@@ -35,7 +35,7 @@ export default class DiffONP {
 	private sequence: Action[] = [];
 	private checkText: string;
 	private correctText: string;
-	private mistakes: Mistake[] = [];
+	private mistakes: DiffMistake[] = [];
 	private diff: DiffChar[] = []; // Characters of the diff in sequential order
 
 	constructor(check: string, correct: string) {
@@ -195,7 +195,7 @@ export default class DiffONP {
 			if (action.type === "DEL" || action.type === "SUB")
 				mistakeOpts.boundsCheck = { start: action.indexCheck, end: action.indexCheck + action.char.length };
 
-			this.mistakes.push(new Mistake(mistakeOpts));
+			this.mistakes.push(new DiffMistake(mistakeOpts));
 		}
 
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
@@ -387,8 +387,8 @@ export default class DiffONP {
 		return bounds;
 	}
 
-	private parseWords(): Mistake[] {
-		const mistakes: Mistake[] = [];
+	private parseWords(): DiffMistake[] {
+		const mistakes: DiffMistake[] = [];
 
 		for (let i = 0; i < this.diff.length; i++) {
 			const charData = this.diff[i];
@@ -449,7 +449,7 @@ export default class DiffONP {
 				}
 			}
 
-			const mistake = new Mistake({
+			const mistake = new DiffMistake({
 				type: mistakeType,
 				boundsCheck,
 				boundsCorrect,
@@ -478,3 +478,5 @@ export default class DiffONP {
 		return this.mistakes;
 	}
 }
+
+export const Mistake = DiffMistake;

@@ -3,9 +3,10 @@ import { Bounds } from "./langUtil";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
 import { DiffChar } from ".";
+import { getMaxElement, getMinElement } from "./util";
 
 export type MistakeType = "ADD" | "DEL" | "MIXED";
-export type MistakeSubtype = "WORD" | "OTHER";
+export type MistakeSubtype = "WORD" | "OTHER" | "MERGED";
 export type MistakeId = string;
 
 export interface MistakeOpts {
@@ -39,7 +40,7 @@ export default class Mistake {
 
 	boundsDiff: Bounds;
 
-	word?: string; // Defined only for subtype=WORD
+	word?: string;
 
 	id: MistakeId;
 
@@ -56,6 +57,13 @@ export default class Mistake {
 		this.boundsDiff = opts.boundsDiff;
 		this.word = opts.word;
 		this.wordMeta = opts.wordMeta;
+
+		if (!opts.word && this.subtype === "OTHER") {
+			this.word = this.actions.map((a) => a.char).join();
+			this.word = this.word.replace(/\n/g, "\\n");
+
+			if (this.word === " ") this.word = "\" \"";
+		}
 		
 		// if (this.subtype === "WORD") {
 		// 	if (this.type === "DEL") {
@@ -78,5 +86,56 @@ export default class Mistake {
 		const enc = new TextEncoder();
 
 		return hash(enc.encode(hashData));
+	}
+
+	static mergeMistakes(...mistakes: Mistake[]) {
+		const actions = mistakes.flatMap((m) => m.actions);
+		actions.sort((a, b) => a.indexDiff - b.indexDiff);
+
+		const inputTypes = mistakes.map((m) => m.type);
+		const type = inputTypes.every((t) => t === "ADD") ? "ADD" : (inputTypes.every((t) => t === "DEL") ? "DEL" : "MIXED");
+
+		const inputSubtypes = mistakes.map((m) => m.subtype);
+		const subtype = inputSubtypes.every((m) => m === "WORD") ? "WORD" : "MERGED";
+
+		let boundsCheck: Bounds | null = null;
+
+		if (type !== "ADD") {
+			const inputBoundsCheck = mistakes.map((m) => m.boundsCheck).filter((b) => b !== null) as Bounds[];
+			boundsCheck = {
+				start: getMinElement<Bounds>(inputBoundsCheck, (b) => b.start).start,
+				end: getMaxElement<Bounds>(inputBoundsCheck, (b) => b.end).end
+			}
+		}
+
+		let boundsCorrect: Bounds | null = null;
+
+		if (type !== "DEL") {
+			const inputBoundsCorrect = mistakes.map((m) => m.boundsCorrect).filter((b) => b !== null) as Bounds[];
+			boundsCorrect = {
+				start: getMinElement<Bounds>(inputBoundsCorrect, (b) => b.start).start,
+				end: getMaxElement<Bounds>(inputBoundsCorrect, (b) => b.end).end
+			}
+		}
+
+		const inputBoundsDiff = mistakes.map((m) => m.boundsDiff);
+		const boundsDiff: Bounds = {
+			start: getMinElement<Bounds>(inputBoundsDiff, (b) => b.start).start,
+			end: getMaxElement<Bounds>(inputBoundsDiff, (b) => b.end).end
+		}
+
+		const word = mistakes.map((m) => m.word).join(" ");
+		const wordMeta = mistakes.filter((m) => m.wordMeta !== undefined).flatMap((m) => m.wordMeta!);
+
+		return new Mistake({
+			type,
+			subtype,
+			actions,
+			boundsCheck,
+			boundsCorrect,
+			boundsDiff,
+			word,
+			wordMeta
+		});
 	}
 }
