@@ -1,3 +1,4 @@
+import { ITemplate } from './../models/template';
 import DiffONP from '@shared/diff-engine';
 import { IAction, IMistake } from './../models/mistake';
 import { Logger } from 'yatsl';
@@ -32,6 +33,8 @@ type Submission = {
 router.post('/api/loadCSV', async (req: Request, res: Response) => {
 	logger.info("Loading CSV...");
 	let csv = req.body;
+	let workspace = req.query.workspace as string;
+	if(!workspace) return res.send("No workspace specified!");
 	parse(csv, {
 		delimiter: ',',
 		from_line: 2,
@@ -43,7 +46,16 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 		}
 
 		logger.info("Removing previous records...");
-		mongoose.connection.db.dropCollection("submissions");
+		let prevRecords = await Submission.find({workspace: workspace});
+		let cleanTasks = prevRecords.map(async x => {
+			await x.remove();
+		});
+		await Promise.all(cleanTasks);
+		let prevMistakes = await Mistake.find({ workspace: workspace });
+		cleanTasks = prevMistakes.map(async x => {
+			await x.remove();
+		});
+		await Promise.all(cleanTasks);
 
 
 		let result = await Template.find();
@@ -83,19 +95,23 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 						boundsCorrect: val2.boundsCorrect,
 						boundsCheck: val2.boundsCheck,
 						boundsDiff: val2.boundsDiff,
-						hash: hash
+						hash: hash,
+						workspace: workspace,
+						ocurrences: 1
 					};
 					let res = Mistake.build(final);
 					await res.save();
 
 					mistakesDb.push(res._id);
 				} else {
+					results[0].ocurrences++;
+					await results[0].save();
 					mistakesDb.push(results[0]._id);
 				}
 				mistakesProcessed++;
 				logger.info(`Processing of submission #${val.id}... (${mistakesProcessed}/${mistakes.length})`);
 			}
-			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb } });
+			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb, workspace: workspace } });
 			await record.save();
 			logger.info(`Processed submission #${val.id}!`);
 		}
@@ -119,23 +135,26 @@ router.get('/api/listSubmissions', (req: Request, res: Response) => {
 });
 
 // Gets a submission by ID
-router.get('/api/getSubmission', (req: Request, res: Response) => {
-	if (req.query.id === undefined || (req.query.id! as string).match(/\D/)) return res.send("Invalid ID!");
-	let id: number = parseInt(req.query.id! as string);
-	Submission.findOne({ id: id }).exec((err, result) => {
-		if (err) {
-			logger.error(err);
-			return;
-		}
+router.get('/api/getSubmission', async (req: Request, res: Response) => {
+	if (!req.query.id || (req.query.id as string).match(/\D/)) return res.send("Invalid ID!");
+	let workspace = req.query.workspace as string;
+	if (!workspace) return res.send("No workspace specified!");
+	let id: number = parseInt(req.query.id as string);
+	
+	let submission = await Submission.findOne({ id: id, workspace: workspace });
+	if(!submission) return res.send("No such submission!");
 
-		res.send(result!.message);
-	});
+	res.send(submission.message);
 });
 
 // Submits a template to check against
 router.post('/api/submitTemplate', async (req: Request, res: Response) => {
-	mongoose.connection.db.dropCollection("templates");
-	let template = Template.build({ message: req.body });
+	let workspace = req.query.workspace as string;
+	if (!workspace) return res.send("No workspace specified!");
+	let prevTemplate = await Template.find({workspace: workspace});
+	let cleanTask = prevTemplate.map(async x => await x.remove());
+	await Promise.all(cleanTask);
+	let template = Template.build({ message: req.body, workspace: workspace });
 	await template.save();
 	return res.send("Loaded!");
 });
@@ -155,22 +174,40 @@ router.get('/api/getTemplate', async (req: Request, res: Response) => {
 });
 
 // Submits an mistake
-router.post('/api/submitMistake', async (req: Request, res: Response) => {
-	let mistake = Mistake.build(req.body);
-	await mistake.save();
-	return res.send("Loaded!");
-});
+// router.post('/api/submitMistake', async (req: Request, res: Response) => {
+// 	let mistake = Mistake.build(req.body);
+// 	await mistake.save();
+// 	return res.send("Loaded!");
+// });
 
 // Submits a registry entry
 router.post('/api/submitRegister', async (req: Request, res: Response) => {
-	if (await Mistake.find({ "hash": req.query.hash }).count() === 0) return res.send("null");
 	let mistake = await Mistake.findOne({ hash: req.query.hash });
-	if (mistake === null) return res.send("null");
-	let register = Register.build(req.body);
+	if (!mistake) return res.send("No such mistake found!");
+
+	let register = Register.build({...req.body, ...{workspace: mistake!.workspace}});
 	await register.save();
-	mistake!.registerId = register._id;
-	await mistake!.save();
+
+	mistake.registerId = register._id;
+	await mistake.save();
+
 	return res.send("Submitted!");
+});
+
+// Submits a registry entry
+router.post('/api/addToRegister', async (req: Request, res: Response) => {
+	let mistake = await Mistake.findOne({ hash: req.query.hash });
+	if (!mistake) return res.send("No such mistake found!");
+
+	let register = await Register.findOne({ _id: req.query.id });
+	if (!register) return res.send("No such register found");
+
+	if(mistake.workspace !== register.workspace) return res.send("Register and mistake are from different workspaces!");
+
+	mistake.registerId = register._id;
+	await mistake.save();
+
+	return res.send("Added!");
 });
 
 // Gets a list of registry entries
@@ -246,6 +283,59 @@ router.get('/api/getMistakeCount', (req: Request, res: Response) => {
 
 		res.send(data[0].mistakes.length.toString());
 	});
+});
+
+interface ExportedSubmission {
+	id: number;
+	message: string;
+	age: number;
+	language: string;
+	language_other: string;
+	level: string;
+	degree: string;
+	country: string;
+	city: string;
+	state: SubmissionStates;
+	mistakes: string[];
+	workspace: string;
+}
+
+// Exports a workspace
+router.get('/api/exportWorkspace', async (req: Request, res: Response) => {
+	let workspace = req.query.workspace as string;
+	if (!workspace) return res.send("No workspace specified!");
+
+	let submissions = await Submission.find({workspace: workspace});
+	let mistakes = await Mistake.find({workspace: workspace});
+	let template = await Template.findOne({workspace: workspace});
+
+	let finalSubmissionsTask = submissions.map(async x => {
+		let mistakesTask = x.mistakes.map(async y => (await Mistake.findById(y))!.hash);
+		let mistakesList = await Promise.all(mistakesTask);
+		return {
+			id: x.id,
+			message: x.message,
+			age: x.age,
+			language: x.language,
+			language_other: x.language_other,
+			level: x.level,
+			degree: x.degree,
+			country: x.country,
+			city: x.city,
+			state: x.state,
+			mistakes: mistakesList,
+			workspace: x.workspace
+		} as ExportedSubmission
+	});
+	let finalSubmissions = await Promise.all(finalSubmissionsTask);
+	let finalMistakes = mistakes as IMistake[];
+	let finalTemplate = template as ITemplate;
+
+	return res.send(JSON.stringify({
+		submissions: finalSubmissions,
+		mistakes: finalMistakes,
+		template: finalTemplate
+	}));
 });
 
 

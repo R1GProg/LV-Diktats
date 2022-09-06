@@ -21,6 +21,7 @@ interface ISubmission {
 	city: string;
 	state: SubmissionStates;
 	mistakes: mongoose.Schema.Types.ObjectId[];
+	workspace: string;
 }
 
 interface SubmissionDoc extends mongoose.Document {
@@ -35,6 +36,7 @@ interface SubmissionDoc extends mongoose.Document {
 	city: string;
 	state: SubmissionStates;
 	mistakes: mongoose.Schema.Types.ObjectId[];
+	workspace: string;
 }
 
 interface submissionModelInterface extends mongoose.Model<SubmissionDoc> {
@@ -79,7 +81,8 @@ const submissionSchema = new mongoose.Schema({
 	mistakes: [{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: "Mistake"
-	}]
+	}],
+	workspace: String
 });
 
 submissionSchema.statics.build = (attr: ISubmission) => {

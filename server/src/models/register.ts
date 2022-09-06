@@ -4,12 +4,14 @@ interface IRegister {
 	// hash: string;
 	description: string;
 	ignore: boolean;
+	workspace: string;
 	// category: string; // TODO: Perhaps turn this into an enum?
 }
 
 interface RegisterDoc extends mongoose.Document {
 	description: string;
 	ignore: boolean;
+	workspace: string;
 }
 
 interface registerModelInterface extends mongoose.Model<RegisterDoc> {
@@ -22,7 +24,8 @@ const registerSchema = new mongoose.Schema({
 	},
 	ignore: {
 		type: Boolean
-	}
+	},
+	workspace: String
 });
 
 registerSchema.statics.build = (attr: IRegister) => {
