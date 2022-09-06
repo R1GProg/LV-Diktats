@@ -10,9 +10,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf build",
-    "build": "npm-run-all clean build:*",
+    "build": "run-s clean build:*",
     "build:esm": "tsc",
     "build:commonjs": "tsc --project tsconfig-commonjs.json",
+    "dev": "run-s build watch",
     "watch": "chokidar 'src/**/*.ts' -c 'npm run build'",
     "postinstall": "patch-package --exclude='(package\\.json)|(build.*)$'",
     "patch-xxhash": "patch-package xxhash --exclude='(package\\.json)|(build.*)$'"

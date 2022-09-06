@@ -2,6 +2,7 @@
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import { createEventDispatcher } from "svelte";
 	import { mode } from "$lib/ts/stores";
+	import config from "$lib/config.json";
 
 	const dispatch = createEventDispatcher();
 
@@ -19,12 +20,14 @@
 		on:click={() => { onBtnClick(ToolbarMode.READ); }}
 		title="Lasīt"
 	></button>
+	{#if !config.pilotMode}
 	<button
 		class="btn-edit"
 		class:active={$mode === ToolbarMode.EDIT}
 		on:click={() => { onBtnClick(ToolbarMode.EDIT); }}
 		title="Rediģēt"
 	></button>
+	{/if}
 	<button
 		class="btn-merge"
 		class:active={$mode === ToolbarMode.MERGE}

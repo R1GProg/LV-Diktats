@@ -35,16 +35,16 @@ import { updated } from "$app/stores";
 		const id: string = ev.detail.entry;
 		const text = $workspace!.dataset[id].text!;
 // 		submissionText = correctText;
-		submissionText = `Aivars Eipurs
-Mazsālīto gurķu blūzs
-Noņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.
-Uz Jāņiem tirgū nopirku it kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darbavietā pastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.
-Es gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams, bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.
-Nekad nebiju neko konservējis — ne dārzeņus, ne augļus — ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču izbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats šādu saimniekošanas formu nebijām novērojuši.
-Atcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt ingredientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu eiro. Būdams labs fiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu. Tāpat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai diemžēl nebija, tomēr par pirkumu paprasīja četrus eiro un septiņdesmit centus. Ne tikvien samaksāju, bet arī pateicos par konsultāciju.
-Kāds idiots esmu, aptvēru tikai tramvajā. Iznāk, ka par mārrutka lapu biju samaksājis trīs eiro. Tā lapa bija liela, taču ne jau tik liela kā palma vai ziloņa auss.
-Nākamajā reizē visu garšaugu komplektu nopirku par vienu eiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.`;
-		// submissionText = text;
+// 		submissionText = `Aivars Eipurs
+// Mazsālīto gurķu blūzs
+// Noņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.
+// Uz Jāņiem tirgū nopirku it kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darbavietā pastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.
+// Es gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams, bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.
+// Nekad nebiju neko konservējis — ne dārzeņus, ne augļus — ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču izbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats šādu saimniekošanas formu nebijām novērojuši.
+// Atcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt ingredientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu eiro. Būdams labs fiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu. Tāpat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai diemžēl nebija, tomēr par pirkumu paprasīja četrus eiro un septiņdesmit centus. Ne tikvien samaksāju, bet arī pateicos par konsultāciju.
+// Kāds idiots esmu, aptvēru tikai tramvajā. Iznāk, ka par mārrutka lapu biju samaksājis trīs eiro. Tā lapa bija liela, taču ne jau tik liela kā palma vai ziloņa auss.
+// Nākamajā reizē visu garšaugu komplektu nopirku par vienu eiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.`;
+		submissionText = text;
 		updateDiff();
 	}
 
@@ -59,8 +59,6 @@ Nākamajā reizē visu garšaugu komplektu nopirku par vienu eiro, turklāt ar u
 	}
 
 	function onMistakeHover(ev: CustomEvent) {
-		console.log(mistakes.find((mistake) => mistake.id === ev.detail.id));
-		
 		if (ev.detail.source === "LIST") {
 			diffEssayBox.setMistakeHover(ev.detail.id);
 		} else {

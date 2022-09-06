@@ -11,7 +11,7 @@ export interface ActionOpts {
 	char: string,
 	subtype: ActionSubtype,
 	indexDiff?: number,
-	charBefore?: string,
+	charCorrect?: string,
 	mistake?: Mistake,
 }
 
@@ -32,7 +32,7 @@ export default class Action {
 	
 	char: string;
 	
-	charBefore?: string;
+	charCorrect?: string;
 
 	hash: Promise<ActionHash>;
 
@@ -47,7 +47,7 @@ export default class Action {
 		this.indexCorrect = opts.indexCorrect;
 		this.char = opts.char;
 
-		this.charBefore = opts.charBefore;
+		this.charCorrect = opts.charCorrect;
 		this.mistake = opts.mistake;
 
 		this.hash = this.genHash();

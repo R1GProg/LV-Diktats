@@ -2,8 +2,8 @@
 	import { onMount, createEventDispatcher } from "svelte";
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
 	import type Highlighter from "web-highlighter";
-	import type Mistake from "@shared/diff-engine/Mistake";
-	import type { MistakeId } from "@shared/diff-engine/Mistake";
+	import type Mistake from "@shared/diff-engine/src/Mistake";
+	import type { MistakeId } from "@shared/diff-engine/src/Mistake";
 
 	export let editable = false;
 	export let text = "";
@@ -38,6 +38,11 @@
 		textContainer.innerHTML = newText;
 	}
 
+	function addHighlightToMap(highlightId: string, mistakeId: MistakeId) {
+		highlightMap[highlightId] = mistakeId;
+		mistakeMap[mistakeId] = [...(mistakeMap[mistakeId] ?? []), highlightId];
+	}
+
 	function highlightMistakes() {
 		const diffCopy = [...diff];
 		diffCopy.sort((a, b) => b.boundsDiff.start - a.boundsDiff.start);
@@ -52,21 +57,72 @@
 				switch (mistake.type) {
 					case "DEL":
 						id = highlightText(start, end - start, "hl-0");
+
+						if (id) addHighlightToMap(id, mistake.id);
 						break;
 					case "ADD":
 						id = addHighlightedText(start, mistake.word!, "hl-1");
+
+						if (id) addHighlightToMap(id, mistake.id);
 						break;
 					case "MIXED":
-						id = highlightText(start, end - start, "hl-2");
+						{
+							const addActions = mistake.actions.filter((a) => a.type === "ADD").reverse();
+							const delActions = mistake.actions.filter((a) => a.type === "DEL").reverse();
+							const subActions = mistake.actions.filter((a) => a.type === "SUB").reverse();
+
+							// Highlight the actions
+							for (const a of delActions) {
+								const aId = highlightText(a.indexCheck, a.char.length, "hl-20");
+
+								if (aId) addHighlightToMap(aId, mistake.id);
+							}
+
+							for (const a of subActions) {
+								const aId = highlightText(a.indexCheck, a.char.length, "hl-22");
+
+								if (aId) addHighlightToMap(aId, mistake.id);
+							}
+
+							// Highlight the other letters part of the word
+							const filteredMetadata = mistake.wordMeta!.filter((c) => c?.action?.type !== "ADD");
+
+							for (let i = 0; i < filteredMetadata.length; i++) {
+								const char = filteredMetadata[i];
+
+								if (char.type === "ACTION") continue;
+
+								let len = 1;
+
+								while (
+									i + len < filteredMetadata.length
+									&& filteredMetadata[i + len].type !== "ACTION"
+								) {
+									len++;
+								}
+
+								const startIndex = mistake.boundsCheck!.start + i;
+								const aId = highlightText(startIndex, len, "hl-2");
+
+								if (aId) addHighlightToMap(aId, mistake.id);
+
+								i += len - 1;
+							}
+
+							for (const a of addActions) {
+								const aId = addHighlightedText(a.indexCheck, a.char, "hl-21");
+
+								if (aId) addHighlightToMap(aId, mistake.id);
+							}
+						}
+
 						break;
 				}
-
-				if (id) {
-					highlightMap[id] = mistake.id;
-					mistakeMap[mistake.id] = [ id ];
-				}
 			} else {
-				for (const action of mistake.actions) {
+				const actionArrCopy = [...mistake.actions];
+				actionArrCopy.reverse();
+
+				for (const action of actionArrCopy) {
 					let id: string | null;
 
 					switch(action.type) {
@@ -86,7 +142,7 @@
 							}
 							break;
 						case "SUB":
-							id = highlightText(action.indexCheck, action.charBefore!.length, "hl-2");
+							id = highlightText(action.indexCheck, action.char.length, "hl-22");
 							break;
 						case "NONE":
 							id = null;
@@ -202,15 +258,16 @@
 			return null;
 		}
 
+		const textNode = document.createTextNode(text);
+
 		const parentRange = document.createRange();
 		parentRange.setStart(startNode, startOffset);
-
-		const textNode = document.createTextNode(text);
 		parentRange.insertNode(textNode);
+		startNode.parentElement!.normalize();
 
 		const range = document.createRange();
-		range.setStart(textNode, 0);
-		range.setEnd(textNode, text.length);
+		range.setStart(startNode, startOffset);
+		range.setEnd(startNode, startOffset + text.length);
 
 		const id = highlighter.fromRange(range).id;
 		
@@ -220,6 +277,7 @@
 
 		highlighter.addClass("added-text", id);
 		return id;
+		return "";
 	}
 
 	export function setMistakeHover(id: MistakeId) {
@@ -276,7 +334,7 @@
 	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class=".highlight hl-0 hl-1 hl-2 hl-3 hl-status-1 active hover hover-external"></span>
+	<span class=".highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-1 active hover hover-external"></span>
 </div>
 
 <HighlightTooltip bind:this={tooltip}/>
@@ -288,7 +346,8 @@
 		border: 1px solid rgba(0,0,0,0.15);
 		width: calc(100% - 20px);
 		height: calc(100% - 10px);
-		text-align: justify;
+		// text-align: justify;
+		text-align: left;
 		font-size: 1rem;
 		font-family: $FONT_BODY;
 		overflow-y: auto;
@@ -314,6 +373,7 @@
 		cursor: pointer;
 		transition: filter 0.3s, transform 0.3s, background-color 0.3s, color 0.3s;
 		background-color: rgba(255, 255, 0, 0.35);
+		color: black;
 
 		&.hover {
 			filter: brightness(85%);
@@ -325,16 +385,29 @@
 
 		// !!! Note when adding new styles: add the class to the workaround span in the component body !!!
 		&.hl-0 { // DEL
-			color: black;
 			background-color: $COL_MISTAKE_DEL;
 		}
 
 		&.hl-1 { // ADD
-			color: black;
 			background-color: $COL_MISTAKE_ADD;
 		}
 
 		&.hl-2 { // MIXED
+			color: $COL_FG_REG;
+			background-color: rgba($COL_MISTAKE_MIXED, 0.15);
+		}
+
+		&.hl-20 { // MIXED, DEL CHAR
+			color: #852121;
+			background-color: $COL_MISTAKE_MIXED;
+		}
+
+		&.hl-21 { // MIXED, ADD CHAR
+			color: #588630;
+			background-color: $COL_MISTAKE_MIXED;
+		}
+
+		&.hl-22 { // MIXED, SUB CHAR
 			color: black;
 			background-color: $COL_MISTAKE_MIXED;
 		}

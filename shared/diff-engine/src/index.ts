@@ -1,6 +1,7 @@
 import { Bounds, charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
 import Action from "./Action";
-import Mistake, { MistakeOpts } from "./Mistake";
+import Mistake, { MistakeOpts, MistakeType } from "./Mistake";
+import { getMaxElement, getMinElement } from "./util";
 
 // The action done to go from target to source character
 
@@ -8,6 +9,13 @@ interface GridPoint {
 	x: number,
 	y: number,
 	k: number | null,
+}
+
+export interface DiffChar {
+	type: "ACTION" | "EXISTING",
+	char: string,
+	action?: Action, // Defined only for type=ACTION
+	matchedToWord: boolean // A quick and dirty way to prevent duplicate word matches
 }
 
 // Based on
@@ -28,6 +36,7 @@ export default class DiffONP {
 	private checkText: string;
 	private correctText: string;
 	private mistakes: Mistake[] = [];
+	private diff: DiffChar[] = []; // Characters of the diff in sequential order
 
 	constructor(check: string, correct: string) {
 		this.checkText = check;
@@ -154,12 +163,11 @@ export default class DiffONP {
 		this.parseSubstitutions();
 		this.cleanEMDashes();
 
+		this.calcDiffIndex();
+		
 		// Mistake-level PP
 
 		this.mistakes = this.parseWords();
-		// const mistakes = this.parseWords();
-		// console.log(mistakes);
-		// this.mistakes = [];
 
 		// Remove duplicate actions from this.sequence
 		for (const mistake of this.mistakes) {
@@ -167,8 +175,6 @@ export default class DiffONP {
 				this.sequence.splice(this.sequence.findIndex((a) => a.id === action.id), 1);
 			}
 		}
-
-		console.log(this.mistakes.map((v) => v.word));
 		
 		// Add mistake containers to the rest of the actions
 		for (const action of this.sequence) {
@@ -179,15 +185,15 @@ export default class DiffONP {
 				type: action.type === "SUB" || action.type === "NONE" ? "MIXED" : action.type,
 				boundsDiff: { start: action.indexDiff, end: action.indexDiff + action.char.length },
 				subtype: "OTHER",
-				correctText: this.correctText,
-				checkText: this.checkText
+				// correctText: this.correctText,
+				// checkText: this.checkText
 			};
 
 			if (action.type === "ADD" || action.type === "SUB")
 				mistakeOpts.boundsCorrect = { start: action.indexCorrect, end: action.indexCorrect + action.char.length };
 
 			if (action.type === "DEL" || action.type === "SUB")
-				mistakeOpts.boundsCheck = { start: action.indexCheck, end: action.indexCheck + (action.charBefore?.length ?? 1) };
+				mistakeOpts.boundsCheck = { start: action.indexCheck, end: action.indexCheck + action.char.length };
 
 			this.mistakes.push(new Mistake(mistakeOpts));
 		}
@@ -203,35 +209,50 @@ export default class DiffONP {
 		// TODO: Improve this piece of shit
 
 		let checkTextCopy = this.checkText;
+		const seqCopy = [...this.sequence];
+		seqCopy.sort((a, b) => a.indexCheck - b.indexCheck);
 
 		// Add the characters in the checkText, and mark each character with an ID
-		for (let i = this.sequence.length - 1; i >= 0; i--) {
-			const a = this.sequence[i];
+		for (let i = seqCopy.length - 1; i >= 0; i--) {
+			const a = seqCopy[i];
 
 			const contentBefore = checkTextCopy.substring(0, a.indexCheck);
-			const contentAfter = checkTextCopy.substring(a.indexCheck + (a.type === "DEL" ? 1 : 0)); // if DEL, replace the existing character
+
+			const charOffset = a.type !== "ADD" ? a.char.length : 0;
+			const contentAfter = checkTextCopy.substring(a.indexCheck + charOffset);
 
 			checkTextCopy = `${contentBefore}<loc id="${i}">${a.char}</loc>${contentAfter}`;
 		}
 
-		let locMatch: RegExpMatchArray | null;
+		// Parse the generated text into a diff text
+		const locTagRegex = /(?<tag1><loc id="(?<id>\d+?)">)(?<char>.+?|\n)(?<tag2><\/loc>)/m;
 
-		// Iterate over all marked characters and set .indexDiff to their index of their corresponding action
-		do {
-			locMatch = checkTextCopy.match(/(?<tag1><loc id="(?<id>\d+?)">)(?<char>.+?|\n)(?<tag2><\/loc>)/m);
+		// console.log(checkTextCopy);
 
-			if (!locMatch) break;
+		this.diff = [];
 
-			const action = this.sequence[Number(locMatch.groups!.id)];
-			action.indexDiff = locMatch.index!;
+		for (let i = 0; i < checkTextCopy.length; i++) {
+			if (checkTextCopy.substring(i, i + 8) === "<loc id=") {
+				const locMatch = checkTextCopy.substring(i).match(locTagRegex);
 
-			checkTextCopy = `${checkTextCopy.substring(0, locMatch.index)}${locMatch.groups!.char}${checkTextCopy.substring(locMatch.index! + locMatch[0].length)}`;
-		} while(locMatch);
+				if (locMatch) {
+					const action = seqCopy[Number(locMatch.groups!.id)];
+					action.indexDiff = i;
+
+					this.diff.push({ type: "ACTION", char: action.char, action, matchedToWord: false });
+					checkTextCopy = checkTextCopy.replace(locMatch[0], action.char);
+
+					continue;
+				}
+			}
+
+			this.diff.push({ type: "EXISTING", char: checkTextCopy[i], matchedToWord: false });
+		}
 	}
 
 	private consolidatePunctuationWhitespaces() {
 		for (const a of this.sequence) {
-			if (!charIsPunctuation(a.char)) continue;
+			if (!charIsPunctuation(a.char) || a.char === "\"") continue;
 
 			const originalIndexDiff = a.indexDiff;
 
@@ -315,14 +336,14 @@ export default class DiffONP {
 					indexCheck: delA.indexCheck,
 					indexCorrect: a.indexCorrect,
 					indexDiff: a.indexDiff,
-					char: newChar,
-					charBefore: delA.char,
+					char: delA.char,
+					charCorrect: newChar,
 				}));
 
 				delActions.splice(nextDel, 1);
 
 				// Decrement indexDiff from later actions, as a SUB removes one character
-				this.shiftIndexDiff([...addActions, ...delActions], a.indexDiff, -1);
+				// this.shiftIndexDiff([...addActions, ...delActions], a.indexDiff, -1);
 			} else {
 				seqCopy.push(a);
 			}
@@ -339,145 +360,110 @@ export default class DiffONP {
 		}
 	}
 
-	private parseWords() {
-		// Make sure that the ADD operations are in order
-		this.sequence.sort((a, b) => a.indexDiff - b.indexDiff);
+	// start - inclusive, end - exclusive
+	private getDiffWordBounds(startIndex: number): Bounds {
+		const bounds: Bounds = { start: 0, end: this.diff.length - 1 };
 
-		const errWords: Mistake[] = [];
-		const seqCopy = [...this.sequence.filter((action) => action.subtype === "ORTHO")];
+		// Find the start
+		for (let i = startIndex; i >= 0; i--) {
+			const c = this.diff[i];
 
-		// Iterate over all letter errors
-		for (let i = 0; i < seqCopy.length; i++) {
-			const a = seqCopy[i];
-
-			// Check if it is a completely new word being added
-			if (a.type === "ADD") {
-				// If the ADD starts on a word delimiter, it is probably a word
-				let isNewWord = charIsWordDelimeter(this.checkText[a.indexCheck]);
-				let newWordAddActions: Action[] = []; // Used only if isNewWord=true
-				let newWord: string = a.char; // Used only if isNewWord=true
-
-				let curOffset = 1;
-				let indexInMainSequence = this.sequence.findIndex((other) => other.indexDiff === a.indexDiff);
-
-				// Iterate over sequential ADD actions until space or punctuation found
-				while (
-					this.sequence[indexInMainSequence + curOffset]
-					&& this.sequence[indexInMainSequence + curOffset].type === "ADD"
-					&& this.sequence[indexInMainSequence + curOffset].indexDiff - a.indexDiff === curOffset
-				) {
-					const otherA = this.sequence[indexInMainSequence + curOffset];
-
-					if (otherA.subtype !== "ORTHO") {
-						isNewWord = true;
-						break;
-					} else {
-						newWordAddActions.push(otherA);
-						newWord += otherA.char;
-						curOffset++;
-					}
-				}
-
-				// If it is just a stray letter ADD, i.e. only one sequential ADD action, then don't consider it a new word
-				if (isNewWord && newWord.length !== 1) {
-					const word: Mistake = new Mistake({
-						type: "ADD",
-						boundsCorrect: { start: a.indexCorrect, end: a.indexCorrect + newWord.length },
-						boundsDiff: { start: a.indexDiff, end: a.indexDiff + newWord.length },
-						// word: newWord,
-						actions: [a, ...newWordAddActions],
-						subtype: "WORD",
-						correctText: this.correctText,
-						checkText: this.checkText
-					});
-	
-					errWords.push(word);
-	
-					// Remove the remaining ADD actions from seqCopy
-					seqCopy.splice(i + 1, newWordAddActions.length);
-					// seqLengthOffset += newWordAddActions.length;
-	
-					continue;
-				}
+			if (charIsWordDelimeter(c.char) && c.action?.type !== "DEL") {
+				bounds.start = i + 1;
+				break;
 			}
-
-			const bounds: Bounds = getWordBounds(this.checkText, a.indexCheck);
-
-			if (bounds.start - 1 === bounds.end) continue; // In case it is some odd single character thing
-
-			const word = new Mistake({
-				type: "MIXED",
-				boundsCheck: bounds,
-				boundsDiff: { start: 0, end: 0 }, // TBI
-				actions: [],
-				subtype: "WORD",
-				correctText: this.correctText,
-				checkText: this.checkText
-			});
-
-			let actionsInWord = seqCopy.filter((action) => {
-				return (action.indexCheck >= bounds.start && action.indexCheck < bounds.end)
-					// && action.indexCorrect !== a.indexCorrect;
-			});
-
-			actionsInWord.sort((a, b) => a.indexDiff - b.indexDiff);
-
-			// Check if some actions are split off by punctuation
-			const startIndex = this.sequence.findIndex((v) => v === actionsInWord[0]);
-			const endIndex = this.sequence.findIndex((v) => v === actionsInWord[actionsInWord.length - 1]);
-
-			// If the number of elements in both arrays don't match,
-			// then there must be punctuation in between the actions
-			if (endIndex - startIndex !== actionsInWord.length) {
-				// Split off actionsInWord at the point of punctuation
-				for (let i = startIndex; i < endIndex; i++) {
-					if (this.sequence[i].subtype !== "ORTHO") {
-						actionsInWord = actionsInWord.slice(0, i);
-						break;
-					}
-				}
-			}
-
-			console.log(actionsInWord);
-			console.log(seqCopy.map((v) => v.char));
-
-			word.actions.push(...actionsInWord);
-
-			word.boundsDiff = {
-				start: a.indexDiff,
-				end: actionsInWord.length === 0
-					? a.indexDiff + a.char.length
-					: actionsInWord[actionsInWord.length - 1].indexDiff + actionsInWord[actionsInWord.length - 1].char.length
-			};
-
-			let allActionsAreDelete = true;
-
-			for (const action of actionsInWord) {
-				const ind = seqCopy.findIndex((other) => other.indexDiff === action.indexDiff);
-				if (action.type !== "DEL") allActionsAreDelete = false;
-
-				if (ind === i) continue;
-
-				seqCopy.splice(ind, 1);
-			}
-
-			if (allActionsAreDelete && word.actions.length === bounds.end - bounds.start) {
-				word.type = "DEL";
-			} else {
-				const correctBounds = getWordBounds(this.correctText, a.indexCorrect);
-				word.boundsCorrect = correctBounds;
-			}
-
-			errWords.push(word);
 		}
 
-		return errWords;
+		// Find the end
+		for (let i = startIndex; i < this.diff.length; i++) {
+			const c = this.diff[i];
+
+			if (charIsWordDelimeter(this.diff[i].char) && c.action?.type !== "DEL") {
+				bounds.end = i;
+				break;
+			}
+		}
+
+		return bounds;
 	}
 
-	private shiftIndexDiff(arrRef: Action[], shiftStartIndex: number, shiftAmount: number) {
-		for (const otherA of arrRef.filter((otherA) => otherA.indexDiff > shiftStartIndex)) {
-			otherA.indexDiff += shiftAmount;
+	private parseWords(): Mistake[] {
+		const mistakes: Mistake[] = [];
+
+		for (let i = 0; i < this.diff.length; i++) {
+			const charData = this.diff[i];
+
+			if (charData.matchedToWord) continue;
+			if (charData.type === "EXISTING" || charData.action === undefined) continue;
+
+			const rootAction = charData.action;
+
+			if (rootAction.subtype !== "ORTHO") continue;
+
+			// If it is a letter action, get the bounds of the word it is part of
+			const boundsDiff = this.getDiffWordBounds(i);
+
+			// Get all the actions in the diffBounds
+			const charsInWord = this.diff.slice(boundsDiff.start, boundsDiff.end);
+			const actionsInWord = charsInWord.filter((c) => c.type === "ACTION").map((c) => c.action!);
+
+			for (const char of charsInWord) {
+				char.matchedToWord = true;
+			}
+
+			let mistakeType: MistakeType = "MIXED";
+			const allActionsAreDEL = actionsInWord.every((a) => a.type === "DEL") && charsInWord.length === actionsInWord.length;
+			const allActionsAreADD = actionsInWord.every((a) => a.type === "ADD") && charsInWord.length === actionsInWord.length;
+
+			// Make sure the entire word is new
+			if (allActionsAreDEL) mistakeType = "DEL";
+			if (allActionsAreADD) mistakeType = "ADD";
+
+			const wordChars = mistakeType === "MIXED" ? charsInWord.filter((c) => c.action?.type !== "ADD") : charsInWord;
+			const word = wordChars.map((c) => c.char).join("");
+			
+			let boundsCheck: Bounds | null = null;
+			let boundsCorrect: Bounds | null = null;
+
+			if (!allActionsAreDEL) { // DEL words dont have boundsCorrect
+				// const checkActions = actionsInWord.filter((a) => a.type !== "DEL")
+				const checkActions = actionsInWord;
+
+				const startOffset = charsInWord.findIndex((v) => v.type === "ACTION");
+
+				boundsCorrect = {
+					start: getMinElement<Action>(checkActions, (a) => a.indexCorrect).indexCorrect - startOffset,
+					end: getMaxElement<Action>(checkActions, (a) => a.indexCorrect).indexCorrect,
+				}
+			}
+
+			if (!allActionsAreADD) { // ADD words dont have boundsCheck
+				// const checkActions = actionsInWord.filter((a) => a.type !== "ADD");
+				const checkActions = actionsInWord;
+
+				const startOffset = charsInWord.findIndex((v) => v.type === "ACTION");
+
+				boundsCheck = {
+					start: getMinElement<Action>(checkActions, (a) => a.indexCheck)!.indexCheck - startOffset,
+					end: getMaxElement<Action>(checkActions, (a) => a.indexCheck)!.indexCheck,
+				}
+			}
+
+			const mistake = new Mistake({
+				type: mistakeType,
+				boundsCheck,
+				boundsCorrect,
+				boundsDiff,
+				actions: [...actionsInWord],
+				subtype: "WORD",
+				word,
+				wordMeta: charsInWord
+			});
+
+			mistakes.push(mistake);
 		}
+
+		return mistakes;
 	}
 
 	getDistance() {

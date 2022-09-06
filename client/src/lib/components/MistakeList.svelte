@@ -46,7 +46,13 @@
 				on:focus={onMistakeHover}
 				on:mouseleave={onMistakeHoverOut}
 				on:blur={onMistakeHoverOut}
-				title={JSON.stringify(m.actions.map((a) => ({char: a.char, charBefore: a.charBefore, type: a.type, indexDiff: a.indexDiff})), null, 2)}
+				title={JSON.stringify({
+					actions: m.actions.map((a) => ({char: a.char, charCorrect: a.charCorrect, type: a.type, indexDiff: a.indexDiff})),
+					boundsCheck: m.boundsCheck ?? m.actions[0].indexCheck,
+					boundsCorrect: m.boundsCorrect,
+					boundsDiff: m.boundsDiff,
+					mType: m.subtype
+				}, null, 2)}
 			>
 
 				<!-- <span>konservējis</span> -->
