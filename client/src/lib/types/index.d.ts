@@ -3,6 +3,7 @@ import type { MistakeHash } from "@shared/diff-engine/Mistake";
 export interface EssayEntry {
 	id: string,
 	text: string | null,
+	mistakes?: MistakeHash[]
 }
 
 export interface Workspace {

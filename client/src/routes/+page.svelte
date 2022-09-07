@@ -143,12 +143,6 @@
 
 		setMistakes(mistakes);
 	}
-
-	onMount(() => {
-		if ($workspace !== null) {
-			
-		}
-	});
 </script>
 
 <div class="container">

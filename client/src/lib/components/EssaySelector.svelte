@@ -12,6 +12,7 @@
 	let totalEntries = 0;
 	let noData = true;
 	let submissionModal: SubmissionModal;
+	let mistakeOrderMap: string[];
 
 	// async function fetchData() {
 	// 	const raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
@@ -29,21 +30,29 @@
 	// 	});
 	// }
 
-	async function onSelect(index: number | string) {
+	async function onSelect(index: number | string, selectByMistakeOrder = true) {
 		if ($workspace === null) return;
 
 		let id: string;
+		let setIndex: number;
 
 		if (typeof index === "number") {
-			const keys = Object.keys($workspace.dataset);
-			id = keys[index];
+			if (!selectByMistakeOrder) {
+				const keys = Object.keys($workspace.dataset);
+				id = keys[index];
+			} else {
+				id = mistakeOrderMap[index];
+			}
+
+			setIndex = index;
 		} else {
 			id = index;
+			setIndex = Object.keys($workspace.dataset).findIndex((el) => el === id);
 		}
 
 		if (!$workspace.dataset[id]) return;
 
-		activeIndex = Object.values($workspace.dataset).findIndex((el) => el.id === id);
+		activeIndex = setIndex;
 		activeID = id;
 
 		if (!$workspace.local && $workspace.dataset[id].text === null) {
@@ -77,6 +86,10 @@
 
 		noData = false;
 		const keys = Object.keys($workspace.dataset);
+
+		mistakeOrderMap = keys;
+		mistakeOrderMap.sort((a, b) => $workspace!.dataset[b].mistakes!.length - $workspace!.dataset[a].mistakes!.length);
+
 		totalEntries = keys.length;
 		activeIndex = 0;
 		onSelect(0);

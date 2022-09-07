@@ -16,17 +16,24 @@
 		dispatch("open", { id });
 		modal.close();
 	}
+
+	$: submArray = (() => {
+		const vals = $workspace === null ? [] : Object.values($workspace.dataset);
+		vals.sort((a, b) => b.mistakes!.length - a.mistakes!.length);
+		return vals;
+	})();
 </script>
 
 <Modal title="Visi iesūtījumi" userClose={true} bind:this={modal}>
 	<div class="listContainer">
 		{#if $workspace !== null}
-		{#each Object.values($workspace.dataset) as entry (entry.id)}
+		{#each submArray as entry (entry.id)}
 			<div
 				data-id={entry.id}
 				on:click={onEntryClick}
 			>
 				<h3 class="id">ID{entry.id}</h3>
+				<span class="errnr">{entry?.mistakes?.length} kļūdas</span>
 				<span class="open">Atvērt</span>
 			</div>
 		{/each}
@@ -64,6 +71,10 @@
 				.open {
 					opacity: 1;
 				}
+			}
+
+			span {
+				font-family: $FONT_BODY;
 			}
 
 			h3 {

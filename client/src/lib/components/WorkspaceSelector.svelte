@@ -3,9 +3,10 @@
 	import { onMount } from "svelte";
 	import WorkspaceUploader from "./modals/WorkspaceUploader.svelte";
 	import { workspace } from "$lib/ts/stores";
-	import type { Workspace } from "$lib/types";
+	import type { EssayEntry, Workspace } from "$lib/types";
 	import { loadLocalWorkspaces } from "$lib/ts/WorkspaceLocalStorage";
 	import config from "$lib/config.json";
+import { Mistake } from "@shared/diff-engine";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
@@ -69,6 +70,41 @@
 				data: entry,
 			}
 		}
+
+		const req = await fetch("/dataset.json");
+		const pregen = await req.json();
+
+		const template = pregen.template.message;
+		const entries: EssayEntry[] = pregen.submissions
+		.map((s: any) => ({
+			id: s.id,
+			text: s.message,
+			mistakes: s.mistakes
+		}))
+		.filter((e: EssayEntry) => e.text!.length > template.length * config.incompleteFraction);
+
+		const dataset: Record<string, EssayEntry> = {};
+
+		for (const e of entries) {
+			dataset[e.id] = e;
+		}
+
+		const name = "Mazsālīto gurķu blūzs"
+		const key = "gurkubluzs";
+
+		const w: Workspace = {
+			template,
+			dataset,
+			register: {},
+			local: true,
+			name,
+			key
+		};
+
+		data[key] = { key, name, data: w };
+
+		console.log(pregen);
+		console.log(w);
 	});
 </script>
 
