@@ -4,6 +4,28 @@ import { workspace } from "./stores";
 import { get } from "svelte/store";
 import { updateLocalWorkspace } from "./WorkspaceLocalStorage";
 
+function pushToLocalStorage(data: RegisterEntry) {
+	const existingData: RegisterEntry[] = JSON.parse(localStorage.getItem("temp-register") ?? "[]");
+	existingData.push(data);
+	localStorage.setItem("temp-register", JSON.stringify(existingData));
+}
+
+function updateInLocalStorage(data: RegisterEntry) {
+	const existingData: RegisterEntry[] = JSON.parse(localStorage.getItem("local-workspaces") ?? "[]");
+	const existing = existingData.findIndex((w) => w.hash === data.hash);
+	
+	existingData[existing] = data;
+	localStorage.setItem("local-workspaces", JSON.stringify(existingData));
+}
+
+function deleteFromLocalStorage(hash: string) {
+	const existingData: RegisterEntry[] = JSON.parse(localStorage.getItem("local-workspaces") ?? "[]");
+	const existing = existingData.findIndex((w) => w.hash === hash);
+	
+	existingData.splice(existing, 1);
+	localStorage.setItem("local-workspaces", JSON.stringify(existingData));
+}
+
 export class ActionRegister {
 	constructor() {}
 
@@ -12,9 +34,11 @@ export class ActionRegister {
 		if (workspaceVal === null) return;
 
 		const hash = await mistake.genHash(true);
+		const regData = {...data, hash};
 
-		workspaceVal.register[hash] = data;
-		updateLocalWorkspace(workspaceVal);
+		workspaceVal.register[hash] = regData;
+		// updateLocalWorkspace(workspaceVal);
+		pushToLocalStorage(regData);
 	}
 
 	// Returns true if update successful
@@ -24,13 +48,18 @@ export class ActionRegister {
 		if (!this.isMistakeInRegister(mistake)) return false;
 
 		if (typeof mistake === "string") {
-			workspaceVal.register[mistake] = data;
+			const regData = {...data, hash: mistake};
+
+			workspaceVal.register[mistake] = regData;
+			pushToLocalStorage(regData);
 		} else {
 			const hash = await mistake.genHash();
-			workspaceVal.register[hash] = data;
+			const regData = {...data, hash}
+			workspaceVal.register[hash] = regData;
+			pushToLocalStorage(regData);
 		}
 
-		updateLocalWorkspace(workspaceVal);
+		// updateLocalWorkspace(workspaceVal);
 		return true;
 	}
 
@@ -49,6 +78,7 @@ export class ActionRegister {
 		}
 
 		delete workspaceVal.register[hash];
+		deleteFromLocalStorage(hash);
 
 		return true;
 	}

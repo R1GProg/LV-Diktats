@@ -3,10 +3,10 @@
 	import { onMount } from "svelte";
 	import WorkspaceUploader from "./modals/WorkspaceUploader.svelte";
 	import { workspace } from "$lib/ts/stores";
-	import type { EssayEntry, Workspace } from "$lib/types";
-	import { loadLocalWorkspaces } from "$lib/ts/WorkspaceLocalStorage";
+	import type { EssayEntry, RegisterEntry, Workspace } from "$lib/types";
+	import { loadLocalWorkspaces, saveLocalWorkspace } from "$lib/ts/WorkspaceLocalStorage";
 	import config from "$lib/config.json";
-import { Mistake } from "@shared/diff-engine";
+	import type { MistakeHash } from "@shared/diff-engine";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
@@ -92,14 +92,24 @@ import { Mistake } from "@shared/diff-engine";
 		const name = "Mazsālīto gurķu blūzs"
 		const key = "gurkubluzs";
 
+		const tempRegister: RegisterEntry[] = JSON.parse(localStorage.getItem("temp-register") ?? "[]");
+		const register: Record<MistakeHash, RegisterEntry> = {};	
+
+		for (const e of tempRegister) {
+			register[e.hash!] = e;
+		}
+		
 		const w: Workspace = {
 			template,
 			dataset,
-			register: {},
+			register,
 			local: true,
 			name,
-			key
+			key,
+			mistakeData: pregen.mistakes,
 		};
+
+		console.log(w.mistakeData!.find((m) => m.hash === "f933e510665fc0c6"));
 
 		data[key] = { key, name, data: w };
 

@@ -20,6 +20,11 @@
 
 		$workspace.register = $workspace.register;
 	}
+
+	function getMistakeOccurences(hash: string) {
+		console.log($workspace);
+		return $workspace!.mistakeData!.find((m) => m.hash === hash)!.ocurrences;
+	}
 </script>
 
 <table class="container">
@@ -28,6 +33,7 @@
 		<th>Kļūdainais vārds</th>
 		<th>Apraksts</th>
 		<th>Uzskatāma par kļūdu?</th>
+		<th>Gadījumu skaits</th>
 	</tr>
 	{#each Object.keys($workspace.register) as hash (hash)}
 	{@const entry = $workspace.register[hash]}
@@ -35,6 +41,7 @@
 		<td><h3>{entry.word}</h3></td>
 		<td class="desc"><span>{entry.desc}</span></td>
 		<td><span>{entry.ignore ? "Nav kļūda" : ""}</span></td>
+		<td><span>{getMistakeOccurences(hash)}</span></td>
 	</tr>
 	{/each}
 	{:else}
@@ -79,7 +86,7 @@
 			transition: background-color 0.3s;
 
 			display: grid;
-			grid-template-columns: repeat(3, 15vw);	
+			grid-template-columns: repeat(4, 15vw);	
 
 			&.head {
 				border-bottom: 3px solid $COL_FG_DARK;
