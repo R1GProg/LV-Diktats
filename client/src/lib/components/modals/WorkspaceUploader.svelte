@@ -61,12 +61,13 @@
 			}
 
 			const key = encodeURIComponent(uploadData.name.toLowerCase());
-			const workspaceData = {
+			const workspaceData: Workspace = {
 				name: uploadData.name,
 				key,
 				template: processString(data[0]),
 				dataset: entries,
 				local: true,
+				register: {},
 			};
 
 			modalResolve();

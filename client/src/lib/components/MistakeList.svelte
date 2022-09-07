@@ -1,16 +1,17 @@
 <script lang="ts">
-import { mode } from "$lib/ts/stores";
-import { ToolbarMode } from "$lib/ts/toolbar";
-
-	import type { MistakeId } from "@shared/diff-engine/src/Mistake";
-	import type Mistake from "@shared/diff-engine/src/Mistake";
+	import { mode, hideRegistered } from "$lib/ts/stores";
+	import { ToolbarMode } from "$lib/ts/toolbar";
+	import type { Mistake, MistakeId } from "@shared/diff-engine";
 	import { createEventDispatcher } from "svelte";
-	import Diff from "./Diff.svelte";
+	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
+	import type { ActionRegister } from "$lib/ts/ActionRegister";
 
+	export let actionRegister: ActionRegister;
 	let mistakes: Mistake[] = [];
 	let hoverId: MistakeId | null = null;
 	let listContainer: HTMLElement;
 	let activeMergeIDs: string[] = [];
+	let regModal: MistakeRegistrationModal;
 
 	const dispatch = createEventDispatcher();
 
@@ -27,30 +28,59 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 		hoverId = null;
 	}
 
-	function onMistakeHover(ev: Event) {
-		const id = (ev.currentTarget as HTMLElement).dataset.id!;
+	let temp = "";
+
+	async function onMistakeHover(ev: Event) {
+		const target = ev.currentTarget as HTMLElement;
+		const id = target.dataset.id!;
 		hoverId = id;
+
+		const mistake = mistakes.find((m) => m.id === id)!;
+
+		if (mistake.isRegistered) {
+			temp = target.title;
+			target.title = (await actionRegister.getMistakeData(mistake))!.desc;
+		}
+
 		dispatch("hover", { source: "LIST", id });
 	}
 
 	function onMistakeHoverOut(ev: Event) {
-		const id = (ev.currentTarget as HTMLElement).dataset.id!;
+		const target = ev.currentTarget as HTMLElement;
+		const id = target.dataset.id!;
 		hoverId = null;
+
+		const mistake = mistakes.find((m) => m.id === id)!;
+
+		if (mistake.isRegistered) {
+			target.title = temp;
+		}
+
 		dispatch("hoverout", { source: "LIST", id });
 	}
 
-	function onMistakeClick(ev: Event) {
+	async function onMistakeClick(ev: Event) {
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 
-		if ($mode !== ToolbarMode.MERGE) return;
+		switch($mode) {
+			case ToolbarMode.MERGE:
+				if (activeMergeIDs.includes(id)) {
+					activeMergeIDs.splice(activeMergeIDs.findIndex((el) => el === id), 1);
+				} else {
+					activeMergeIDs.push(id);
+				}
 
-		if (activeMergeIDs.includes(id)) {
-			activeMergeIDs.splice(activeMergeIDs.findIndex((el) => el === id), 1);
-		} else {
-			activeMergeIDs.push(id);
+				activeMergeIDs = activeMergeIDs;
+				break;
+			case ToolbarMode.REGISTER:
+				{
+					const data = await regModal.open(mistakes.find((m) => m.id === id)!);
+					dispatch("register", { id, data: data.data, action: data.action });
+				}
+				break;
+			default:
+				return;
 		}
-
-		activeMergeIDs = activeMergeIDs;
 	}
 
 	function onBodyKeypress(ev: KeyboardEvent) {
@@ -74,6 +104,8 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 				class="mistake {m.type}"
 				class:hover={hoverId === m.id}
 				class:merging={activeMergeIDs.includes(m.id)}
+				class:registered={m.isRegistered}
+				class:hidden={m.isRegistered && $hideRegistered}
 				on:mouseenter={onMistakeHover}
 				on:focus={onMistakeHover}
 				on:mouseleave={onMistakeHoverOut}
@@ -98,13 +130,15 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 	</div>
 	<div class="list-footer">
 		<div class="footer-visibility">
-			<input type="checkbox" id="listHideRegistered" title="Slēpt atpazītās kļūdas">
+			<input type="checkbox" id="listHideRegistered" title="Slēpt atpazītās kļūdas" bind:checked={$hideRegistered}>
 			<label for="listHideRegistered" title="Slēpt atpazītās kļūdas">slēpt atpazītās</label>
 		</div>
 		<!-- TODO: <NumLength> (<NumRecognized>) kļūdas -->
 		<span class="footer-mistakes">{mistakes.length} kļūdas</span>
 	</div>
 </div>
+
+<MistakeRegistrationModal bind:this={regModal} />
 
 <style lang="scss">
 	@import "../scss/global.scss";
@@ -220,6 +254,10 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 			outline: 3px solid yellow;
 			box-shadow: 0px 0px 5px 5px yellow;
 			z-index: 5;
+		}
+
+		&.hidden {
+			display: none;
 		}
 	}
 </style>

@@ -2,8 +2,7 @@
 	import { onMount, createEventDispatcher } from "svelte";
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
 	import type Highlighter from "web-highlighter";
-	import type Mistake from "@shared/diff-engine/src/Mistake";
-	import type { MistakeId } from "@shared/diff-engine/src/Mistake";
+	import type { MistakeId, Mistake } from "@shared/diff-engine";
 
 	export let editable = false;
 	export let text = "";
@@ -155,6 +154,12 @@
 					}
 				}
 			}
+
+			if (mistake.isRegistered) {
+				for (const id of mistakeMap[mistake.id]) {
+					highlighter.addClass("hl-status-registered", id);
+				}
+			}
 		}
 	}
 
@@ -188,7 +193,7 @@
 		return { node: startNode, index: startNodeIndex, offset: offset - walkedOffset };
 	}
 
-	function highlightText(offset: number, length: number, style = "") {
+	function highlightText(offset: number, length: number, ...style: string[]) {
 		if (!highlighter) {
 			console.warn("Attempt to highlight before web-highlighter has been imported!");
 			return null;
@@ -234,14 +239,14 @@
 
 		const highlight = highlighter.fromRange(range);
 
-		if (style !== "") {
-			highlighter.addClass(style, highlight.id);
+		for (const entry of style) {
+			highlighter.addClass(entry, highlight.id);
 		}
 
 		return highlight.id;
 	}
 
-	function addHighlightedText(offset: number, text: string, style = "") {
+	function addHighlightedText(offset: number, text: string, ...style: string[]) {
 		if (!highlighter) {
 			console.warn("Attempt to highlight before web-highlighter has been imported!");
 			return null;
@@ -271,13 +276,12 @@
 
 		const id = highlighter.fromRange(range).id;
 		
-		if (style !== "") {
-			highlighter.addClass(style, id);
+		for (const entry of style) {
+			highlighter.addClass(entry, id);
 		}
 
 		highlighter.addClass("added-text", id);
 		return id;
-		return "";
 	}
 
 	export function setMistakeHover(id: MistakeId) {
@@ -334,7 +338,7 @@
 	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class=".highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-1 active hover hover-external"></span>
+	<span class=".highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered active hover hover-external"></span>
 </div>
 
 <HighlightTooltip bind:this={tooltip}/>
@@ -421,8 +425,8 @@
 			// display: inline-block;
 		}
 
-		&.hl-status-1 {
-			filter: brightness(50%);
+		&.hl-status-registered {
+			filter: brightness(25%);
 		}
 
 		// For debugging highlight overlaps

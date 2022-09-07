@@ -4,6 +4,7 @@
 
 	export let title = "";
 	export let confirmLabel = "Ok";
+	export let extraButtons: Record<string, string> = {};
 	let modal: Modal;
 
 	const dispatcher = createEventDispatcher();
@@ -21,6 +22,13 @@
 		dispatcher("cancel");
 		modal.close();
 	}
+
+	function onCustomClick(ev: MouseEvent) {
+		const key = (ev.currentTarget as HTMLElement).dataset.key;
+
+		dispatcher("custom", { key });
+		modal.close();
+	}
 </script>
 
 <Modal title={title} userClose={true} bind:this={modal}>
@@ -28,6 +36,9 @@
 		<slot></slot>
 		<div class="input-container">
 			<button on:click={onCancelClick}>Atcelt</button>
+			{#each Object.keys(extraButtons) as btn}
+				<button data-key={btn} on:click={onCustomClick}>{extraButtons[btn]}</button>
+			{/each}
 			<button on:click={onConfirmClick}>{confirmLabel}</button>
 		</div>
 	</div>
@@ -44,8 +55,9 @@
 
 	.input-container {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		column-gap: 5%;
+		grid-auto-columns: minmax(0, 1fr);
+		grid-auto-flow: column;
+		column-gap: 3.5%;
 		margin-top: 3vh;
 
 		button {

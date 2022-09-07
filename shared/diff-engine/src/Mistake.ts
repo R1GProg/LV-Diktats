@@ -25,7 +25,7 @@ export interface MistakeOpts {
 
 export type MistakeHash = string;
 
-export default class Mistake {
+export class Mistake {
 	actions: Action[] = [];
 
 	type: MistakeType;
@@ -33,6 +33,8 @@ export default class Mistake {
 	subtype: MistakeSubtype;
 
 	registerId?: string;
+
+	isRegistered: boolean;
 
 	boundsCheck: Bounds | null;
 	
@@ -46,6 +48,8 @@ export default class Mistake {
 
 	wordMeta?: DiffChar[];
 
+	private cachedHash: string | null = null;
+
 	constructor(opts: MistakeOpts) {
 		this.id = uuidv4();
 		this.actions = opts.actions;
@@ -57,6 +61,7 @@ export default class Mistake {
 		this.boundsDiff = opts.boundsDiff;
 		this.word = opts.word;
 		this.wordMeta = opts.wordMeta;
+		this.isRegistered = false;
 
 		if (!opts.word && this.subtype === "OTHER") {
 			this.word = this.actions.map((a) => a.char).join();
@@ -78,14 +83,19 @@ export default class Mistake {
 		}
 	}
 
-	async genHash(): Promise<MistakeHash> {
+	async genHash(force = false): Promise<MistakeHash> {
+		if (this.cachedHash && !force) return this.cachedHash;
+
 		const actionCopy = [...this.actions];
 		actionCopy.sort((a, b) => a.indexDiff - b.indexDiff); // Sorting by indexDiff, as the order should always be consistent
 		const hashPromises = actionCopy.map((a) => a.hash);
 		const hashData = (await Promise.all(hashPromises)).join("");
 		const enc = new TextEncoder();
 
-		return hash(enc.encode(hashData));
+		const mHash = await hash(enc.encode(hashData));
+
+		this.cachedHash = mHash;
+		return mHash;
 	}
 
 	static mergeMistakes(...mistakes: Mistake[]) {

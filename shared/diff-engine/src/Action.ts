@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type Mistake from "./Mistake";
+import type { Mistake } from "./Mistake";
 import { hash } from "./xxhash";
 export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
 export type ActionSubtype = "PUNCT" | "ORTHO" | "SPACE";

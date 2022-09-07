@@ -4,3 +4,4 @@ import { ToolbarMode } from "./toolbar";
 
 export const workspace = writable<Workspace | null>(null);
 export const mode = writable<ToolbarMode>(ToolbarMode.READ);
+export const hideRegistered = writable<boolean>(false);

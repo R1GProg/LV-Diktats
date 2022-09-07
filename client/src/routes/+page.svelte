@@ -3,8 +3,10 @@
 	import EssaySelector from "$lib/components/EssaySelector.svelte";
 	import MistakeList from "$lib/components/MistakeList.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
+	import { ActionRegister } from "$lib/ts/ActionRegister";
 	import { workspace, mode } from "$lib/ts/stores";
 	import { ToolbarMode } from "$lib/ts/toolbar";
+	import type { RegisterEntry, RegisterEntryAction } from "$lib/types";
 	import DiffONP, { Mistake } from "@shared/diff-engine";
 
 	let correctText = "";
@@ -14,6 +16,7 @@
 	let submissionEssayBox: EssayBox;
 	let mistakeList: MistakeList;
 	let mistakes: Mistake[] = [];
+	const actionRegister = new ActionRegister();
 
 	$: if ($workspace !== null) {
 		correctText = $workspace.template;
@@ -23,7 +26,7 @@
 		diffEssayBox?.setPlainText("");
 	}
 
-	function onSubmissionSelect(ev: CustomEvent) {
+	async function onSubmissionSelect(ev: CustomEvent) {
 		if (!$workspace) {
 			console.error("Attempt to load submission text without workspace!");
 			return;
@@ -51,8 +54,20 @@
 		setMistakes(diff.getMistakes());
 	}
 
-	function setMistakes(newMistakes: Mistake[]) {
+	async function setMistakes(newMistakes: Mistake[]) {
 		mistakes = newMistakes;
+
+		let registerPromises: Promise<void>[] = [];
+
+		for (const m of mistakes) {
+			registerPromises.push(new Promise<void>(async (res) => {
+				m.isRegistered = await actionRegister.isMistakeInRegister(m);
+				res();
+			}));
+		}
+
+		await Promise.all(registerPromises);
+
 		mistakeList.set(mistakes);
 		diffEssayBox.set(submissionText, mistakes);
 	}
@@ -91,7 +106,7 @@
 		const ids: string[] = ev.detail.ids;
 		const newMistakes = [...mistakes];
 		
-		const mergedMistakes = ids.map((id) => mistakes.find((m) => m.id === id));
+		const mergedMistakes = ids.map((id) => mistakes.find((m) => m.id === id)!);
 		const mergedMistake = Mistake.mergeMistakes(...mergedMistakes);
 
 		for (const id of ids) {
@@ -102,6 +117,30 @@
 		newMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
 		setMistakes(newMistakes);
+	}
+
+	async function onMistakeRegister(ev: CustomEvent) {
+		const id = ev.detail.id as string;
+		const data = ev.detail.data as RegisterEntry;
+		const action = ev.detail.action as RegisterEntryAction;
+		const mistake: Mistake = mistakes.find((m) => m.id === id)!;
+
+		switch (action) {
+			case "ADD":
+				await actionRegister.addMistakeToRegister(mistake, data);
+				mistake.isRegistered = true;
+				break;
+			case "EDIT":
+				await actionRegister.updateMistakeInRegister(mistake, data);
+				mistake.isRegistered = true;
+				break;
+			case "DELETE":
+				await actionRegister.deleteMistakeFromRegister(mistake);
+				mistake.isRegistered = false;
+				break;
+		}
+
+		setMistakes(mistakes);
 	}
 </script>
 
@@ -135,10 +174,12 @@
 		</div>
 		<div class="info-mistakes">
 			<MistakeList
+				actionRegister={actionRegister}
 				bind:this={mistakeList}
 				on:hover={onMistakeHover}
 				on:hoverout={onMistakeHoverOut}
 				on:merge={onMistakeMerge}
+				on:register={onMistakeRegister}
 			/>
 		</div>
 	</div>

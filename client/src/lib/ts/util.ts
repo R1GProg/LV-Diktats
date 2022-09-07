@@ -1,3 +1,5 @@
+import type { Writable } from "svelte/store";
+
 export function readTextFile(file: File) {
 	return new Promise<string | null>((res, rej) => {
 		const reader = new FileReader();

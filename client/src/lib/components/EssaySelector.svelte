@@ -3,7 +3,7 @@
 	import { workspace } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import { processString } from "@shared/normalization";
-import SubmissionModal from "./modals/SubmissionModal.svelte";
+	import SubmissionModal from "./modals/SubmissionModal.svelte";
 
 	const dispatch = createEventDispatcher();
 
