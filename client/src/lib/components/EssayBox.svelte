@@ -3,6 +3,7 @@
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
 	import type Highlighter from "web-highlighter";
 	import type { MistakeId, Mistake } from "@shared/diff-engine";
+	import type { Action } from "@shared/diff-engine";
 
 	export let editable = false;
 	export let text = "";
@@ -83,8 +84,30 @@
 								if (aId) addHighlightToMap(aId, mistake.id);
 							}
 
+							// Initially set all characters as existing
+							const wordMeta: {
+								char: string,
+								type: "ACTION" | "EXISTING",
+								action?: Action
+							}[] = mistake.word.split("").map((c) => ({ char:c, type: "EXISTING" }));
+
+							for (const a of mistake.actions) {
+								const charIndex = a.indexDiff - mistake.boundsDiff.start;
+
+								if (a.type === "ADD") {
+									wordMeta.splice(charIndex, 0, {
+										char: a.char,
+										type: "ACTION",
+										action: a,
+									});
+								} else {
+									wordMeta[charIndex] = { char: a.char, type: "ACTION", action: a };
+								}
+							}
+
 							// Highlight the other letters part of the word
-							const filteredMetadata = mistake.wordMeta!.filter((c) => c?.action?.type !== "ADD");
+							// const filteredMetadata = mistake.wordMeta!.filter((c) => c?.action?.type !== "ADD");
+							const filteredMetadata = wordMeta.filter((c) => c?.action?.type !== "ADD");
 
 							for (let i = 0; i < filteredMetadata.length; i++) {
 								const char = filteredMetadata[i];

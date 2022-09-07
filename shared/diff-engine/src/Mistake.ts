@@ -1,4 +1,4 @@
-import type Action from "./Action";
+import type { Action } from "./Action";
 import { Bounds } from "./langUtil";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
@@ -18,7 +18,6 @@ export interface MistakeOpts {
 	boundsCorrect?: Bounds | null,
 	boundsDiff: Bounds,
 	word?: string,
-	wordMeta?: DiffChar[],
 	// correctText: string, // Used for word substring
 	// checkText: string,
 }
@@ -46,8 +45,6 @@ export class Mistake {
 
 	id: MistakeId;
 
-	wordMeta?: DiffChar[];
-
 	private cachedHash: string | null = null;
 
 	constructor(opts: MistakeOpts) {
@@ -59,7 +56,6 @@ export class Mistake {
 		this.boundsCheck = opts.boundsCheck ?? null;
 		this.boundsCorrect = opts.boundsCorrect ?? null;
 		this.boundsDiff = opts.boundsDiff;
-		this.wordMeta = opts.wordMeta;
 		this.isRegistered = false;
 
 		if (!opts.word && this.subtype === "OTHER") {
@@ -136,7 +132,6 @@ export class Mistake {
 		}
 
 		const word = mistakes.map((m) => m.word).join(" ");
-		const wordMeta = mistakes.filter((m) => m.wordMeta !== undefined).flatMap((m) => m.wordMeta!);
 
 		return new Mistake({
 			type,
@@ -145,8 +140,7 @@ export class Mistake {
 			boundsCheck,
 			boundsCorrect,
 			boundsDiff,
-			word,
-			wordMeta
+			word
 		});
 	}
 }

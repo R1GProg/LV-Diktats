@@ -1,5 +1,5 @@
 import { Bounds, charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
-import Action from "./Action";
+import { Action } from "./Action";
 import { Mistake, MistakeOpts, MistakeType } from "./Mistake";
 import { getMaxElement, getMinElement } from "./util";
 
@@ -456,8 +456,7 @@ export default class DiffONP {
 				boundsDiff,
 				actions: [...actionsInWord],
 				subtype: "WORD",
-				word,
-				wordMeta: charsInWord
+				word
 			});
 
 			mistakes.push(mistake);

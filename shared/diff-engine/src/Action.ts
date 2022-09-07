@@ -17,7 +17,7 @@ export interface ActionOpts {
 
 export type ActionHash = string;
 
-export default class Action {
+export class Action {
 	id: string;
 	
 	type: ActionType;
