@@ -1,7 +1,8 @@
 import type { RegisterEntry } from "$lib/types";
-import type { Mistake } from "@shared/diff-engine";
+import type { Mistake, MistakeHash } from "@shared/diff-engine";
 import { workspace } from "./stores";
 import { get } from "svelte/store";
+import { updateLocalWorkspace } from "./WorkspaceLocalStorage";
 
 export class ActionRegister {
 	constructor() {}
@@ -13,37 +14,54 @@ export class ActionRegister {
 		const hash = await mistake.genHash(true);
 
 		workspaceVal.register[hash] = data;
+		updateLocalWorkspace(workspaceVal);
 	}
 
 	// Returns true if update successful
-	async updateMistakeInRegister(mistake: Mistake, data: RegisterEntry) {
+	async updateMistakeInRegister(mistake: Mistake | MistakeHash, data: RegisterEntry) {
 		const workspaceVal = get(workspace);
 		if (workspaceVal === null) return false;
 		if (!this.isMistakeInRegister(mistake)) return false;
 
-		const hash = await mistake.genHash();
-		workspaceVal.register[hash] = data;
+		if (typeof mistake === "string") {
+			workspaceVal.register[mistake] = data;
+		} else {
+			const hash = await mistake.genHash();
+			workspaceVal.register[hash] = data;
+		}
 
+		updateLocalWorkspace(workspaceVal);
 		return true;
 	}
 
 	// Returns true if successful
-	async deleteMistakeFromRegister(mistake: Mistake) {
+	async deleteMistakeFromRegister(mistake: Mistake | MistakeHash) {
 		const workspaceVal = get(workspace);
 		if (workspaceVal === null) return false;
 		if (!this.isMistakeInRegister(mistake)) return false;
 
-		const hash = await mistake.genHash();
+		let hash: MistakeHash;
+
+		if (typeof mistake === "string") {
+			hash = mistake;
+		} else {
+			hash = await mistake.genHash();
+		}
+
 		delete workspaceVal.register[hash];
 
 		return true;
 	}
 
-	async isMistakeInRegister(mistake: Mistake) {
+	async isMistakeInRegister(mistake: Mistake | MistakeHash) {
 		const workspaceVal = get(workspace);
 		if (workspaceVal === null) return false;
 
-		return Object.keys(workspaceVal.register).includes(await mistake.genHash());
+		if (typeof mistake === "string") {
+			return Object.keys(workspaceVal.register).includes(mistake);
+		} else {
+			return Object.keys(workspaceVal.register).includes(await mistake.genHash());
+		}
 	}
 
 	async getMistakeData(mistake: Mistake) {

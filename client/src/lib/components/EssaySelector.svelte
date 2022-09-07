@@ -67,20 +67,33 @@
 		onSelect(activeIndex + delta);
 	}
 
-	$: if ($workspace) {
+	function onEntryOpen(ev: CustomEvent) {
+		const id = ev.detail.id as string;
+		onSelect(id);
+	}
+
+	function initWorkspace() {
+		if ($workspace === null) return;
+
 		noData = false;
 		const keys = Object.keys($workspace.dataset);
 		totalEntries = keys.length;
 		activeIndex = 0;
 		onSelect(0);
+	}
+
+	$: if ($workspace) {
+		initWorkspace();
 	} else if ($workspace === null) {
 		noData = true;
 	}
 
-	function onEntryOpen(ev: CustomEvent) {
-		const id = ev.detail.id as string;
-		onSelect(id);
-	}
+	onMount(() => {
+		// A quick and dirty hack
+		setTimeout(() => {
+			initWorkspace();
+		}, 500);
+	});
 </script>
 
 <div class="container">

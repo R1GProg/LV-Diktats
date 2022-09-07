@@ -1,4 +1,4 @@
-import type { MistakeHash } from "@shared/diff-engine/src/Mistake";
+import type { MistakeHash } from "@shared/diff-engine/Mistake";
 
 export interface EssayEntry {
 	id: string,
@@ -17,6 +17,8 @@ export interface Workspace {
 export interface RegisterEntry {
 	desc: string,
 	ignore: boolean,
+	word: string,
+	wordCorrect: string,
 }
 
 export type RegisterEntryAction = "ADD" | "DELETE" | "EDIT";

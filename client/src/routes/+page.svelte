@@ -8,6 +8,7 @@
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import type { RegisterEntry, RegisterEntryAction } from "$lib/types";
 	import DiffONP, { Mistake } from "@shared/diff-engine";
+	import { onMount } from "svelte";
 
 	let correctText = "";
 	let submissionText = "";
@@ -142,6 +143,12 @@
 
 		setMistakes(mistakes);
 	}
+
+	onMount(() => {
+		if ($workspace !== null) {
+			
+		}
+	});
 </script>
 
 <div class="container">

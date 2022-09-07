@@ -42,7 +42,7 @@ export class Mistake {
 
 	boundsDiff: Bounds;
 
-	word?: string;
+	word: string;
 
 	id: MistakeId;
 
@@ -59,7 +59,6 @@ export class Mistake {
 		this.boundsCheck = opts.boundsCheck ?? null;
 		this.boundsCorrect = opts.boundsCorrect ?? null;
 		this.boundsDiff = opts.boundsDiff;
-		this.word = opts.word;
 		this.wordMeta = opts.wordMeta;
 		this.isRegistered = false;
 
@@ -68,6 +67,8 @@ export class Mistake {
 			this.word = this.word.replace(/\n/g, "\\n");
 
 			if (this.word === " ") this.word = "\" \"";
+		} else {
+			this.word = opts.word!;
 		}
 		
 		// if (this.subtype === "WORD") {
