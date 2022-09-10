@@ -7,11 +7,13 @@
 	import { loadLocalWorkspaces, saveLocalWorkspace } from "$lib/ts/WorkspaceLocalStorage";
 	import config from "$lib/config.json";
 	import type { MistakeHash } from "@shared/diff-engine";
+	import LoadingWorkspaceStatus from "./modals/status/LoadingWorkspaceStatus.svelte";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
 	let active = "";
 	let workspaceUploader: WorkspaceUploader;
+	let workspaceLoader: LoadingWorkspaceStatus;
 
 	async function fetchAvailableWorkspaces() {
 		const request = await fetch(`${config.endpointUrl}/api/listWorkspaces`);
@@ -63,7 +65,9 @@
 		}
 
 		// TODO: Load server workspaces here
-		const request = await fetch(`${config.endpointUrl}/api/exportWorkspace?workspace=${key}`);
+		const requestPromise = fetch(`${config.endpointUrl}/api/exportWorkspace?workspace=${key}`);
+		workspaceLoader.open(requestPromise);
+		const request = await requestPromise;
 		const workspaceRaw = await request.json();
 		
 		const template = workspaceRaw.template.message;
@@ -171,6 +175,7 @@
 </div>
 
 <WorkspaceUploader bind:this={workspaceUploader} />
+<LoadingWorkspaceStatus bind:this={workspaceLoader} />
 
 <style lang="scss">
 	@import "../scss/global.scss";
