@@ -1,6 +1,6 @@
-import { Bounds, charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
+import { charIsPunctuation, charIsWordDelimeter, getWordBounds } from "./langUtil";
 import { Action } from "./Action";
-import { Mistake, MistakeOpts, MistakeType } from "./Mistake";
+import { Bounds, Mistake, MistakeOpts, MistakeType } from "./Mistake";
 import { getMaxElement, getMinElement } from "./util";
 
 // The action done to go from target to source character

@@ -1,10 +1,10 @@
 import type { Action } from "./Action";
-import { Bounds } from "./langUtil";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
 import { DiffChar } from ".";
 import { getMaxElement, getMinElement } from "./util";
 
+export type Bounds = { start: number, end: number };
 export type MistakeType = "ADD" | "DEL" | "MIXED";
 export type MistakeSubtype = "WORD" | "OTHER" | "MERGED";
 export type MistakeId = string;

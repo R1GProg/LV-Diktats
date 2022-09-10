@@ -4,6 +4,8 @@
 	import type Highlighter from "web-highlighter";
 	import type { MistakeId, Mistake } from "@shared/diff-engine";
 	import type { Action } from "@shared/diff-engine";
+	import { mode } from "$lib/ts/stores";
+import { ToolbarMode } from "$lib/ts/toolbar";
 
 	export let editable = false;
 	export let text = "";
@@ -287,15 +289,16 @@
 		}
 
 		const textNode = document.createTextNode(text);
-
 		const parentRange = document.createRange();
 		parentRange.setStart(startNode, startOffset);
 		parentRange.insertNode(textNode);
 		startNode.parentElement!.normalize();
 
+		const rangeNode = startNode.textContent === "" ? textContainer.firstChild! : startNode;
+
 		const range = document.createRange();
-		range.setStart(startNode, startOffset);
-		range.setEnd(startNode, startOffset + text.length);
+		range.setStart(rangeNode, startOffset);
+		range.setEnd(rangeNode, startOffset + text.length);
 
 		const id = highlighter.fromRange(range).id;
 		
@@ -350,6 +353,15 @@
 		});
 	}
 
+	function onKeyPress(ev: KeyboardEvent) {
+		console.log("press");
+		if (ev.key !== "Enter") return;
+		if ($mode !== ToolbarMode.IGNORE) return;
+
+		const selection = window.getSelection();
+		console.log(selection);
+	}
+
 	onMount(async () => {
 		// actionRegister.loadActionRegister();
 
@@ -357,8 +369,13 @@
 	});
 </script>
 
-<div class="textbox">
-	<span class="container" bind:this={textContainer} contenteditable={editable} spellcheck="false">{text}</span>
+<div class="textbox" on:keypress={onKeyPress}>
+	<span
+		class="container"
+		bind:this={textContainer}
+		contenteditable={editable}
+		spellcheck="false"
+	>{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
 	<span class=".highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered active hover hover-external"></span>

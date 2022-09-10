@@ -109,12 +109,7 @@
 			mistakeData: pregen.mistakes,
 		};
 
-		console.log(w.mistakeData!.find((m) => m.hash === "f933e510665fc0c6"));
-
 		data[key] = { key, name, data: w };
-
-		console.log(pregen);
-		console.log(w);
 	});
 </script>
 

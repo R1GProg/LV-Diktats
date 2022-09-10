@@ -1,3 +1,5 @@
+import { Bounds } from "./Mistake";
+
 export function charIsPunctuation(char: string): boolean {
 	return (char !== undefined && char?.match(/[,.\?!";:\-—\(\)]/) !== null);
 }
@@ -5,8 +7,6 @@ export function charIsPunctuation(char: string): boolean {
 export function charIsWordDelimeter(char: string): boolean {
 	return charIsPunctuation(char) || char === " " || char === "\n";
 }
-
-export type Bounds = { start: number, end: number };
 
 export function getWordBounds(text: string, startIndex: number): Bounds {
 	const bounds: Bounds = { start: 0, end: text.length };

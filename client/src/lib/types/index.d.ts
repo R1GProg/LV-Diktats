@@ -1,11 +1,10 @@
-import type { MistakeType } from "@shared/diff-engine";
-import type { Bounds } from "@shared/diff-engine/build/esm/langUtil";
-import type { MistakeHash } from "@shared/diff-engine/Mistake";
+import type { MistakeType, Bounds, MistakeHash } from "@shared/diff-engine";
 
 export interface EssayEntry {
 	id: string,
 	text: string | null,
-	mistakes?: MistakeHash[]
+	mistakes?: MistakeHash[],
+	ignoredText: Bounds[]
 }
 
 export interface PregenMistake {

@@ -61,7 +61,8 @@
 
 			$workspace.dataset[id] = {
 				id,
-				text: processString(data)
+				text: processString(data),
+				ignoredText: [],
 			};
 
 			dispatch("select", { entry: id });
