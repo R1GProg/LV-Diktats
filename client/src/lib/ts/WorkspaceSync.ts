@@ -47,7 +47,7 @@ export default class WorkspaceSync {
 			return;
 		}
 		
-		if (w === null && this.hasUnsavedChanges) {
+		if (w === null || w !== this.prevWorkspace && this.hasUnsavedChanges) {
 			this.save(this.prevWorkspace, false);
 			return;
 		}
