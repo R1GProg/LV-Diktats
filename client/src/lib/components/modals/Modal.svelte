@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { createEventDispatcher, onMount } from "svelte";
 	export let userClose = true;
 	export let title = "";
 	export let closeTime = 100;
@@ -8,6 +8,8 @@
 	let closeAnim = false;
 	let closeTimeout: number | null = null;
 	let container: HTMLElement;
+
+	const dispatch = createEventDispatcher();
 
 	export function isOpen() {
 		return stateOpen;
@@ -24,6 +26,7 @@
 
 	export function close() {
 		closeAnim = true;
+		dispatch("close");
 
 		closeTimeout = window.setTimeout(() => {
 			stateOpen = false;

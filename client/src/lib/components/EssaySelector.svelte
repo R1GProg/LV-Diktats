@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
-	import { workspace } from "$lib/ts/stores";
+	import { workspace, sort, SortMode } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import { processString } from "@shared/normalization";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
@@ -30,14 +30,14 @@
 	// 	});
 	// }
 
-	async function onSelect(index: number | string, selectByMistakeOrder = true) {
+	async function onSelect(index: number | string) {
 		if ($workspace === null) return;
 
 		let id: string;
 		let setIndex: number;
 
 		if (typeof index === "number") {
-			if (!selectByMistakeOrder) {
+			if ($sort === SortMode.ID) {
 				const keys = Object.keys($workspace.dataset);
 				id = keys[index];
 			} else {
@@ -107,6 +107,10 @@
 			initWorkspace();
 		}, 500);
 	});
+
+	function onSortChange() {
+		initWorkspace();
+	}
 </script>
 
 <div class="container">
@@ -121,7 +125,7 @@
 	{/if}
 </div>
 
-<SubmissionModal bind:this={submissionModal} on:open={onEntryOpen}/>
+<SubmissionModal bind:this={submissionModal} on:open={onEntryOpen} on:sortchange={onSortChange}/>
 
 <style lang="scss">
 	@import "../scss/global.scss";

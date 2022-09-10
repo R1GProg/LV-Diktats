@@ -1,14 +1,16 @@
 <script lang="ts">
 	import Modal from "./Modal.svelte";
-	import { workspace } from "$lib/ts/stores";
+	import { SortMode, workspace, sort } from "$lib/ts/stores";
 	import { createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher();
 
 	let modal: Modal;
+	let openSortMode: SortMode;
 
 	export function open() {
 		modal.open();
+		openSortMode = $sort;
 	}
 
 	function onEntryClick(ev: MouseEvent) {
@@ -17,14 +19,33 @@
 		modal.close();
 	}
 
+	function onClose() {
+		if ($sort !== openSortMode) {
+			dispatch("sortchange");
+		}
+	}
+
 	$: submArray = (() => {
 		const vals = $workspace === null ? [] : Object.values($workspace.dataset);
-		vals.sort((a, b) => b.mistakes!.length - a.mistakes!.length);
+
+		if ($sort === SortMode.ID) {
+			vals.sort((a, b) => Number(a.id) - Number(b.id));
+		} else {
+			vals.sort((a, b) => b.mistakes!.length - a.mistakes!.length);
+		}
+		
 		return vals;
 	})();
 </script>
 
-<Modal title="Visi iesūtījumi" userClose={true} bind:this={modal}>
+<Modal title="Visi iesūtījumi" userClose={true} bind:this={modal} on:close={onClose}>
+	<div class="sortSelect">
+		<select bind:value={$sort}>
+			<option value={SortMode.MISTAKE}>Kārtot pēc kļūdu skaita</option>
+			<option value={SortMode.ID}>Kārtot pēc ID</option>
+		</select>
+	</div>
+
 	<div class="listContainer">
 		{#if $workspace !== null}
 		{#each submArray as entry (entry.id)}
@@ -44,13 +65,20 @@
 <style lang="scss">
 	@import "../../scss/global";
 
+	.sortSelect {
+		@include dropdown(3.5rem);
+
+		margin-bottom: 1rem;
+		width: 100%;
+	}
+
 	.listContainer {
 		display: grid;
 		grid-auto-flow: row;
 		max-height: 70vh;
 		min-width: 20vw;
 		overflow-y: auto;
-		padding: 1vw;
+		padding: 0 1vw 1vw 1vw;
 
 		@include scrollbar;
 

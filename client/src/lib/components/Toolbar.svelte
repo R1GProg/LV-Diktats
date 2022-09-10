@@ -29,6 +29,12 @@
 	></button>
 	{/if}
 	<button
+		class="btn-ignore"
+		class:active={$mode === ToolbarMode.IGNORE}
+		on:click={() => { onBtnClick(ToolbarMode.IGNORE) }}
+		title="Izņemt tekstu"
+	></button>
+	<button
 		class="btn-merge"
 		class:active={$mode === ToolbarMode.MERGE}
 		on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
@@ -83,6 +89,14 @@
 
 				-webkit-mask-size: 80%;
 				mask-size: 80%;
+			}
+
+			&.btn-ignore {
+				-webkit-mask-image: url(/icons/icon-ignore.svg);
+				mask-image: url(/icons/icon-ignore.svg);
+
+				-webkit-mask-size: 100%;
+				mask-size: 100%;
 			}
 
 			&.btn-merge {
