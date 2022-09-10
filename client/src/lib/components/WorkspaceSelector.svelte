@@ -13,8 +13,15 @@
 	let active = "";
 	let workspaceUploader: WorkspaceUploader;
 
-	function fetchAvailableWorkspaces() {
-		throw "NYI";
+	async function fetchAvailableWorkspaces() {
+		const request = await fetch(`${config.endpointUrl}/api/listWorkspaces`);
+		const workspaces: string[] = await request.json();
+		for (const workspaceEntry of workspaces) {
+			data[workspaceEntry] = {
+				key: workspaceEntry,
+				name: `${workspaceEntry} (Online)`
+			}
+		}
 	}
 
 	async function loadWorkspace(key: string) {
@@ -56,6 +63,43 @@
 		}
 
 		// TODO: Load server workspaces here
+		const request = await fetch(`${config.endpointUrl}/api/exportWorkspace?workspace=${key}`);
+		const workspaceRaw = await request.json();
+		
+		const template = workspaceRaw.template.message;
+		const entries: EssayEntry[] = workspaceRaw.submissions
+		.map((s: any) => ({
+			id: s.id,
+			text: s.message,
+			mistakes: s.mistakes
+		}))
+		.filter((e: EssayEntry) => e.text!.length > template.length * config.incompleteFraction);
+
+		const dataset: Record<string, EssayEntry> = {};
+
+		for (const e of entries) {
+			dataset[e.id] = e;
+		}
+
+		const tempRegister: any[] = workspaceRaw.register;
+		const register: Record<MistakeHash, RegisterEntry> = {};	
+
+		for (const e of tempRegister) {
+			register[e._id!] = e;
+		}
+		
+		const w: Workspace = {
+			template,
+			dataset,
+			register,
+			local: false,
+			name: data[key].name,
+			key,
+			mistakeData: workspaceRaw.mistakes,
+		};
+
+		data[key].data = w;
+		$workspace = w;
 	}
 
 	onMount(async () => {

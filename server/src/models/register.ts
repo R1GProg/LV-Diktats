@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface IRegister {
+export interface IRegister {
 	// hash: string;
 	description: string;
 	ignore: boolean;

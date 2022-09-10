@@ -10,7 +10,7 @@ import { Template } from '../models/template';
 import { Mistake } from '../models/mistake';
 import cors from 'cors';
 import { processString } from '@shared/normalization';
-import { Register } from '../models/register';
+import { IRegister, Register } from '../models/register';
 
 const logger = new Logger();
 const router = express.Router();
@@ -307,12 +307,32 @@ router.get('/api/exportWorkspace', async (req: Request, res: Response) => {
 
 	let submissions = await Submission.find({workspace: workspace});
 	let mistakes = await Mistake.find({workspace: workspace});
-	let template = await Template.findOne({workspace: workspace});
+	let template = await Template.findOne({ workspace: workspace });
+	let register = await Register.find({ workspace: workspace });
 
-	let finalSubmissionsTask = submissions.map(async x => {
-		let mistakesTask = x.mistakes.map(async y => (await Mistake.findById(y))!.hash);
-		let mistakesList = await Promise.all(mistakesTask);
-		return {
+	// let finalSubmissionsTask = submissions.map(async x => {
+	// 	let mistakesTask = x.mistakes.map(async y => (await Mistake.findById(y))!.hash);
+	// 	let mistakesList = await Promise.all(mistakesTask);
+	// 	return {
+	// 		id: x.id,
+	// 		message: x.message,
+	// 		age: x.age,
+	// 		language: x.language,
+	// 		language_other: x.language_other,
+	// 		level: x.level,
+	// 		degree: x.degree,
+	// 		country: x.country,
+	// 		city: x.city,
+	// 		state: x.state,
+	// 		mistakes: mistakesList,
+	// 		workspace: x.workspace
+	// 	} as ExportedSubmission
+	// });
+	let finalSubmissions = [];
+	for (const x of submissions) {
+		// logger.log(x.mistakes);
+		let mistakesList = x.mistakes.map(y => mistakes.find(z => z._id.toString() === y.toString())!.hash);
+		finalSubmissions.push({
 			id: x.id,
 			message: x.message,
 			age: x.age,
@@ -325,17 +345,28 @@ router.get('/api/exportWorkspace', async (req: Request, res: Response) => {
 			state: x.state,
 			mistakes: mistakesList,
 			workspace: x.workspace
-		} as ExportedSubmission
-	});
-	let finalSubmissions = await Promise.all(finalSubmissionsTask);
+		});
+	}
 	let finalMistakes = mistakes as IMistake[];
 	let finalTemplate = template as ITemplate;
+	// let finalRegister = register as IRegister[];
 
 	return res.send(JSON.stringify({
 		submissions: finalSubmissions,
 		mistakes: finalMistakes,
+		register: register,
 		template: finalTemplate
 	}));
+});
+
+// Lists available server workspaces
+router.get('/api/listWorkspaces', async (req: Request, res: Response) => {
+	let result = await Submission.aggregate([
+		{ $match: { } },
+		{ $group: { _id: null, workspaces: { $addToSet: "$workspace" } } }
+	]);
+
+	return res.send(result[0].workspaces);
 });
 
 

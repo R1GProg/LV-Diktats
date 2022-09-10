@@ -1,5 +1,5 @@
 {
-	"endpointUrl": "http://localhost:8080",
+	"endpointUrl": "http://localhost:3000",
 	"pilotMode": false,
 	"incompleteFraction": 0.75
 }
