@@ -79,7 +79,8 @@
 		.map((s: any) => ({
 			id: s.id,
 			text: s.message,
-			mistakes: s.mistakes
+			mistakes: s.mistakes,
+			ignoredText: []
 		}))
 		.filter((e: EssayEntry) => e.text!.length > template.length * config.incompleteFraction);
 

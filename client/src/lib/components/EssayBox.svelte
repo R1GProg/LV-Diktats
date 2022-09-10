@@ -2,14 +2,15 @@
 	import { onMount, createEventDispatcher } from "svelte";
 	import HighlightTooltip from "$lib/components/HighlightTooltip.svelte";
 	import type Highlighter from "web-highlighter";
-	import type { MistakeId, Mistake } from "@shared/diff-engine";
+	import type { MistakeId, Mistake, Bounds } from "@shared/diff-engine";
 	import type { Action } from "@shared/diff-engine";
 	import { mode } from "$lib/ts/stores";
-import { ToolbarMode } from "$lib/ts/toolbar";
+	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 
 	export let editable = false;
 	export let text = "";
 	export let diff: Mistake[] = [];
+	export let submEssay = false; // true - essay is for the submission
 	let textContainer: HTMLElement;
 	let tooltip: HighlightTooltip;
 	let highlighter: Highlighter;
@@ -38,6 +39,15 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 	export function setPlainText(newText: string) {
 		text = newText;
 		textContainer.innerHTML = newText;
+	}
+
+	export function setTextWithIgnores(newText: string, ignoredText: Bounds[]) {
+		text = newText;
+		textContainer.innerHTML = newText;
+
+		for (const b of ignoredText) {
+			highlightText(b.start, b.end - b.start, "hl-ignore");
+		}
 	}
 
 	function addHighlightToMap(highlightId: string, mistakeId: MistakeId) {
@@ -311,12 +321,16 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 	}
 
 	export function setMistakeHover(id: MistakeId) {
+		if (!highlightMap[id]) return;
+
 		for (const highlight of mistakeMap[id]) {
 			highlighter.addClass("hover-external", highlight);
 		}
 	}
 
 	export function clearMistakeHover(id: MistakeId) {
+		if (!highlightMap[id]) return;
+
 		for (const highlight of mistakeMap[id]) {
 			highlighter.removeClass("hover-external", highlight);
 		}
@@ -354,22 +368,62 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 	}
 
 	function onKeyPress(ev: KeyboardEvent) {
-		console.log("press");
 		if (ev.key !== "Enter") return;
 		if ($mode !== ToolbarMode.IGNORE) return;
 
 		const selection = window.getSelection();
-		console.log(selection);
+
+		if (selection === null) return;
+
+		const range = selection.getRangeAt(0);
+		const h = highlighter.fromRange(range);
+		highlighter.addClass("hl-ignore", h.id);
+	}
+
+	function onSelect() {
+		if ($mode !== ToolbarMode.IGNORE) return;
+		
+		// const selection = window.getSelection();
+	}
+
+	function onToolbarModeChange(ev: ToolbarModeEvent) {
+		if (ev.prevMode !== ToolbarMode.IGNORE) return		
+
+		// Calculate the bounds of each highlight
+		const bounds: Bounds[] = [];
+		let curOffset = 0;
+
+		for (const el of textContainer.childNodes) {
+			const textLen = el.textContent!.length;
+
+			if (el.nodeType !== Node.TEXT_NODE) {
+				bounds.push({
+					start: curOffset,
+					end: curOffset + textLen,
+				});
+			}
+
+			curOffset += textLen;
+		}
+
+		dispatch("ignore", { bounds });
 	}
 
 	onMount(async () => {
 		// actionRegister.loadActionRegister();
 
 		await initHighlighting();
+
+		if (submEssay) {
+			document.addEventListener("keydown", onKeyPress);
+			document.addEventListener("selectionchange", onSelect);
+
+			subToToolbarMode(onToolbarModeChange);
+		}
 	});
 </script>
 
-<div class="textbox" on:keypress={onKeyPress}>
+<div class="textbox">
 	<span
 		class="container"
 		bind:this={textContainer}
@@ -378,7 +432,7 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 	>{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class=".highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered active hover hover-external"></span>
+	<span class=".highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered hl-ignore active hover hover-external"></span>
 </div>
 
 <HighlightTooltip bind:this={tooltip}/>
@@ -454,6 +508,11 @@ import { ToolbarMode } from "$lib/ts/toolbar";
 		&.hl-22 { // MIXED, SUB CHAR
 			color: black;
 			background-color: $COL_MISTAKE_MIXED;
+		}
+
+		&.hl-ignore {
+			color: #333;
+			background-color: $COL_BG_REG;
 		}
 
 		&.active:not(.temp), &.hl-3 {

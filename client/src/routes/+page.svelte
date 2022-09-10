@@ -5,19 +5,22 @@
 	import Toolbar from "$lib/components/Toolbar.svelte";
 	import { ActionRegister } from "$lib/ts/ActionRegister";
 	import { workspace, mode } from "$lib/ts/stores";
-	import { ToolbarMode } from "$lib/ts/toolbar";
+	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 	import type { RegisterEntry, RegisterEntryAction } from "$lib/types";
-	import DiffONP, { Mistake } from "@shared/diff-engine";
+	import DiffONP, { Mistake, type Bounds } from "@shared/diff-engine";
 	import { onMount } from "svelte";
 
 	let correctText = "";
-	let submissionText = "";
+	let submissionText = ""; // Submission text with ignored text
+	let rawSubmissionText = ""; // Submission text as submitted
 	let diffEssayBox: EssayBox;
 	let templateEssayBox: EssayBox;
 	let submissionEssayBox: EssayBox;
 	let mistakeList: MistakeList;
 	let mistakes: Mistake[] = [];
 	const actionRegister = new ActionRegister();
+
+	let activeSubmissionID: string;
 
 	$: if ($workspace !== null) {
 		correctText = $workspace.template;
@@ -34,23 +37,36 @@
 		}
 
 		const id: string = ev.detail.entry;
-		const text = $workspace!.dataset[id].text!;
-// 		submissionText = correctText;
-// 		submissionText = `Aivars Eipurs
-// Mazsālīto gurķu blūzs
-// Noņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.
-// Uz Jāņiem tirgū nopirku it kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darbavietā pastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.
-// Es gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams, bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.
-// Nekad nebiju neko konservējis — ne dārzeņus, ne augļus — ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču izbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats šādu saimniekošanas formu nebijām novērojuši.
-// Atcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt ingredientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu eiro. Būdams labs fiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu. Tāpat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai diemžēl nebija, tomēr par pirkumu paprasīja četrus eiro un septiņdesmit centus. Ne tikvien samaksāju, bet arī pateicos par konsultāciju.
-// Kāds idiots esmu, aptvēru tikai tramvajā. Iznāk, ka par mārrutka lapu biju samaksājis trīs eiro. Tā lapa bija liela, taču ne jau tik liela kā palma vai ziloņa auss.
-// Nākamajā reizē visu garšaugu komplektu nopirku par vienu eiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.`;
-		submissionText = text;
-		updateDiff();
+		setActiveSubmission(id);
 	}
 
-	async function updateDiff() {
-		const diff = new DiffONP(submissionText, correctText);
+	function setActiveSubmission(id: string) {
+		activeSubmissionID = id;
+		
+		const entry = $workspace!.dataset[id];
+		const text = entry.text!;
+		rawSubmissionText = text;
+		submissionEssayBox.setTextWithIgnores(rawSubmissionText, entry.ignoredText);
+
+		updateDiff(id);
+	}
+
+	async function updateDiff(id: string) {
+		const ignoreBounds = $workspace!.dataset[id].ignoredText;
+		let text = $workspace!.dataset[id].text!;
+		let offset = 0;
+
+		for (const bounds of ignoreBounds) {
+			const sub1 = submissionText.substring(0, bounds.start - offset);
+			const sub2 = submissionText.substring(bounds.end - offset);
+			text = (sub1 + sub2).trim();
+
+			offset += bounds.end - bounds.start;
+		}
+
+		submissionText = text;
+
+		const diff = new DiffONP(text, correctText);
 		diff.calc();
 		setMistakes(diff.getMistakes());
 	}
@@ -89,19 +105,18 @@
 		}
 	}
 
-	let prevToolbarMode: ToolbarMode | null = null;
+	function onToolbarModeChange(ev: ToolbarModeEvent) {
+		if (ev.prevMode !== ToolbarMode.EDIT) return;
 
-	function onToolbarModeChange(newMode: ToolbarMode) {
-		if (prevToolbarMode === ToolbarMode.EDIT) {
-			correctText = templateEssayBox.getText();
-			submissionText = submissionEssayBox.getText();
-			updateDiff();
-		}
+		const newCorrectText = templateEssayBox.getText();
+		const newSubmText = submissionEssayBox.getText();
 
-		prevToolbarMode = newMode;
+		if (newCorrectText === correctText && newSubmText === submissionText) return;
+
+		correctText = newCorrectText;
+		submissionText = newSubmText;
+		updateDiff(activeSubmissionID);
 	}
-
-	$: onToolbarModeChange($mode);
 
 	function onMistakeMerge(ev: CustomEvent) {
 		const ids: string[] = ev.detail.ids;
@@ -143,6 +158,18 @@
 
 		setMistakes(mistakes);
 	}
+
+	function onEssayIgnore(ev: CustomEvent) {
+		if ($workspace === null) return;
+		
+		const bounds = ev.detail.bounds as Bounds[];
+		$workspace.dataset[activeSubmissionID].ignoredText = bounds;
+		updateDiff(activeSubmissionID);
+	}
+
+	onMount(() => {
+		subToToolbarMode(onToolbarModeChange);
+	});
 </script>
 
 <div class="container">
@@ -151,21 +178,34 @@
 	<div class="essay-container essay1">
 		<h2>Paraugs</h2>
 		<div>
-			<EssayBox bind:this={templateEssayBox} text={correctText} editable={$mode === ToolbarMode.EDIT}/>
+			<EssayBox
+				bind:this={templateEssayBox}
+				text={correctText}
+				editable={$mode === ToolbarMode.EDIT}
+			/>
 		</div>
 	</div>
 
 	<div class="essay-container essay2">
 		<h2>Labošana</h2>
 		<div>
-			<EssayBox bind:this={diffEssayBox} on:hover={onMistakeHover} on:hoverout={onMistakeHoverOut}/>
+			<EssayBox
+				bind:this={diffEssayBox}
+				on:hover={onMistakeHover}
+				on:hoverout={onMistakeHoverOut}
+			/>
 		</div>
 	</div>
 
 	<div class="essay-container essay3">
 		<h2>Iesūtītais</h2>
 		<div>
-			<EssayBox bind:this={submissionEssayBox} text={submissionText} editable={$mode === ToolbarMode.EDIT}/>
+			<EssayBox
+				bind:this={submissionEssayBox}
+				editable={$mode === ToolbarMode.EDIT}
+				submEssay={true}
+				on:ignore={onEssayIgnore}
+			/>
 		</div>
 	</div>
 
