@@ -1,3 +1,4 @@
+import { Bounds } from "@shared/diff-engine/src";
 import mongoose from "mongoose";
 import { IMistake, Mistake } from "./mistake";
 
@@ -21,6 +22,7 @@ interface ISubmission {
 	city: string;
 	state: SubmissionStates;
 	mistakes: mongoose.Schema.Types.ObjectId[];
+	ignoreText: Bounds[];
 	workspace: string;
 }
 
@@ -36,6 +38,7 @@ interface SubmissionDoc extends mongoose.Document {
 	city: string;
 	state: SubmissionStates;
 	mistakes: mongoose.Schema.Types.ObjectId[];
+	ignoreText: Bounds[];
 	workspace: string;
 }
 
@@ -81,6 +84,14 @@ const submissionSchema = new mongoose.Schema({
 	mistakes: [{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: "Mistake"
+	}],
+	ignoredText: [{
+		start: {
+			type: Number
+		},
+		end: {
+			type: Number
+		}
 	}],
 	workspace: String
 });

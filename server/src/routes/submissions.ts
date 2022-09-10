@@ -111,7 +111,7 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 				mistakesProcessed++;
 				logger.info(`Processing of submission #${val.id}... (${mistakesProcessed}/${mistakes.length})`);
 			}
-			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb, workspace: workspace } });
+			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb, workspace: workspace, ignoreText: [] } });
 			await record.save();
 			logger.info(`Processed submission #${val.id}!`);
 		}
@@ -344,6 +344,7 @@ router.get('/api/exportWorkspace', async (req: Request, res: Response) => {
 			city: x.city,
 			state: x.state,
 			mistakes: mistakesList,
+			ignoreText: x.ignoreText,
 			workspace: x.workspace
 		});
 	}
