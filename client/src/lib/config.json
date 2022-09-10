@@ -1,5 +1,6 @@
 {
 	"endpointUrl": "http://localhost:3000",
 	"pilotMode": false,
-	"incompleteFraction": 0.75
+	"incompleteFraction": 0.75,
+	"autosaveTime": 15
 }

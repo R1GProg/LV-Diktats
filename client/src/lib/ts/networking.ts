@@ -4,7 +4,7 @@ export const APP_ONLINE: Promise<boolean> = new Promise(async (res, rej) => {
 	try {
 		const isOnline = (await fetch(config.endpointUrl)).status === 200;
 
-		if (!isOnline) console.log("OFFLINE MODE");
+		console.log(isOnline ? "ONLINE MODE" : "OFFLINE MODE");
 
 		res(isOnline);
 	} catch (err) {

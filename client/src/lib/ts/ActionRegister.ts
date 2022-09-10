@@ -1,6 +1,6 @@
 import type { RegisterEntry } from "$lib/types";
 import type { Mistake, MistakeHash } from "@shared/diff-engine";
-import { workspace } from "./stores";
+import { workspace, workspaceSync } from "./stores";
 import { get } from "svelte/store";
 import { updateLocalWorkspace } from "./WorkspaceLocalStorage";
 
@@ -38,7 +38,8 @@ export class ActionRegister {
 
 		workspaceVal.register[hash] = regData;
 		// updateLocalWorkspace(workspaceVal);
-		pushToLocalStorage(regData);
+
+		get(workspaceSync).addRegisterChange(hash, "ADD");
 	}
 
 	// Returns true if update successful
@@ -47,19 +48,14 @@ export class ActionRegister {
 		if (workspaceVal === null) return false;
 		if (!this.isMistakeInRegister(mistake)) return false;
 
-		if (typeof mistake === "string") {
-			const regData = {...data, hash: mistake};
+		const hash = typeof mistake === "string" ? mistake : await mistake.genHash();
+		const regData = { ...data, hash };
 
-			workspaceVal.register[mistake] = regData;
-			pushToLocalStorage(regData);
-		} else {
-			const hash = await mistake.genHash();
-			const regData = {...data, hash}
-			workspaceVal.register[hash] = regData;
-			pushToLocalStorage(regData);
-		}
+		workspaceVal.register[hash] = regData;
+		get(workspaceSync).addRegisterChange(hash, "EDIT");
 
 		// updateLocalWorkspace(workspaceVal);
+		
 		return true;
 	}
 
@@ -69,16 +65,11 @@ export class ActionRegister {
 		if (workspaceVal === null) return false;
 		if (!this.isMistakeInRegister(mistake)) return false;
 
-		let hash: MistakeHash;
-
-		if (typeof mistake === "string") {
-			hash = mistake;
-		} else {
-			hash = await mistake.genHash();
-		}
+		let hash = typeof mistake === "string" ? mistake : await mistake.genHash();
 
 		delete workspaceVal.register[hash];
-		deleteFromLocalStorage(hash);
+		// deleteFromLocalStorage(hash);
+		get(workspaceSync).addRegisterChange(hash, "DELETE");
 
 		return true;
 	}

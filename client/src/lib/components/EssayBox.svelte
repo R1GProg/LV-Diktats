@@ -15,6 +15,7 @@
 	let tooltip: HighlightTooltip;
 	let highlighter: Highlighter;
 
+	let newEssayIgnores = false;
 	const highlightMap: Record<string, MistakeId> = {}; // HighlightID : MistakeID
 	const mistakeMap: Record<MistakeId, string[]> = {} // MistakeID : HighlightID[]
 
@@ -378,16 +379,20 @@
 		const range = selection.getRangeAt(0);
 		const h = highlighter.fromRange(range);
 		highlighter.addClass("hl-ignore", h.id);
+
+		newEssayIgnores = true;
 	}
 
 	function onSelect() {
 		if ($mode !== ToolbarMode.IGNORE) return;
 		
 		// const selection = window.getSelection();
+		// TODO: To be used for better UI when selecting text for ignore and for mistake merge
 	}
 
 	function onToolbarModeChange(ev: ToolbarModeEvent) {
-		if (ev.prevMode !== ToolbarMode.IGNORE) return		
+		if (ev.prevMode !== ToolbarMode.IGNORE) return;
+		if (!newEssayIgnores) return;
 
 		// Calculate the bounds of each highlight
 		const bounds: Bounds[] = [];
@@ -406,6 +411,7 @@
 			curOffset += textLen;
 		}
 
+		newEssayIgnores = false;
 		dispatch("ignore", { bounds });
 	}
 

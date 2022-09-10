@@ -4,7 +4,7 @@
 	import MistakeList from "$lib/components/MistakeList.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
 	import { ActionRegister } from "$lib/ts/ActionRegister";
-	import { workspace, mode } from "$lib/ts/stores";
+	import { workspace, mode, activeSubmission, workspaceSync } from "$lib/ts/stores";
 	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 	import type { RegisterEntry, RegisterEntryAction } from "$lib/types";
 	import DiffONP, { Mistake, type Bounds } from "@shared/diff-engine";
@@ -19,8 +19,6 @@
 	let mistakeList: MistakeList;
 	let mistakes: Mistake[] = [];
 	const actionRegister = new ActionRegister();
-
-	let activeSubmissionID: string;
 
 	$: if ($workspace !== null) {
 		correctText = $workspace.template;
@@ -41,7 +39,7 @@
 	}
 
 	function setActiveSubmission(id: string) {
-		activeSubmissionID = id;
+		$activeSubmission = id;
 		
 		const entry = $workspace!.dataset[id];
 		const text = entry.text!;
@@ -107,6 +105,7 @@
 
 	function onToolbarModeChange(ev: ToolbarModeEvent) {
 		if (ev.prevMode !== ToolbarMode.EDIT) return;
+		if ($activeSubmission === null) return;
 
 		const newCorrectText = templateEssayBox.getText();
 		const newSubmText = submissionEssayBox.getText();
@@ -115,7 +114,7 @@
 
 		correctText = newCorrectText;
 		submissionText = newSubmText;
-		updateDiff(activeSubmissionID);
+		updateDiff($activeSubmission);
 	}
 
 	function onMistakeMerge(ev: CustomEvent) {
@@ -161,14 +160,21 @@
 
 	function onEssayIgnore(ev: CustomEvent) {
 		if ($workspace === null) return;
+		if ($activeSubmission === null) return;
 		
 		const bounds = ev.detail.bounds as Bounds[];
-		$workspace.dataset[activeSubmissionID].ignoredText = bounds;
-		updateDiff(activeSubmissionID);
+		$workspace.dataset[$activeSubmission].ignoredText = bounds;
+		updateDiff($activeSubmission);
 	}
 
 	onMount(() => {
 		subToToolbarMode(onToolbarModeChange);
+		
+		$workspaceSync.addSaveCallback((w, changes, autosave) => {
+			console.log(`Autosave: ${autosave}`);
+			console.log(`Workspace: ${w.key}`);
+			console.log(changes);
+		});
 	});
 </script>
 
