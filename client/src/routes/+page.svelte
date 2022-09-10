@@ -57,8 +57,8 @@
 		let offset = 0;
 
 		for (const bounds of ignoreBounds) {
-			const sub1 = submissionText.substring(0, bounds.start - offset);
-			const sub2 = submissionText.substring(bounds.end - offset);
+			const sub1 = text.substring(0, bounds.start - offset);
+			const sub2 = text.substring(bounds.end - offset);
 			text = (sub1 + sub2).trim();
 
 			offset += bounds.end - bounds.start;
