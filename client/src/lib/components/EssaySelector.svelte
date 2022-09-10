@@ -13,6 +13,7 @@
 	let noData = true;
 	let submissionModal: SubmissionModal;
 	let mistakeOrderMap: string[];
+	let activeWorkspaceKey: string;
 
 	// async function fetchData() {
 	// 	const raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
@@ -94,9 +95,11 @@
 		totalEntries = keys.length;
 		activeIndex = 0;
 		onSelect(0);
+
+		activeWorkspaceKey = $workspace.key;
 	}
 
-	$: if ($workspace) {
+	$: if ($workspace?.key !== activeWorkspaceKey) {
 		initWorkspace();
 	} else if ($workspace === null) {
 		noData = true;
