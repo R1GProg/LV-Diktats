@@ -15,7 +15,7 @@ export interface IAction {
 	indexCorrect: number;
 	indexDiff: number;
 	char: string;
-	charBefore: string | undefined;
+	charCorrect: string | undefined;
 	hash: string;
 }
 
@@ -24,9 +24,9 @@ export interface IMistake {
 	actions: IAction[];
 	type: MistakeType;
 	registerId: mongoose.Schema.Types.ObjectId | undefined;
-	boundsCorrect: Bounds | undefined;
-	boundsCheck: Bounds | undefined;
-	boundsDiff: Bounds | undefined;
+	boundsCorrect: Bounds | null;
+	boundsCheck: Bounds | null;
+	boundsDiff: Bounds | null;
 	hash: string;
 	workspace: string;
 	ocurrences: number;
@@ -36,9 +36,9 @@ interface MistakeDoc extends mongoose.Document {
 	actions: IAction[];
 	type: MistakeType;
 	registerId: mongoose.Schema.Types.ObjectId | undefined;
-	boundsCorrect: Bounds | undefined;
-	boundsCheck: Bounds | undefined;
-	boundsDiff: Bounds | undefined;
+	boundsCorrect: Bounds | null;
+	boundsCheck: Bounds | null;
+	boundsDiff: Bounds | null;
 	hash: string;
 	workspace: string;
 	ocurrences: number;
@@ -72,7 +72,7 @@ const mistakeSchema = new mongoose.Schema({
 		char: {
 			type: String
 		},
-		charBefore: {
+		charCorrect: {
 			type: String,
 			nullable: true
 		},

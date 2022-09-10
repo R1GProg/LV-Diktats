@@ -2,7 +2,7 @@ import { ITemplate } from './../models/template';
 import DiffONP from '@shared/diff-engine';
 import { IAction, IMistake } from './../models/mistake';
 import { Logger } from 'yatsl';
-import express, { Request, response, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { parse } from 'csv-parse';
 import { Submission, SubmissionStates } from '../models/submission';
 import mongoose from 'mongoose';
@@ -85,7 +85,7 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 								indexCorrect: x.indexCorrect,
 								indexDiff: x.indexDiff,
 								char: x.char,
-								charBefore: x.charBefore,
+								charCorrect: x.charCorrect,
 								hash: await x.hash
 							};
 							return actionFinal;
@@ -154,15 +154,15 @@ router.post('/api/submitTemplate', async (req: Request, res: Response) => {
 	let prevTemplate = await Template.find({workspace: workspace});
 	let cleanTask = prevTemplate.map(async x => await x.remove());
 	await Promise.all(cleanTask);
-	let template = Template.build({ message: req.body, workspace: workspace });
+	let template = Template.build({ message: processString(req.body), workspace: workspace });
 	await template.save();
 	return res.send("Loaded!");
 });
 
 // Gets the template
 router.get('/api/getTemplate', async (req: Request, res: Response) => {
-	let results = await Mistake.find({});
-	logger.log(results.length);
+	// let results = await Mistake.find({});
+	// logger.log(results.length);
 	Template.find().exec((err, result) => {
 		if (err) {
 			logger.error(err);
