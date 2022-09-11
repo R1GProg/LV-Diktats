@@ -322,7 +322,7 @@
 	}
 
 	export function setMistakeHover(id: MistakeId) {
-		if (!highlightMap[id]) return;
+		if (!mistakeMap[id]) return;
 
 		for (const highlight of mistakeMap[id]) {
 			highlighter.addClass("hover-external", highlight);
@@ -330,7 +330,7 @@
 	}
 
 	export function clearMistakeHover(id: MistakeId) {
-		if (!highlightMap[id]) return;
+		if (!mistakeMap[id]) return;
 
 		for (const highlight of mistakeMap[id]) {
 			highlighter.removeClass("hover-external", highlight);

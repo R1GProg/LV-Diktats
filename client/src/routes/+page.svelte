@@ -49,9 +49,8 @@
 		updateDiff(id);
 	}
 
-	async function updateDiff(id: string) {
-		const ignoreBounds = $workspace!.dataset[id].ignoredText;
-		let text = $workspace!.dataset[id].text!;
+	function parseSubmissionIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
+		let text = rawText;
 		let offset = 0;
 
 		for (const bounds of ignoreBounds) {
@@ -62,9 +61,14 @@
 			offset += bounds.end - bounds.start;
 		}
 
-		submissionText = text;
+		return text;
+	}
 
-		const diff = new DiffONP(text, correctText);
+	async function updateDiff(id: string) {
+		const entry = $workspace!.dataset[id];
+		submissionText = parseSubmissionIgnoreBounds(entry.text!, entry.ignoredText);
+
+		const diff = new DiffONP(submissionText, correctText);
 		diff.calc();
 		setMistakes(diff.getMistakes());
 	}
@@ -130,7 +134,7 @@
 
 		newMistakes.push(mergedMistake);
 		newMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-
+		
 		setMistakes(newMistakes);
 	}
 

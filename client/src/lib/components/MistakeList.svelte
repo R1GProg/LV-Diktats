@@ -21,7 +21,7 @@
 
 	export function setMistakeHover(id: MistakeId) {
 		hoverId = id;
-		listContainer.querySelector(`[data-id='${hoverId}']`)!.scrollIntoView({ behavior: "smooth" });
+		// listContainer.querySelector(`[data-id='${hoverId}']`)!.scrollIntoView({ behavior: "smooth" });
 	}
 
 	export function clearMistakeHover() {
@@ -206,13 +206,14 @@
 
 	.mistake {
 		width: 100%;
-		height: 2.25em;
+		// height: 2.25em;
+		text-align: center;
 		font-family: $FONT_BODY;
 		font-size: 1rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		white-space: nowrap;
+		// white-space: nowrap;
 
 		&:not(.registered) {
 			@include hover_filter;
