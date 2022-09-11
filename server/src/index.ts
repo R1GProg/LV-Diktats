@@ -34,8 +34,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 let prod = process.env["PRODUCTION"] === "yes";
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-	logger.info('The application is listening on port 3000!');
+	logger.info(`The application is listening on port ${PORT}!`);
 });

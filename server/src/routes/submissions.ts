@@ -1,10 +1,10 @@
 import { ITemplate } from './../models/template';
-import DiffONP from '@shared/diff-engine';
+import DiffONP, { Bounds } from '@shared/diff-engine';
 import { IAction, IMistake } from './../models/mistake';
 import { Logger } from 'yatsl';
 import express, { Request, Response } from 'express';
 import { parse } from 'csv-parse';
-import { Submission, SubmissionStates } from '../models/submission';
+import { ISubmission, Submission, SubmissionStates } from '../models/submission';
 import mongoose from 'mongoose';
 import { Template } from '../models/template';
 import { Mistake } from '../models/mistake';
@@ -72,7 +72,7 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 			let mistakesDb: any[] = [];
 			for (let val2 of mistakes) {
 				let hash = await val2.genHash();
-				let results = await Mistake.find({ hash: hash });
+				let results = await Mistake.find({ hash: hash, workspace: workspace });
 				// logger.log(results.length);
 				if (results.length === 0) {
 					let final: IMistake = {
@@ -298,6 +298,7 @@ interface ExportedSubmission {
 	state: SubmissionStates;
 	mistakes: string[];
 	workspace: string;
+	ignoredText: Bounds[];
 }
 
 // Exports a workspace
@@ -328,7 +329,7 @@ router.get('/api/exportWorkspace', async (req: Request, res: Response) => {
 	// 		workspace: x.workspace
 	// 	} as ExportedSubmission
 	// });
-	let finalSubmissions = [];
+	let finalSubmissions: ExportedSubmission[] = [];
 	for (const x of submissions) {
 		// logger.log(x.mistakes);
 		let mistakesList = x.mistakes.map(y => mistakes.find(z => z._id.toString() === y.toString())!.hash);
@@ -344,13 +345,15 @@ router.get('/api/exportWorkspace', async (req: Request, res: Response) => {
 			city: x.city,
 			state: x.state,
 			mistakes: mistakesList,
-			ignoreText: x.ignoreText,
+			ignoredText: x.ignoreText !== undefined ? x.ignoreText : [],
 			workspace: x.workspace
 		});
 	}
 	let finalMistakes = mistakes as IMistake[];
 	let finalTemplate = template as ITemplate;
 	// let finalRegister = register as IRegister[];
+
+	logger.log(finalSubmissions[0].ignoredText);
 
 	return res.send(JSON.stringify({
 		submissions: finalSubmissions,
@@ -368,6 +371,101 @@ router.get('/api/listWorkspaces', async (req: Request, res: Response) => {
 	]);
 
 	return res.send(result[0].workspaces);
+});
+
+
+interface WorkspaceSyncChanges {
+	registerChanges: RegisterChange[],
+	registers: any[],
+	submissions: EssayEntry[],
+	mistakeRecords: Record<string, string>, // MistakeHash, RecordId
+	mistakes: IMistake[]
+}
+
+interface RegisterChange {
+	id: string,
+	type: RegisterChangeType,
+}
+
+interface EssayEntry {
+	id: string,
+	text: string | null,
+	mistakes?: string[],
+	ignoredText: Bounds[]
+}
+
+type RegisterChangeType = "ADD" | "EDIT" | "DELETE";
+
+// Updates a specific workspace using a diff in the body
+router.post('/api/updateWorkspace', async (req: Request, res: Response) => {
+	if (!req.is('application/json')) return res.send("Invalid content!");
+	const diff = req.body as WorkspaceSyncChanges;
+	const workspace = req.query.workspace as string;
+	if(!workspace) {
+		return res.send("No workspace specified!");
+	}
+
+	for (const mistake of diff.mistakes) {
+		let dbEntry = await Submission.findOne({ workspace: workspace, hash: mistake.hash });
+		if (!dbEntry) {
+			let res = Mistake.build({...mistake, workspace: workspace});
+			await res.save();
+		}
+	}
+
+	for (const submission of diff.submissions) {
+		let dbEntry = await Submission.findOne({workspace: workspace, id: submission.id});
+		if(!dbEntry) {
+			logger.error(`Client sent invalid essay entry with ID #${submission.id}`);
+			continue;
+		}
+		dbEntry.message = submission.text as string;
+		let mistakeTask = submission.mistakes!.map(async (x) => (await Mistake.findOne({workspace: workspace, hash: x}, {_id: 1}))!._id)
+		let mistakeIds = await Promise.all(mistakeTask);
+		dbEntry.mistakes = mistakeIds;
+		dbEntry.ignoreText = submission.ignoredText;
+		await dbEntry.save();
+	}
+
+	for(const registerChange of diff.registerChanges) {
+		switch(registerChange.type) {
+			case "ADD":
+				let newEntry = await Register.build({...diff.registers.find((x) => x.hash === registerChange.id)!, workspace: workspace});
+				await newEntry.save();
+				break;
+			case "EDIT":
+				let dbEntry = await Register.findOne({workspace: workspace, hash: registerChange.id});
+				if(!dbEntry) {
+					logger.error(`Client sent invalid register entry update with id ${registerChange.id}`);
+					continue;
+				}
+				let syncEntry = diff.registers.find((x) => x.hash === registerChange.id)!;
+				dbEntry.description = syncEntry.desc;
+				dbEntry.ignore = syncEntry.ignore;
+				dbEntry.word = syncEntry.word;
+				dbEntry.wordCorrect = syncEntry.wordCorrect;
+				await dbEntry.save();
+				break;
+			case "DELETE":
+				let referencingMistakes = await Mistake.find({workspace: workspace, registerId: registerChange.id});
+				for(const mistake of referencingMistakes) {
+					mistake.registerId = undefined;
+					await mistake.save();
+				}
+				await Register.deleteOne({workspace: workspace, hash: registerChange.id});
+		}
+	}
+
+	for (let mistakeKey in diff.mistakeRecords) {
+		let dbEntry = await Mistake.findOne({ workspace: workspace, hash: mistakeKey });
+		if (!dbEntry) {
+			logger.error(`Client sent invalid mistake entry with hash ${mistakeKey}`);
+			continue;
+		}
+		dbEntry.registerId = diff.mistakeRecords[mistakeKey];
+	}
+
+	return res.send("balls");
 });
 
 

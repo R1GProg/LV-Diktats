@@ -23,7 +23,7 @@ export interface IMistake {
 	// hash: string;
 	actions: IAction[];
 	type: MistakeType;
-	registerId: mongoose.Schema.Types.ObjectId | undefined;
+	registerId: string | undefined;
 	boundsCorrect: Bounds | null;
 	boundsCheck: Bounds | null;
 	boundsDiff: Bounds | null;
@@ -35,7 +35,7 @@ export interface IMistake {
 interface MistakeDoc extends mongoose.Document {
 	actions: IAction[];
 	type: MistakeType;
-	registerId: mongoose.Schema.Types.ObjectId | undefined;
+	registerId: string | undefined;
 	boundsCorrect: Bounds | null;
 	boundsCheck: Bounds | null;
 	boundsDiff: Bounds | null;
@@ -84,8 +84,9 @@ const mistakeSchema = new mongoose.Schema({
 		type: String
 	},
 	registerId: {
-		type: mongoose.Schema.Types.ObjectId,
-		ref: "Register",
+		// type: mongoose.Schema.Types.ObjectId,
+		// ref: "Register",
+		type: String,
 		nullable: true
 	},
 	boundsCorrect: {

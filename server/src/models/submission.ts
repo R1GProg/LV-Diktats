@@ -10,7 +10,7 @@ enum SubmissionStates {
 }
 export { SubmissionStates };
 
-interface ISubmission {
+export interface ISubmission {
 	id: number;
 	message: string;
 	age: number;
@@ -79,7 +79,7 @@ const submissionSchema = new mongoose.Schema({
 	state: {
 		type: String,
 		enum: SubmissionStates,
-		default: SubmissionStates
+		default: SubmissionStates.UNGRADED
 	},
 	mistakes: [{
 		type: mongoose.Schema.Types.ObjectId,

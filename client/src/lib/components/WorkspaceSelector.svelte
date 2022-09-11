@@ -2,12 +2,13 @@
 	import { APP_ONLINE } from "$lib/ts/networking";
 	import { onMount } from "svelte";
 	import WorkspaceUploader from "./modals/WorkspaceUploader.svelte";
-	import { workspace } from "$lib/ts/stores";
-	import type { EssayEntry, RegisterEntry, Workspace } from "$lib/types";
+	import { workspace, workspaceSync } from "$lib/ts/stores";
+	import type { EssayEntry, PregenMistake, RegisterEntry, Workspace } from "$lib/types";
 	import { loadLocalWorkspaces, saveLocalWorkspace } from "$lib/ts/WorkspaceLocalStorage";
 	import config from "$lib/config.json";
 	import type { MistakeHash } from "@shared/diff-engine";
 	import LoadingWorkspaceStatus from "./modals/status/LoadingWorkspaceStatus.svelte";
+import type { RegisterChange } from "$lib/ts/WorkspaceSync";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
@@ -75,7 +76,8 @@
 		.map((s: any) => ({
 			id: s.id,
 			text: s.message,
-			mistakes: s.mistakes
+			mistakes: s.mistakes,
+			ignoredText: s.ignoredText
 		}))
 		.filter((e: EssayEntry) => e.text!.length > template.length * config.incompleteFraction);
 
@@ -86,7 +88,7 @@
 		}
 
 		const tempRegister: any[] = workspaceRaw.register;
-		const register: Record<MistakeHash, RegisterEntry> = {};	
+		const register: Record<string, RegisterEntry> = {};	
 
 		for (const e of tempRegister) {
 			register[e._id!] = e;
@@ -106,9 +108,44 @@
 		$workspace = w;
 	}
 
+	interface WorkspaceSyncBody {
+		registerChanges: RegisterChange[],
+		registers: RegisterEntry[],
+		submissions: EssayEntry[],
+		mistakeRecords: Record<MistakeHash, string>,
+		mistakes: PregenMistake[]
+	}
+
 	onMount(async () => {
 		if (await APP_ONLINE) {
 			fetchAvailableWorkspaces();
+			$workspaceSync.addSaveCallback(async (workspace, changes, autosave) => {
+				if(workspace.local) return;
+				let submissions = changes.submissions.map(x => workspace.dataset[x]);
+				let mistakeRecords: Record<MistakeHash, string> = {};
+				let mistakes: PregenMistake[] = [];
+				for(const submission of submissions) {
+					for(const mistake of submission.mistakes!) {
+						if(!(mistake in mistakeRecords) && mistake in workspace.register) {
+							mistakeRecords[mistake] = workspace.register[mistake].hash!;
+						}
+						if(!mistakes.find(x => x.hash === mistake)) {
+							mistakes.push(workspace.mistakeData!.find(x => x.hash === mistake)!);
+						}
+					}
+				}
+				await fetch(`${config.endpointUrl}/api/updateWorkspace?workspace=${workspace.key}`, {
+					method: "POST",
+					headers: new Headers({'content-type': 'application/json'}),
+					body: JSON.stringify({
+						registerChanges: changes.register,
+						registers: changes.register.map(x => workspace.register[x.id]),
+						submissions: submissions,
+						mistakeRecords: mistakeRecords,
+						mistakes: mistakes
+					} as WorkspaceSyncBody)
+				});
+			});
 		}
 
 		for (const entry of loadLocalWorkspaces()) {
