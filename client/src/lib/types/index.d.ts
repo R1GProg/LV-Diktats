@@ -9,8 +9,8 @@ export interface EssayEntry {
 
 export interface PregenMistake {
 	actions: Action[],
-	boundsCheck: Bounds,
-	boundsCorrect: Bounds,
+	boundsCheck: Bounds | null,
+	boundsCorrect: Bounds | null,
 	boundsDiff: Bounds,
 	hash: MistakeHash,
 	ocurrences: number,

@@ -121,20 +121,51 @@
 		updateDiff($activeSubmission);
 	}
 
-	function onMistakeMerge(ev: CustomEvent) {
+	async function onMistakeMerge(ev: CustomEvent) {
+		if (!$activeSubmission) return;
+		if (!$workspace) return;
+
 		const ids: string[] = ev.detail.ids;
 		const newMistakes = [...mistakes];
 		
 		const mergedMistakes = ids.map((id) => mistakes.find((m) => m.id === id)!);
 		const mergedMistake = Mistake.mergeMistakes(...mergedMistakes);
+		const entryMistakeArr = $workspace.dataset[$activeSubmission].mistakes!;
 
 		for (const id of ids) {
-			newMistakes.splice(newMistakes.findIndex((m) => m.id === id), 1);
+			const delMistakeIndex = newMistakes.findIndex((m) => m.id === id);
+			const delMistakeHash = await newMistakes[delMistakeIndex].genHash();
+
+			newMistakes.splice(delMistakeIndex, 1);
+			entryMistakeArr.splice(entryMistakeArr.findIndex((m) => m === delMistakeHash), 1);
+
+			$workspaceSync.addMistakeChange($activeSubmission, id, "DELETE");
 		}
 
 		newMistakes.push(mergedMistake);
 		newMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-		
+
+		const mergedHash = await mergedMistake.genHash();
+		const existingMistake = $workspace.mistakeData!.find((m) => m.hash === mergedHash);
+
+		if (existingMistake) {
+			existingMistake.ocurrences++;
+		} else {
+			$workspace!.mistakeData!.push({
+				actions: mergedMistake.actions,
+				boundsCheck: mergedMistake.boundsCheck,
+				boundsCorrect: mergedMistake.boundsCorrect,
+				boundsDiff: mergedMistake.boundsDiff,
+				hash: mergedHash,
+				ocurrences: 1,
+				type: mergedMistake.type,
+				workspace: $workspace.key
+			});
+		}
+
+		entryMistakeArr.push(mergedHash);
+		$workspaceSync.addMistakeChange($activeSubmission, mergedMistake.id, "ADD");
+
 		setMistakes(newMistakes);
 	}
 
@@ -142,21 +173,27 @@
 		const id = ev.detail.id as string;
 		const data = ev.detail.data as RegisterEntry;
 		const action = ev.detail.action as RegisterEntryAction;
+		const addedToExisting = ev.detail.addedToExisting as boolean;
 		const mistake: Mistake = mistakes.find((m) => m.id === id)!;
 
-		switch (action) {
-			case "ADD":
-				await actionRegister.addMistakeToRegister(mistake, data);
-				mistake.isRegistered = true;
-				break;
-			case "EDIT":
-				await actionRegister.updateMistakeInRegister(mistake, data);
-				mistake.isRegistered = true;
-				break;
-			case "DELETE":
-				await actionRegister.deleteMistakeFromRegister(mistake);
-				mistake.isRegistered = false;
-				break;
+		if (addedToExisting) {
+			// TODO: NYI
+			mistake.isRegistered = true;
+		} else {
+			switch (action) {
+				case "ADD":
+					await actionRegister.addMistakeToRegister(mistake, data);
+					mistake.isRegistered = true;
+					break;
+				case "EDIT":
+					await actionRegister.updateMistakeInRegister(mistake, data);
+					mistake.isRegistered = true;
+					break;
+				case "DELETE":
+					await actionRegister.deleteMistakeFromRegister(mistake);
+					mistake.isRegistered = false;
+					break;
+			}
 		}
 
 		setMistakes(mistakes);

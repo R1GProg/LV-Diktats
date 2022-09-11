@@ -3,22 +3,25 @@ import type { Workspace } from "$lib/types";
 import { get } from "svelte/store";
 
 export interface WorkspaceSyncChanges {
-	register: RegisterChange[],
+	register: SyncChange[],
+	mistakes: MistakeSyncChange[],
 	submissions: string[],
 }
 
-export interface RegisterChange {
+export interface SyncChange {
 	id: string,
-	type: RegisterChangeType,
+	type: SyncChangeType,
 }
 
+export type MistakeSyncChange = SyncChange & { submission: string };
+
 export type WorkspaceSyncCallback = (w: Workspace, changes: WorkspaceSyncChanges, autosave: boolean) => void;
-export type RegisterChangeType = "ADD" | "EDIT" | "DELETE";
+export type SyncChangeType = "ADD" | "EDIT" | "DELETE";
 
 export default class WorkspaceSync {
 	private prevWorkspace: Workspace | null = null;
 
-	private activeChanges: WorkspaceSyncChanges = { register: [], submissions: [] };
+	private activeChanges: WorkspaceSyncChanges = { register: [], mistakes: [], submissions: [] };
 
 	private saveCbs: WorkspaceSyncCallback[] = [];
 
@@ -29,7 +32,7 @@ export default class WorkspaceSync {
 	constructor(autosaveTime: number) {
 		this.autosaveTime = autosaveTime;
 
-		workspace.subscribe((w) => { this.wsListener(w) });
+		// workspace.subscribe((w) => { this.wsListener(w) });
 		setInterval(() => { this.autosave(); }, this.autosaveTime * 1000);
 	}
 
@@ -41,25 +44,25 @@ export default class WorkspaceSync {
 		this.save(activeWorkspace, true);
 	}
 
-	private wsListener(w: Workspace | null) {
-		if (this.prevWorkspace === null) {
-			this.prevWorkspace = w;
-			return;
-		}
+	// private wsListener(w: Workspace | null) {
+	// 	if (this.prevWorkspace === null) {
+	// 		this.prevWorkspace = w;
+	// 		return;
+	// 	}
 		
-		if (w === null || w !== this.prevWorkspace && this.hasUnsavedChanges) {
-			this.save(this.prevWorkspace, false);
-			return;
-		}
+	// 	if (w === null || w !== this.prevWorkspace && this.hasUnsavedChanges) {
+	// 		this.save(this.prevWorkspace, false);
+	// 		return;
+	// 	}
 		
-		const activeId = get(activeSubmission);
+	// 	const activeId = get(activeSubmission);
 		
-		if (activeId === null) return;
-		if (this.activeChanges.submissions.includes(activeId)) return;
+	// 	if (activeId === null) return;
+	// 	if (this.activeChanges.submissions.includes(activeId)) return;
 		
-		this.activeChanges.submissions.push(activeId);
-		this.hasUnsavedChanges = true;
-	}
+	// 	this.activeChanges.submissions.push(activeId);
+	// 	this.hasUnsavedChanges = true;
+	// }
 
 	private save(w: Workspace, autosave: boolean) {
 		for (const cb of this.saveCbs) {
@@ -84,12 +87,30 @@ export default class WorkspaceSync {
 	}
 
 	clearActiveChanges() {
-		this.activeChanges = { register: [], submissions: [] };
+		this.activeChanges = { register: [], mistakes: [], submissions: [] };
 		this.hasUnsavedChanges = false;
 	}
 
-	addRegisterChange(id: string, type: RegisterChangeType) {
+	// Called when the register changes (Add, edit, delete)
+	addRegisterChange(id: string, type: SyncChangeType) {
 		this.activeChanges.register.push({ id, type });
+		this.hasUnsavedChanges = true;
+	}
+
+	// Called when a mistake changes (Gets merged, unmerged)
+	addMistakeChange(submissionId: string, mistakeId: string, type: SyncChangeType) {
+		this.activeChanges.mistakes.push({
+			submission: submissionId,
+			id: mistakeId,
+			type,
+		});
+
+		this.hasUnsavedChanges = true;
+	}
+
+	// Called when submission metadata changes
+	addSubmissionChange(submissionId: string) {
+		this.activeChanges.submissions.push(submissionId);
 		this.hasUnsavedChanges = true;
 	}
 }
