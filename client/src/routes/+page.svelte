@@ -139,6 +139,13 @@
 			newMistakes.splice(delMistakeIndex, 1);
 			entryMistakeArr.splice(entryMistakeArr.findIndex((m) => m === delMistakeHash), 1);
 
+			const mistakeDataIndex = $workspace.mistakeData!.findIndex((m) => m.hash === delMistakeHash);
+			$workspace.mistakeData![mistakeDataIndex].ocurrences--;
+
+			if ($workspace.mistakeData![mistakeDataIndex].ocurrences === 0) {
+				$workspace.mistakeData!.splice(mistakeDataIndex, 1);
+			}
+
 			$workspaceSync.addMistakeChange($activeSubmission, id, "DELETE");
 		}
 
