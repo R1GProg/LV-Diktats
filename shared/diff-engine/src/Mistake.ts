@@ -143,4 +143,13 @@ export class Mistake {
 			word
 		});
 	}
+
+	static fromData(data: MistakeOpts & { id: string, isRegistered?: boolean, word: string }) {
+		const m = new Mistake(data);
+		m.id = data.id;
+		m.isRegistered = data.isRegistered ?? false;
+		m.word = data.word;
+
+		return m;
+	}
 }

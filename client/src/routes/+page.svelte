@@ -140,9 +140,9 @@
 			entryMistakeArr.splice(entryMistakeArr.findIndex((m) => m === delMistakeHash), 1);
 
 			const mistakeDataIndex = $workspace.mistakeData!.findIndex((m) => m.hash === delMistakeHash);
-			$workspace.mistakeData![mistakeDataIndex].ocurrences--;
+			$workspace.mistakeData![mistakeDataIndex].occurrences--;
 
-			if ($workspace.mistakeData![mistakeDataIndex].ocurrences === 0) {
+			if ($workspace.mistakeData![mistakeDataIndex].occurrences === 0) {
 				$workspace.mistakeData!.splice(mistakeDataIndex, 1);
 			}
 
@@ -156,17 +156,13 @@
 		const existingMistake = $workspace.mistakeData!.find((m) => m.hash === mergedHash);
 
 		if (existingMistake) {
-			existingMistake.ocurrences++;
+			existingMistake.occurrences++;
 		} else {
-			$workspace!.mistakeData!.push({
-				actions: mergedMistake.actions,
-				boundsCheck: mergedMistake.boundsCheck,
-				boundsCorrect: mergedMistake.boundsCorrect,
-				boundsDiff: mergedMistake.boundsDiff,
+			$workspace!.mistakeData.push({
+				mistake: mergedMistake,
+				occurrences: 1,
 				hash: mergedHash,
-				ocurrences: 1,
-				type: mergedMistake.type,
-				workspace: $workspace.key
+				workspace: $workspace.key,
 			});
 		}
 

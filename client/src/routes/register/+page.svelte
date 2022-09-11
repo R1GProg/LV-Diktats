@@ -22,7 +22,7 @@
 	}
 
 	function getMistakeOccurences(hash: string) {
-		return $workspace!.mistakeData!.find((m) => m.hash === hash)!.ocurrences;
+		return $workspace!.mistakeData!.find((m) => m.hash === hash)!.occurrences;
 	}
 </script>
 

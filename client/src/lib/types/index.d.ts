@@ -7,14 +7,10 @@ export interface EssayEntry {
 	ignoredText: Bounds[]
 }
 
-export interface PregenMistake {
-	actions: Action[],
-	boundsCheck: Bounds | null,
-	boundsCorrect: Bounds | null,
-	boundsDiff: Bounds,
+export interface WorkspaceMistake {
+	mistake: Mistake,
 	hash: MistakeHash,
-	ocurrences: number,
-	type: MistakeType,
+	occurrences: number,
 	workspace: string,
 }
 
@@ -25,7 +21,7 @@ export interface Workspace {
 	register: Record<MistakeHash, RegisterEntry>,
 	template: string,
 	local: boolean,
-	mistakeData?: PregenMistake[]
+	mistakeData: WorkspaceMistake[]
 }
 
 export interface RegisterEntry {
