@@ -98,7 +98,7 @@
 
 <div class="container">
 	<div class="list" bind:this={listContainer}>
-		{#each mistakes as m (m.id)}
+		{#each mistakes as m}
 			<div
 				data-id={m.id}
 				class="mistake {m.type}"

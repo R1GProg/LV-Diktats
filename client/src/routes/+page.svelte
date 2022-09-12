@@ -4,7 +4,7 @@
 	import MistakeList from "$lib/components/MistakeList.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
 	import { ActionRegister } from "$lib/ts/ActionRegister";
-	import { workspace, mode, activeSubmission, workspaceSync } from "$lib/ts/stores";
+	import { workspace, mode, activeSubmission, workspaceSync, workspaceDatabase } from "$lib/ts/stores";
 	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 	import type { RegisterEntry, RegisterEntryAction } from "$lib/types";
 	import DiffONP, { Mistake, type Bounds } from "@shared/diff-engine";
@@ -68,13 +68,86 @@
 		const entry = $workspace!.dataset[id];
 		submissionText = parseSubmissionIgnoreBounds(entry.text!, entry.ignoredText);
 
-		const diff = new DiffONP(submissionText, correctText);
-		diff.calc();
-		setMistakes(diff.getMistakes());
+		let mistakes: Mistake[] = [];
+
+		if (!entry.mistakes) {
+			const diff = new DiffONP(submissionText, correctText);
+			diff.calc();
+			mistakes = diff.getMistakes();
+		} else {
+			// for (const m of entry.mistakes) {
+			// 	const foundMistake: Mistake = $workspace!.mistakeData.find((data) => data.hash === m.hash)!.mistake;
+
+			// 	if (!foundMistake) {
+			// 		console.warn(`Unable to match mistake ${m.hash}`);
+			// 		continue;
+			// 	}
+
+			// 	foundMistake.boundsDiff = m.boundsDiff;
+			// 	foundMistake.boundsCheck = m.boundsCheck;
+
+			// 	for (const a of foundMistake.actions) {
+			// 		const aHash = await a.hash;
+			// 		const aData = m.actions.find((action) => action.hash === aHash);
+					
+			// 		if (!aData) {
+			// 			console.warn(`Unable to match action (Mistake: ${m.hash}, action: ${aHash})`);
+			// 			continue;
+			// 		}
+
+			// 		a.indexCheck = aData.indexCheck;
+			// 		a.indexDiff = aData.indexDiff;
+			// 	}
+
+			// 	mistakes.push(foundMistake);
+			// }
+
+			// mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+		}
+
+		const testDiff = new DiffONP(submissionText, correctText);
+		testDiff.calc();
+		// console.log("gend:");
+		// console.log(testDiff.getMistakes());
+		// console.log("pregen:");
+		// console.log(mistakes);
+
+		const testMistakes = testDiff.getMistakes();
+
+		// console.log(entry.mistakes);
+		// console.log(mistakes.length);
+		// console.log(testMistakes.length);
+
+		// console.log(await mistakes[52].genHash());
+		// console.log(await testMistakes[52].genHash());
+
+		// console.log(testMistakes[52]);
+		// console.log(mistakes[52]);
+
+		// console.log(testMistakes.find((m) => m.boundsDiff.start === 955));
+
+		// for (let i = 0; i < testMistakes.length; i++) {
+		// 	const tm = testMistakes[i];
+		// 	const m = mistakes[i];
+
+		// 	if (m === undefined) {
+		// 		// console.log(`wtf at ${i}`);
+		// 		continue;
+		// 	}
+
+		// 	if (tm.boundsDiff.start !== m.boundsDiff.start) {
+		// 		console.log(i);
+		// 		console.log(tm);
+		// 		console.log(m);
+		// 	}
+		// }
+
+		setMistakes(testMistakes);
 	}
 
 	async function setMistakes(newMistakes: Mistake[]) {
-		mistakes = newMistakes;
+		mistakes = [...newMistakes];
+		mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
 		let registerPromises: Promise<void>[] = [];
 
@@ -137,7 +210,7 @@
 			const delMistakeHash = await newMistakes[delMistakeIndex].genHash();
 
 			newMistakes.splice(delMistakeIndex, 1);
-			entryMistakeArr.splice(entryMistakeArr.findIndex((m) => m === delMistakeHash), 1);
+			entryMistakeArr.splice(entryMistakeArr.findIndex((m) => m.hash === delMistakeHash), 1);
 
 			const mistakeDataIndex = $workspace.mistakeData!.findIndex((m) => m.hash === delMistakeHash);
 			$workspace.mistakeData![mistakeDataIndex].occurrences--;
@@ -166,7 +239,7 @@
 			});
 		}
 
-		entryMistakeArr.push(mergedHash);
+		// entryMistakeArr.push({ hash: mergedHash, bo });
 		$workspaceSync.addMistakeChange($activeSubmission, mergedMistake.id, "ADD");
 
 		setMistakes(newMistakes);
@@ -218,6 +291,8 @@
 			console.log(`Autosave: ${autosave}`);
 			console.log(`Workspace: ${w.key}`);
 			console.log(changes);
+
+			$workspaceDatabase?.updateWorkspace($workspace!);
 		});
 	});
 </script>

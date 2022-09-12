@@ -2,29 +2,6 @@ import type { RegisterEntry } from "$lib/types";
 import type { Mistake, MistakeHash } from "@shared/diff-engine";
 import { workspace, workspaceSync } from "./stores";
 import { get } from "svelte/store";
-import { updateLocalWorkspace } from "./WorkspaceLocalStorage";
-
-function pushToLocalStorage(data: RegisterEntry) {
-	const existingData: RegisterEntry[] = JSON.parse(localStorage.getItem("temp-register") ?? "[]");
-	existingData.push(data);
-	localStorage.setItem("temp-register", JSON.stringify(existingData));
-}
-
-function updateInLocalStorage(data: RegisterEntry) {
-	const existingData: RegisterEntry[] = JSON.parse(localStorage.getItem("local-workspaces") ?? "[]");
-	const existing = existingData.findIndex((w) => w.hash === data.hash);
-	
-	existingData[existing] = data;
-	localStorage.setItem("local-workspaces", JSON.stringify(existingData));
-}
-
-function deleteFromLocalStorage(hash: string) {
-	const existingData: RegisterEntry[] = JSON.parse(localStorage.getItem("local-workspaces") ?? "[]");
-	const existing = existingData.findIndex((w) => w.hash === hash);
-	
-	existingData.splice(existing, 1);
-	localStorage.setItem("local-workspaces", JSON.stringify(existingData));
-}
 
 export class ActionRegister {
 	constructor() {}
@@ -37,7 +14,6 @@ export class ActionRegister {
 		const regData = {...data, hash};
 
 		workspaceVal.register[hash] = regData;
-		// updateLocalWorkspace(workspaceVal);
 
 		get(workspaceSync).addRegisterChange(hash, "ADD");
 	}
@@ -53,8 +29,6 @@ export class ActionRegister {
 
 		workspaceVal.register[hash] = regData;
 		get(workspaceSync).addRegisterChange(hash, "EDIT");
-
-		// updateLocalWorkspace(workspaceVal);
 		
 		return true;
 	}
@@ -68,7 +42,6 @@ export class ActionRegister {
 		let hash = typeof mistake === "string" ? mistake : await mistake.genHash();
 
 		delete workspaceVal.register[hash];
-		// deleteFromLocalStorage(hash);
 		get(workspaceSync).addRegisterChange(hash, "DELETE");
 
 		return true;

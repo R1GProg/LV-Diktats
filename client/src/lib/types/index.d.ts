@@ -1,10 +1,25 @@
 import type { MistakeType, Bounds, MistakeHash } from "@shared/diff-engine";
 
+export enum SubmissionStatus {
+	UNGRADED = "UNGRADED",
+	REJECTED = "REJECTED",
+	WIP = "WIP",
+	DONE = "DONE"
+}
+
+export interface EssayMistake {
+	hash: string,
+	boundsDiff: Bounds,
+	boundsCheck: Bounds,
+	actions: { hash: string, indexDiff: number, indexCheck: number }[]
+}
+
 export interface EssayEntry {
 	id: string,
 	text: string | null,
-	mistakes?: MistakeHash[],
-	ignoredText: Bounds[]
+	mistakes?: EssayMistake[],
+	ignoredText: Bounds[],
+	state: SubmissionStatus
 }
 
 export interface WorkspaceMistake {

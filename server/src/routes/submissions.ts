@@ -11,6 +11,8 @@ import { Mistake } from '../models/mistake';
 import cors from 'cors';
 import { processString } from '@shared/normalization';
 import { IRegister, Register } from '../models/register';
+import fs from "fs";
+import path from "path";
 
 const logger = new Logger();
 const router = express.Router();
@@ -29,12 +31,16 @@ type Submission = {
 	city: string;
 };
 
-// Takes a CSV and loads it into the DB
-router.post('/api/loadCSV', async (req: Request, res: Response) => {
-	logger.info("Loading CSV...");
-	let csv = req.body;
-	let workspace = req.query.workspace as string;
-	if(!workspace) return res.send("No workspace specified!");
+async function parseshitdicks() {
+	const csv = fs.readFileSync(path.join(__dirname, "data.csv"), "utf8");
+	const workspace = "gurki";
+	const template = processString(fs.readFileSync(path.join(__dirname, "correct.txt"), "utf8"));
+
+	console.log(template);
+
+	const submissions: any[] = [];
+	const mistakesDb: any[] = [];
+
 	parse(csv, {
 		delimiter: ',',
 		from_line: 2,
@@ -45,39 +51,134 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 			return;
 		}
 
-		logger.info("Removing previous records...");
-		let prevRecords = await Submission.find({workspace: workspace});
-		let cleanTasks = prevRecords.map(async x => {
-			await x.remove();
-		});
-		await Promise.all(cleanTasks);
-		let prevMistakes = await Mistake.find({ workspace: workspace });
-		cleanTasks = prevMistakes.map(async x => {
-			await x.remove();
-		});
-		await Promise.all(cleanTasks);
-
-
-		let result = await Template.find();
-
-		let template = result![0].message;
-		for (let val of records) {
+		for (const val of records) {
 			logger.info(`Beginning processing of submission #${val.id}...`);
 			// TODO: generate diff and categorise mistakes
 			val.message = processString(val.message);
 			const diff = new DiffONP(val.message, template);
 			diff.calc();
-			let mistakes = diff.getMistakes();
+			const mistakes = diff.getMistakes();
 			let mistakesProcessed = 0;
-			let mistakesDb: any[] = [];
-			for (let val2 of mistakes) {
-				let hash = await val2.genHash();
-				let results = await Mistake.find({ hash: hash, workspace: workspace });
+
+			const curSubmMistakes: any[] = [];
+			
+			for (const mistake of mistakes) {
+				const hash = await mistake.genHash();
+				const existing = mistakesDb.find((m) => m.hash === hash);
+
+				if (!existing) {
+					const final: any = {
+						...mistake,
+						hash,
+						workspace,
+						occurrences: 1,
+					};
+
+					for (const a of final.actions) {
+						a.mistake = undefined;
+					}
+
+					mistakesDb.push(final);
+				} else {
+					existing.occurrences++;
+				}
+
+				curSubmMistakes.push({
+					hash,
+					boundsDiff: mistake.boundsDiff,
+					boundsCheck: mistake.boundsCheck,
+					actions: await Promise.all(mistake.actions.map(async (a) => ({
+						hash: await a.hash,
+						indexDiff: a.indexDiff,
+						indexCheck: a.indexCheck
+					}))),
+				});
+				mistakesProcessed++;
+				logger.info(`Processing of submission #${val.id}... (${mistakesProcessed}/${mistakes.length})`);
+			}
+
+			const submission = {
+				...val,
+				state: SubmissionStates.UNGRADED,
+				mistakes: curSubmMistakes,
+				workspace,
+				ignoreText: [],
+			};
+
+			submissions.push(submission);
+
+			logger.info(`Processed submission #${val.id}!`);
+		}
+
+		const outputData = {
+			submissions,
+			mistakes: mistakesDb,
+			template,
+			register: [],
+		};
+	
+		fs.writeFileSync(path.join(__dirname, "output.json"), JSON.stringify(outputData));
+
+		logger.info("CSV parsed!");
+	});
+}
+
+parseshitdicks();
+
+// Takes a CSV and loads it into the DB
+router.post('/api/loadCSV', async (req: Request, res: Response) => {
+	logger.info("Loading CSV...");
+	let csv = req.body;
+	let workspace = req.query.workspace as string;
+	if(!workspace) return res.send("No workspace specified!");
+	parse(csv, {
+		delimiter: ',',
+		from_line: 2,
+		to_line: 5,
+		columns: ["id", "created_at", "message", "age", "language", "language_other", "level", "degree", "country", "city"]
+	}, async (err, records: Submission[], info) => {
+		if (err) {
+			logger.error(err);
+			return;
+		}
+
+		logger.info("Removing previous records...");
+		const prevRecords = await Submission.find({workspace: workspace});
+		let cleanTasks = prevRecords.map(async x => {
+			await x.remove();
+		});
+
+		await Promise.all(cleanTasks);
+
+		const prevMistakes = await Mistake.find({ workspace: workspace });
+		cleanTasks = prevMistakes.map(async x => {
+			await x.remove();
+		});
+
+		await Promise.all(cleanTasks);
+
+		const result = await Template.find();
+		const template = result![0].message;
+
+		for (const val of records) {
+			logger.info(`Beginning processing of submission #${val.id}...`);
+			// TODO: generate diff and categorise mistakes
+			val.message = processString(val.message);
+			const diff = new DiffONP(val.message, template);
+			diff.calc();
+			const mistakes = diff.getMistakes();
+			let mistakesProcessed = 0;
+			const mistakesDb: any[] = [];
+			
+			for (const val2 of mistakes) {
+				const hash = await val2.genHash();
+				const results = await Mistake.find({ hash: hash, workspace: workspace });
 				// logger.log(results.length);
+
 				if (results.length === 0) {
-					let final: IMistake = {
+					const final: IMistake = {
 						actions: await Promise.all(val2.actions.map(async (x) => {
-							let actionFinal: IAction = {
+							const actionFinal: IAction = {
 								id: x.id,
 								type: x.type,
 								subtype: x.subtype,
@@ -88,6 +189,7 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 								charCorrect: x.charCorrect,
 								hash: await x.hash
 							};
+
 							return actionFinal;
 						})),
 						type: val2.type,
@@ -99,19 +201,22 @@ router.post('/api/loadCSV', async (req: Request, res: Response) => {
 						workspace: workspace,
 						ocurrences: 1
 					};
-					let res = Mistake.build(final);
-					await res.save();
+
+					const res = Mistake.build(final);
+					// await res.save();
 
 					mistakesDb.push(res._id);
 				} else {
 					results[0].ocurrences++;
-					await results[0].save();
+					// await results[0].save();
 					mistakesDb.push(results[0]._id);
 				}
+
 				mistakesProcessed++;
 				logger.info(`Processing of submission #${val.id}... (${mistakesProcessed}/${mistakes.length})`);
 			}
-			let record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb, workspace: workspace, ignoreText: [] } });
+
+			const record = Submission.build({ ...val, ...{ state: SubmissionStates.UNGRADED, mistakes: mistakesDb, workspace: workspace, ignoreText: [] } });
 			await record.save();
 			logger.info(`Processed submission #${val.id}!`);
 		}

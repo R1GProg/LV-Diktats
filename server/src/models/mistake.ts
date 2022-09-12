@@ -30,6 +30,9 @@ export interface IMistake {
 	hash: string;
 	workspace: string;
 	ocurrences: number;
+	id?: string;
+	word?: string;
+	subtype?: string;
 }
 
 interface MistakeDoc extends mongoose.Document {

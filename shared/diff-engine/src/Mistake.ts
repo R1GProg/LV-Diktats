@@ -1,4 +1,4 @@
-import type { Action } from "./Action";
+import { Action } from "./Action";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
 import { DiffChar } from ".";
@@ -146,6 +146,7 @@ export class Mistake {
 
 	static fromData(data: MistakeOpts & { id: string, isRegistered?: boolean, word: string }) {
 		const m = new Mistake(data);
+
 		m.id = data.id;
 		m.isRegistered = data.isRegistered ?? false;
 		m.word = data.word;
