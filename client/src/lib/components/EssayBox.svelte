@@ -346,7 +346,7 @@
 	}
 
 	async function initHighlighting() {
-		const svelteClass = textContainer.className.match(/s-.+?( |$)/)![0].trim();
+		const svelteClass = textContainer.className.match(/(s|svelte)-.+?( |$)/)![0].trim();
 		const Highlighter = (await import("web-highlighter")).default;
 
 		highlighter = new Highlighter({
