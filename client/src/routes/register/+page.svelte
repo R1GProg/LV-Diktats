@@ -22,6 +22,8 @@
 	}
 
 	function getMistakeOccurences(hash: string) {
+		console.log($workspace!.mistakeData!.find((m) => m.hash === hash));
+
 		return $workspace!.mistakeData!.find((m) => m.hash === hash)!.occurrences;
 	}
 </script>

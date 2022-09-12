@@ -217,7 +217,7 @@
 						id: m.id,
 					}),
 					hash: m.hash,
-					occurrences: m.ocurrences,
+					occurrences: m.occurrences,
 					workspace: key
 				});
 			}
@@ -240,6 +240,8 @@
 
 			for (const wsMistake of pregenWorkspace.mistakeData) {
 				const m = wsMistake.mistake;
+
+				console.log(wsMistake);
 
 				parsedMistakeData.push({
 					mistake: new Mistake({
