@@ -13,8 +13,8 @@ export interface MistakeOpts {
 	type: MistakeType,
 	subtype: MistakeSubtype,
 	registerId?: string,
-	boundsCheck: Bounds, // 
-	boundsCorrect: Bounds,
+	boundsCheck: Bounds, // For type=ADD, start == end
+	boundsCorrect: Bounds, // For type=DEL start == end
 	boundsDiff: Bounds,
 	word: string,
 	wordCorrect?: string,

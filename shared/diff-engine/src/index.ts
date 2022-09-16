@@ -222,14 +222,12 @@ export default class Diff {
 export * from "./Mistake";
 export * from "./Action";
 
-(async () => {
-	const check = "Test Hellw, test world!";
-	const correct = "Test Hello: test worldw!";
+// (async () => {
+// 	const check = "Test Hellw, test world!";
+// 	const correct = "Test Hello test worldw!";
 
-	const d = new Diff(check, correct);
-	d.calc();
+// 	const d = new Diff(check, correct);
+// 	d.calc();
 
-	for (const m of d.getMistakes()) {
-		logger.info(await m.genHash());
-	}
-})();
+// 	logger.info(d.getMistakes());
+// })();
