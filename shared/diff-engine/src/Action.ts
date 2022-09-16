@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import type { Mistake } from "./Mistake";
 import { hash } from "./xxhash";
-export type ActionType = "ADD" | "DEL" | "SUB" | "NONE";
+export type ActionType = "ADD" | "DEL";
 export type ActionSubtype = "PUNCT" | "ORTHO" | "SPACE";
 
 export interface ActionOpts {
@@ -11,8 +10,6 @@ export interface ActionOpts {
 	char: string,
 	subtype: ActionSubtype,
 	indexDiff?: number,
-	charCorrect?: string,
-	mistake?: Mistake,
 }
 
 export type ActionHash = string;
@@ -28,15 +25,11 @@ export class Action {
 	
 	indexCorrect: number;
 	
-	indexDiff: number = -1; // indexDiff=-1 if the action hasn't yet been run through post-processing
-	
+	indexDiff?: number; // Defined only for type=DEL
+
 	char: string;
-	
-	charCorrect?: string;
 
 	hash: Promise<ActionHash>;
-
-	mistake?: Mistake;
 
 	constructor(opts: ActionOpts) {
 		this.id = uuidv4();
@@ -45,10 +38,8 @@ export class Action {
 		this.subtype = opts.subtype;
 		this.indexCheck = opts.indexCheck;
 		this.indexCorrect = opts.indexCorrect;
+		this.indexDiff = opts.indexDiff;
 		this.char = opts.char;
-
-		this.charCorrect = opts.charCorrect;
-		this.mistake = opts.mistake;
 
 		this.hash = this.genHash();
 	}
@@ -57,10 +48,8 @@ export class Action {
 		if (this.hash) return this.hash;
 
 		const dict: Record<ActionType, number> = {
-			"NONE": 0,
+			"DEL": 0,
 			"ADD": 1,
-			"DEL": 2,
-			"SUB": 3,
 		}
 	
 		const keyObject = {
