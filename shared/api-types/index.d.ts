@@ -55,31 +55,6 @@ export interface Submission {
 	} | null
 }
 
-export interface MistakeData {
-	id: UUID,
-	hash: MistakeHash
-	type: MistakeType,
-	subtype: MistakeSubtype,
-	actions: ActionData[],
-	boundsCheck: Bounds,
-	boundsCorrect: Bounds,
-	boundsDiff: Bounds,
-	word: string,
-	wordCorrect?: string,
-	registerId: string | null,
-	children: MistakeChild[]
-}
-
-export interface ActionData {
-	id: UUID,
-	type: ActionType,
-	subtype: ActionSubtype,
-	indexCheck: number,
-	indexCorrect: number,
-	indexDiff?: number,
-	char: string
-}
-
 export interface RegisterEntry {
 	id: UUID,
 	mistakes: MistakeHash[],

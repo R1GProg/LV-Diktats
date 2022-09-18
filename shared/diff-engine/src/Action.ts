@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { hash } from "./xxhash";
 export type ActionType = "ADD" | "DEL";
 export type ActionSubtype = "PUNCT" | "ORTHO" | "SPACE";
+export type ActionID = string;
 
 export interface ActionOpts {
 	type: ActionType,
@@ -12,10 +13,20 @@ export interface ActionOpts {
 	indexDiff?: number,
 }
 
+export interface ActionData {
+	id: ActionID,
+	type: ActionType,
+	subtype: ActionSubtype,
+	indexCheck: number,
+	indexCorrect: number,
+	indexDiff?: number,
+	char: string
+}
+
 export type ActionHash = string;
 
 export class Action {
-	id: string;
+	id: ActionID;
 	
 	type: ActionType;
 	
@@ -38,5 +49,17 @@ export class Action {
 		this.indexCorrect = opts.indexCorrect;
 		this.indexDiff = opts.indexDiff;
 		this.char = opts.char;
+	}
+
+	exportData(): ActionData {
+		return {
+			id: this.id,
+			type: this.type,
+			subtype: this.subtype,
+			indexCheck: this.indexCheck,
+			indexCorrect: this.indexCorrect,
+			indexDiff: this.indexDiff,
+			char: this.char
+		}
 	}
 }

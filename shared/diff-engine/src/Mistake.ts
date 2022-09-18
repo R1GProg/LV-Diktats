@@ -1,4 +1,4 @@
-import { Action } from "./Action";
+import { Action, ActionData } from "./Action";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
 import { getMaxElement, getMinElement } from "./util";
@@ -30,6 +30,21 @@ export interface MistakeChild {
 	boundsCheck: Bounds,
 }
 
+export interface MistakeData {
+	id: MistakeId,
+	hash: MistakeHash
+	type: MistakeType,
+	subtype: MistakeSubtype,
+	actions: ActionData[],
+	boundsCheck: Bounds,
+	boundsCorrect: Bounds,
+	boundsDiff: Bounds,
+	word: string,
+	wordCorrect?: string,
+	registerId: string | null,
+	children: MistakeChild[]
+}
+
 export type MistakeHash = string;
 
 export class Mistake {
@@ -39,7 +54,7 @@ export class Mistake {
 
 	subtype: MistakeSubtype;
 
-	registerId?: string;
+	registerId: string | null = null;
 
 	boundsCheck: Bounds;
 	
@@ -84,6 +99,23 @@ export class Mistake {
 
 		this.cachedHash = mHash;
 		return mHash;
+	}
+
+	async exportData(): Promise<MistakeData> {
+		return {
+			id: this.id,
+			hash: await this.genHash(),
+			type: this.type,
+			subtype: this.subtype,
+			actions: this.actions,
+			boundsCheck: this.boundsCheck,
+			boundsCorrect: this.boundsCorrect,
+			boundsDiff: this.boundsDiff,
+			word: this.word,
+			wordCorrect: this.wordCorrect,
+			registerId: this.registerId,
+			children: this.children,
+		}
 	}
 
 	static mergeMistakes(...mistakes: Mistake[]) {
