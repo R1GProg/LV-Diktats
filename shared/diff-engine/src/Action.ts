@@ -62,4 +62,10 @@ export class Action {
 			char: this.char
 		}
 	}
+
+	static fromData(data: ActionData) {
+		const a = new Action(data);
+		a.id = data.id;
+		return a;
+	}
 }

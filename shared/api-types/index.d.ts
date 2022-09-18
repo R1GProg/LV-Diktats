@@ -1,4 +1,4 @@
-import type { ActionSubtype, ActionType, Bounds, MistakeChild, MistakeHash, MistakeSubtype, MistakeType } from "@shared/diff-engine";
+import type { ActionSubtype, ActionType, Bounds, MistakeChild, MistakeData, MistakeHash, MistakeSubtype, MistakeType } from "@shared/diff-engine";
 
 export type UUID = string;
 export type SubmissionID = string;

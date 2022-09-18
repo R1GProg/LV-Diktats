@@ -168,8 +168,8 @@ export class Mistake {
 		// });
 	}
 
-	static fromData(data: MistakeOpts & { id: string, registerId: string }) {
-		const m = new Mistake(data);
+	static fromData(data: MistakeData) {
+		const m = new Mistake({ ...data, actions: data.actions.map((a) => Action.fromData(a)) });
 
 		m.id = data.id;
 		m.registerId = data.registerId;
