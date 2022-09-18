@@ -107,7 +107,7 @@ export class Mistake {
 			hash: await this.genHash(),
 			type: this.type,
 			subtype: this.subtype,
-			actions: this.actions,
+			actions: this.actions.map((a) => a.exportData()),
 			boundsCheck: this.boundsCheck,
 			boundsCorrect: this.boundsCorrect,
 			boundsDiff: this.boundsDiff,
