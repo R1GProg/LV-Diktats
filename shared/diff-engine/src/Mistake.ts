@@ -12,12 +12,22 @@ export interface MistakeOpts {
 	actions?: Action[], // Used only for type=MIXED
 	type: MistakeType,
 	subtype: MistakeSubtype,
-	registerId?: string,
 	boundsCheck: Bounds, // For type=ADD, start == end
 	boundsCorrect: Bounds, // For type=DEL start == end
 	boundsDiff: Bounds,
 	word: string,
 	wordCorrect?: string,
+}
+
+// Used to represent a base mistake that is part of a merged mistake
+export interface MistakeChild {
+	type: MistakeType,
+	hash: string,
+	word: string,
+	wordCorrect?: string, // Not sure if this is needed, but probably a nice to have
+	boundsDiff: Bounds,
+	boundsCorrect: Bounds,
+	boundsCheck: Bounds,
 }
 
 export type MistakeHash = string;
@@ -39,9 +49,11 @@ export class Mistake {
 
 	word: string;
 
-	wordAfter?: string; // Defined only for type=MIXED
+	wordCorrect?: string; // Defined only for type=MIXED
 
 	id: MistakeId;
+
+	children: MistakeChild[] = []; // Populated only for type=MERGED
 
 	private cachedHash: string | null = null;
 
@@ -50,12 +62,11 @@ export class Mistake {
 		this.actions = opts.actions ?? [];
 		this.type = opts.type;
 		this.subtype = opts.subtype;
-		this.registerId = opts.registerId;
 		this.boundsCheck = opts.boundsCheck;
 		this.boundsCorrect = opts.boundsCorrect;
 		this.boundsDiff = opts.boundsDiff;
 		this.word = opts.word;
-		this.wordAfter = opts.wordCorrect;
+		this.wordCorrect = opts.wordCorrect;
 	}
 
 	async genHash(force = false): Promise<MistakeHash> {
@@ -125,11 +136,11 @@ export class Mistake {
 		// });
 	}
 
-	static fromData(data: MistakeOpts & { id: string, word: string }) {
+	static fromData(data: MistakeOpts & { id: string, registerId: string }) {
 		const m = new Mistake(data);
 
 		m.id = data.id;
-		m.word = data.word;
+		m.registerId = data.registerId;
 
 		return m;
 	}

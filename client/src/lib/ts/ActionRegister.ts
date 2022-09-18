@@ -1,6 +1,6 @@
 import type { RegisterEntry } from "$lib/types";
 import type { Mistake, MistakeHash } from "@shared/diff-engine";
-import { workspace, workspaceSync } from "./stores";
+import { workspace } from "./stores";
 import { get } from "svelte/store";
 
 export class ActionRegister {
@@ -14,8 +14,6 @@ export class ActionRegister {
 		const regData = {...data, hash};
 
 		workspaceVal.register[hash] = regData;
-
-		get(workspaceSync).addRegisterChange(hash, "ADD");
 	}
 
 	// Returns true if update successful
@@ -28,7 +26,6 @@ export class ActionRegister {
 		const regData = { ...data, hash };
 
 		workspaceVal.register[hash] = regData;
-		get(workspaceSync).addRegisterChange(hash, "EDIT");
 		
 		return true;
 	}
@@ -42,7 +39,6 @@ export class ActionRegister {
 		let hash = typeof mistake === "string" ? mistake : await mistake.genHash();
 
 		delete workspaceVal.register[hash];
-		get(workspaceSync).addRegisterChange(hash, "DELETE");
 
 		return true;
 	}

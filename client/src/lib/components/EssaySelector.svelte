@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
-	import { workspace, sort, SortMode } from "$lib/ts/stores";
+	import { workspace, sort, SortMode, activeSubmissionID } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import { processString } from "@shared/normalization";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
+	import type { SubmissionID } from "@shared/api-types";
 
 	const dispatch = createEventDispatcher();
 
@@ -31,7 +32,7 @@
 	// 	});
 	// }
 
-	async function onSelect(index: number | string) {
+	async function onSelect(index: number | SubmissionID) {
 		if ($workspace === null) return;
 
 		let id: string;
@@ -39,7 +40,7 @@
 
 		if (typeof index === "number") {
 			if ($sort === SortMode.ID) {
-				const keys = Object.keys($workspace.dataset);
+				const keys = Object.keys($workspace.submissions);
 				id = keys[index];
 			} else {
 				id = mistakeOrderMap[index];
@@ -48,28 +49,31 @@
 			setIndex = index;
 		} else {
 			id = index;
-			setIndex = Object.keys($workspace.dataset).findIndex((el) => el === id);
+			setIndex = Object.keys($workspace.submissions).findIndex((el) => el === id);
 		}
 
-		if (!$workspace.dataset[id]) return;
+		if (!$workspace.submissions[id]) return;
 
 		activeIndex = setIndex;
 		activeID = id;
+		$activeSubmissionID = id;
 
-		if (!$workspace.local && $workspace.dataset[id].text === null) {
-			const req = await fetch(`${config.endpointUrl}/api/getSubmission?id=${id}`);
-			const data = await req.text();
+		// if (!$workspace.local && $workspace.submissions[id].text === null) {
+		// 	const req = await fetch(`${config.endpointUrl}/api/getSubmission?id=${id}`);
+		// 	const data = await req.text();
 
-			$workspace.dataset[id] = {
-				id,
-				text: processString(data),
-				ignoredText: [],
-			};
+		// 	$workspace.submissions[id] = {
+		// 		id,
+		// 		text: processString(data),
+		// 		ignoredText: [],
+		// 	};
 
-			dispatch("select", { entry: id });
-		} else {
-			dispatch("select", { entry: id });
-		}
+		// 	dispatch("select", { entry: id });
+		// } else {
+		// 	dispatch("select", { entry: id });
+		// }
+
+		dispatch("select", { entry: id });
 	}
 
 	export function changeSelectionBy(delta: number) {
@@ -87,19 +91,19 @@
 		if ($workspace === null) return;
 
 		noData = false;
-		const keys = Object.keys($workspace.dataset);
+		const keys = Object.keys($workspace.submissions);
 
 		mistakeOrderMap = keys;
-		mistakeOrderMap.sort((a, b) => $workspace!.dataset[b].mistakes!.length - $workspace!.dataset[a].mistakes!.length);
+		mistakeOrderMap.sort((a, b) => $workspace!.submissions[b].data!.mistakes.length - $workspace!.submissions[a].data!.mistakes.length);
 
 		totalEntries = keys.length;
 		activeIndex = 0;
 		onSelect(0);
 
-		activeWorkspaceKey = $workspace.key;
+		activeWorkspaceKey = $workspace.id;
 	}
 
-	$: if ($workspace?.key !== activeWorkspaceKey) {
+	$: if ($workspace?.id !== activeWorkspaceKey) {
 		initWorkspace();
 	} else if ($workspace === null) {
 		noData = true;

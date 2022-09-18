@@ -1,4 +1,4 @@
-import type { Workspace } from "$lib/types";
+import type { Workspace } from "@shared/api-types";
 
 export default class WorkspaceDatabase {
 	private db: IDBDatabase | null = null;
@@ -82,7 +82,7 @@ export default class WorkspaceDatabase {
 			};
 
 			req.onsuccess = (ev) => {
-				res(req.result as Workspace);
+				res({...req.result, id: "temp"} as Workspace);
 			};
 		});
 	}

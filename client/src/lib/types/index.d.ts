@@ -29,15 +29,15 @@ export interface WorkspaceMistake {
 	workspace: string,
 }
 
-export interface Workspace {
-	name: string,
-	key: string,
-	dataset: Record<string, EssayEntry>,
-	register: Record<MistakeHash, RegisterEntry>,
-	template: string,
-	local: boolean,
-	mistakeData: WorkspaceMistake[]
-}
+// export interface Workspace {
+// 	name: string,
+// 	key: string,
+// 	dataset: Record<string, EssayEntry>,
+// 	register: Record<MistakeHash, RegisterEntry>,
+// 	template: string,
+// 	local: boolean,
+// 	mistakeData: WorkspaceMistake[]
+// }
 
 export interface RegisterEntry {
 	desc: string,

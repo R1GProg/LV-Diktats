@@ -217,6 +217,10 @@ export default class Diff {
 	getMistakes() {
 		return this.mistakes;
 	}
+
+	getDistance(){
+		return this.mistakes.length;
+	}
 }
 
 export * from "./Mistake";

@@ -2,13 +2,13 @@
 	import { APP_ONLINE } from "$lib/ts/networking";
 	import { onMount } from "svelte";
 	import WorkspaceUploader from "./modals/WorkspaceUploader.svelte";
-	import { workspace, workspaceSync, workspaceDatabase } from "$lib/ts/stores";
-	import type { EssayEntry, WorkspaceMistake, RegisterEntry, Workspace } from "$lib/types";
-	import { loadLocalWorkspaces, saveLocalWorkspace } from "$lib/ts/WorkspaceLocalStorage";
+	import { workspace, workspaceDatabase } from "$lib/ts/stores";
+	import type { EssayEntry, WorkspaceMistake, RegisterEntry } from "$lib/types";
+	import { loadLocalWorkspaces } from "$lib/ts/WorkspaceLocalStorage";
 	import config from "$lib/config.json";
-	import { Action, Mistake, type MistakeHash } from "@shared/diff-engine";
+	import {  Mistake, type MistakeHash } from "@shared/diff-engine";
 	import LoadingWorkspaceStatus from "./modals/status/LoadingWorkspaceStatus.svelte";
-	import type { SyncChange } from "$lib/ts/WorkspaceSync";
+	import type { Submission, SubmissionID, UUID, Workspace } from "@shared/api-types";
 
 	// data: Workspace should be defined for cached workspaces or uploaded workspaces
 	let data: Record<string, { key: string, name: string, data?: Workspace }> = {};
@@ -38,18 +38,18 @@
 			active = "";
 
 			try {
-				const workspaceData = await workspaceUploader.open();
+				// const workspaceData = await workspaceUploader.open();
 
-				data[workspaceData.key] = {
-					key: workspaceData.key,
-					name: workspaceData.name,
-					data: workspaceData,
-				};
+				// data[workspaceData.key] = {
+				// 	key: workspaceData.key,
+				// 	name: workspaceData.name,
+				// 	data: workspaceData,
+				// };
 
-				data = data; // Update Svelte
-				active = workspaceData.key;
+				// data = data; // Update Svelte
+				// active = workspaceData.key;
 
-				$workspace = workspaceData;
+				// $workspace = workspaceData;
 			} catch {}
 
 			return;
@@ -88,7 +88,7 @@
 		}
 
 		const tempRegister: any[] = workspaceRaw.register;
-		const register: Record<string, RegisterEntry> = {};	
+		const register: Record<UUID, RegisterEntry> = {};	
 
 		for (const e of tempRegister) {
 			register[e._id!] = e;
@@ -105,15 +105,7 @@
 		};
 
 		data[key].data = w;
-		$workspace = w;
-	}
-
-	interface WorkspaceSyncBody {
-		registerChanges: SyncChange[],
-		registers: RegisterEntry[],
-		submissions: EssayEntry[],
-		mistakeRecords: Record<MistakeHash, string>,
-		mistakes: WorkspaceMistake[]
+		// $workspace = w;
 	}
 
 	onMount(async () => {
@@ -173,20 +165,22 @@
 			const pregen = await req.json();
 
 			const template = pregen.template;
-			const entries: EssayEntry[] = pregen.submissions
+			const entries: Submission[] = pregen.submissions
 			.map((s: any) => ({
 				id: s.id,
-				text: s.message,
-				mistakes: s.mistakes,
-				ignoredText: [],
 				status: "UNGRADED",
+				data: {
+					text: s.message,
+					mistakes: s.mistakes,
+					ignoreText: s.ignoreText,
+				}
 			}))
-			.filter((e: EssayEntry) => e.text!.length > template.length * config.incompleteFraction);
+			.filter((e: Submission) => e.data!.text.length > template.length * config.incompleteFraction);
 
-			const dataset: Record<string, EssayEntry> = {};
+			const submissions: Record<SubmissionID, Submission> = {};
 
 			for (const e of entries) {
-				dataset[e.id] = e;
+				submissions[e.id] = e;
 			}
 
 			const tempRegister: RegisterEntry[] = JSON.parse(localStorage.getItem("temp-register") ?? "[]");
@@ -205,64 +199,66 @@
 				// 	initActions.push(new Action(a));
 				// }
 
-				mistakeData.push({
-					mistake: Mistake.fromData({
-						actions: m.actions,
-						boundsCheck: m.boundsCheck,
-						boundsCorrect: m.boundsCorrect,
-						boundsDiff: m.boundsDiff,
-						type: m.type,
-						subtype: m.subtype,
-						word: m.word,
-						id: m.id,
-					}),
-					hash: m.hash,
-					occurrences: m.occurrences,
-					workspace: key
-				});
+				// mistakeData.push({
+				// 	mistake: Mistake.fromData({
+				// 		actions: m.actions,
+				// 		boundsCheck: m.boundsCheck,
+				// 		boundsCorrect: m.boundsCorrect,
+				// 		boundsDiff: m.boundsDiff,
+				// 		type: m.type,
+				// 		subtype: m.subtype,
+				// 		word: m.word,
+				// 		id: m.id,
+				// 	}),
+				// 	hash: m.hash,
+				// 	occurrences: m.occurrences,
+				// 	workspace: key
+				// });
 			}
 			
 			pregenWorkspace = {
+				id: "tempID",
 				template,
-				dataset,
+				submissions,
 				register,
-				local: true,
 				name,
 				key,
 				mistakeData,
 			};
 
-			$workspaceDatabase!.addWorkspace(pregenWorkspace);
+			console.log(pregenWorkspace);
+
+			data[key] = { key, name, data: pregenWorkspace };
+
+			// $workspaceDatabase!.addWorkspace(pregenWorkspace);
 		} else {
-			pregenWorkspace = await $workspaceDatabase!.getWorkspace(key);
+			// pregenWorkspace = await $workspaceDatabase!.getWorkspace(key);
 		
-			const parsedMistakeData: WorkspaceMistake[] = [];
+			// const parsedMistakeData: WorkspaceMistake[] = [];
 
-			for (const wsMistake of pregenWorkspace.mistakeData) {
-				const m = wsMistake.mistake;
+			// for (const wsMistake of pregenWorkspace.mistakeData) {
+			// 	const m = wsMistake.mistake;
 
-				console.log(wsMistake);
+			// 	parsedMistakeData.push({
+			// 		mistake: new Mistake({
+			// 			actions: m.actions,
+			// 			boundsCheck: m.boundsCheck,
+			// 			boundsCorrect: m.boundsCorrect,
+			// 			boundsDiff: m.boundsDiff,
+			// 			type: m.type,
+			// 			subtype: m.subtype,
+			// 			word: m.word
+			// 		}),
+			// 		hash: wsMistake.hash,
+			// 		occurrences: wsMistake.occurrences,
+			// 		workspace: key
+			// 	});
+			// }
 
-				parsedMistakeData.push({
-					mistake: new Mistake({
-						actions: m.actions,
-						boundsCheck: m.boundsCheck,
-						boundsCorrect: m.boundsCorrect,
-						boundsDiff: m.boundsDiff,
-						type: m.type,
-						subtype: m.subtype,
-						word: m.word
-					}),
-					hash: wsMistake.hash,
-					occurrences: wsMistake.occurrences,
-					workspace: key
-				});
-			}
-
-			pregenWorkspace.mistakeData = parsedMistakeData;
+			// pregenWorkspace.mistakeData = parsedMistakeData;
 		}
 
-		data[key] = { key, name, data: pregenWorkspace };
+		// data[key] = { key, name, data: pregenWorkspace };
 	});
 </script>
 

@@ -37,6 +37,7 @@
 	"dependencies": {
 		"@fontsource/roboto": "^4.5.8",
 		"@fontsource/roboto-condensed": "^4.5.9",
+		"@shared/api-types": "file:../shared/api-types",
 		"@shared/diff-engine": "file:../shared/diff-engine",
 		"@shared/normalization": "file:../shared/normalization",
 		"@sveltejs/adapter-node": "^1.0.0-next.89",

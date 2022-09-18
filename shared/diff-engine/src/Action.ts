@@ -29,8 +29,6 @@ export class Action {
 
 	char: string;
 
-	hash: Promise<ActionHash>;
-
 	constructor(opts: ActionOpts) {
 		this.id = uuidv4();
 
@@ -40,25 +38,5 @@ export class Action {
 		this.indexCorrect = opts.indexCorrect;
 		this.indexDiff = opts.indexDiff;
 		this.char = opts.char;
-
-		this.hash = this.genHash();
-	}
-
-	async genHash(): Promise<ActionHash> {
-		if (this.hash) return this.hash;
-
-		const dict: Record<ActionType, number> = {
-			"DEL": 0,
-			"ADD": 1,
-		}
-	
-		const keyObject = {
-			type: dict[this.type],
-			index: this.indexCorrect,
-			char: this.char.trim().charCodeAt(0)
-		};
-	
-		const dataBuf = Uint8Array.from(Object.values(keyObject));	
-		return hash(dataBuf);
 	}
 }

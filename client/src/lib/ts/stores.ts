@@ -1,10 +1,10 @@
-import type { Workspace } from "$lib/types";
-import { readable, writable } from "svelte/store";
+import type { Submission, SubmissionID, Workspace } from "@shared/api-types";
+import { get, readable, writable } from "svelte/store";
 import { ToolbarMode } from "./toolbar";
-import WorkspaceSync from "./WorkspaceSync";
-import config from "$lib/config.json";
 import WorkspaceDatabase from "./WorkspaceDatabase";
 import { onMount } from "svelte";
+import { fetchSubmission } from "./networking";
+import type { MistakeId } from "@shared/diff-engine";
 
 export enum SortMode {
 	MISTAKE,
@@ -15,8 +15,19 @@ export const workspace = writable<Workspace | null>(null);
 export const mode = writable<ToolbarMode>(ToolbarMode.READ);
 export const hideRegistered = writable<boolean>(false);
 export const sort = writable<SortMode>(SortMode.MISTAKE);
-export const activeSubmission = writable<string | null>(null);
-export const workspaceSync = readable<WorkspaceSync>(new WorkspaceSync(config.autosaveTime));
+export const hoveredMistake = writable<MistakeId | null>(null);
+export const activeSubmissionID = writable<SubmissionID | null>(null);
+
+export const activeSubmission = readable<Promise<Submission> | null>(null, (set) => {
+	activeSubmissionID.subscribe((newID: string | null) => {
+		if (newID === null || get(workspace) === null) {
+			set(null);
+		} else {
+			set(fetchSubmission(newID, get(workspace)!.id));
+		}
+	});
+});
+
 export const workspaceDatabase = readable<WorkspaceDatabase | null>(null, (set) => {
 	onMount(() => {
 		set(new WorkspaceDatabase());

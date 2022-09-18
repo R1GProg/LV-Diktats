@@ -1,300 +1,13 @@
 <script lang="ts">
-	import EssayBox from "$lib/components/EssayBox.svelte";
+	import DiffEssayBox from "$lib/components/EssayBox/DiffEssayBox.svelte";
 	import EssaySelector from "$lib/components/EssaySelector.svelte";
 	import MistakeList from "$lib/components/MistakeList.svelte";
+	import SubmissionEssayBox from "$lib/components/EssayBox/SubmissionEssayBox.svelte";
+	import TemplateEssayBox from "$lib/components/EssayBox/TemplateEssayBox.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
 	import { ActionRegister } from "$lib/ts/ActionRegister";
-	import { workspace, mode, activeSubmission, workspaceSync, workspaceDatabase } from "$lib/ts/stores";
-	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
-	import type { RegisterEntry, RegisterEntryAction } from "$lib/types";
-	import DiffONP, { Mistake, type Bounds } from "@shared/diff-engine";
-	import { onMount } from "svelte";
 
-	let correctText = "";
-	let submissionText = ""; // Submission text with ignored text
-	let rawSubmissionText = ""; // Submission text as submitted
-	let diffEssayBox: EssayBox;
-	let templateEssayBox: EssayBox;
-	let submissionEssayBox: EssayBox;
-	let mistakeList: MistakeList;
-	let mistakes: Mistake[] = [];
 	const actionRegister = new ActionRegister();
-
-	$: if ($workspace !== null) {
-		correctText = $workspace.template;
-	} else {
-		correctText = "";
-		submissionText = "";
-		diffEssayBox?.setPlainText("");
-	}
-
-	async function onSubmissionSelect(ev: CustomEvent) {
-		if (!$workspace) {
-			console.error("Attempt to load submission text without workspace!");
-			return;
-		}
-
-		const id: string = ev.detail.entry;
-		setActiveSubmission(id);
-	}
-
-	function setActiveSubmission(id: string) {
-		$activeSubmission = id;
-		
-		const entry = $workspace!.dataset[id];
-		const text = entry.text!;
-		rawSubmissionText = text;
-		submissionEssayBox.setTextWithIgnores(rawSubmissionText, entry.ignoredText);
-
-		updateDiff(id);
-	}
-
-	function parseSubmissionIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
-		let text = rawText;
-		let offset = 0;
-
-		for (const bounds of ignoreBounds) {
-			const sub1 = text.substring(0, bounds.start - offset);
-			const sub2 = text.substring(bounds.end - offset);
-			text = (sub1 + sub2).trim();
-
-			offset += bounds.end - bounds.start;
-		}
-
-		return text;
-	}
-
-	async function updateDiff(id: string) {
-		const entry = $workspace!.dataset[id];
-		submissionText = parseSubmissionIgnoreBounds(entry.text!, entry.ignoredText);
-
-		let mistakes: Mistake[] = [];
-
-		if (!entry.mistakes) {
-			const diff = new DiffONP(submissionText, correctText);
-			diff.calc();
-			mistakes = diff.getMistakes();
-		} else {
-			// for (const m of entry.mistakes) {
-			// 	const foundMistake: Mistake = $workspace!.mistakeData.find((data) => data.hash === m.hash)!.mistake;
-
-			// 	if (!foundMistake) {
-			// 		console.warn(`Unable to match mistake ${m.hash}`);
-			// 		continue;
-			// 	}
-
-			// 	foundMistake.boundsDiff = m.boundsDiff;
-			// 	foundMistake.boundsCheck = m.boundsCheck;
-
-			// 	for (const a of foundMistake.actions) {
-			// 		const aHash = await a.hash;
-			// 		const aData = m.actions.find((action) => action.hash === aHash);
-					
-			// 		if (!aData) {
-			// 			console.warn(`Unable to match action (Mistake: ${m.hash}, action: ${aHash})`);
-			// 			continue;
-			// 		}
-
-			// 		a.indexCheck = aData.indexCheck;
-			// 		a.indexDiff = aData.indexDiff;
-			// 	}
-
-			// 	mistakes.push(foundMistake);
-			// }
-
-			// mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-		}
-
-		const testDiff = new DiffONP(submissionText, correctText);
-		testDiff.calc();
-		// console.log("gend:");
-		// console.log(testDiff.getMistakes());
-		// console.log("pregen:");
-		// console.log(mistakes);
-
-		const testMistakes = testDiff.getMistakes();
-
-		// console.log(entry.mistakes);
-		// console.log(mistakes.length);
-		// console.log(testMistakes.length);
-
-		// console.log(await mistakes[52].genHash());
-		// console.log(await testMistakes[52].genHash());
-
-		// console.log(testMistakes[52]);
-		// console.log(mistakes[52]);
-
-		// console.log(testMistakes.find((m) => m.boundsDiff.start === 955));
-
-		// for (let i = 0; i < testMistakes.length; i++) {
-		// 	const tm = testMistakes[i];
-		// 	const m = mistakes[i];
-
-		// 	if (m === undefined) {
-		// 		// console.log(`wtf at ${i}`);
-		// 		continue;
-		// 	}
-
-		// 	if (tm.boundsDiff.start !== m.boundsDiff.start) {
-		// 		console.log(i);
-		// 		console.log(tm);
-		// 		console.log(m);
-		// 	}
-		// }
-
-		setMistakes(testMistakes);
-	}
-
-	async function setMistakes(newMistakes: Mistake[]) {
-		mistakes = [...newMistakes];
-		mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-
-		let registerPromises: Promise<void>[] = [];
-
-		for (const m of mistakes) {
-			registerPromises.push(new Promise<void>(async (res) => {
-				m.isRegistered = await actionRegister.isMistakeInRegister(m);
-				res();
-			}));
-		}
-
-		await Promise.all(registerPromises);
-
-		mistakeList.set(mistakes);
-		diffEssayBox.set(submissionText, mistakes);
-	}
-
-	function onMistakeHover(ev: CustomEvent) {
-		if (ev.detail.source === "LIST") {
-			diffEssayBox.setMistakeHover(ev.detail.id);
-		} else {
-			mistakeList.setMistakeHover(ev.detail.id);
-		}
-	}
-
-	function onMistakeHoverOut(ev: CustomEvent) {
-		if (ev.detail.source === "LIST") {
-			diffEssayBox.clearMistakeHover(ev.detail.id);
-		} else {
-			mistakeList.clearMistakeHover();
-		}
-	}
-
-	function onToolbarModeChange(ev: ToolbarModeEvent) {
-		if (ev.prevMode !== ToolbarMode.EDIT) return;
-		if ($activeSubmission === null) return;
-
-		const newCorrectText = templateEssayBox.getText();
-		const newSubmText = submissionEssayBox.getText();
-
-		if (newCorrectText === correctText && newSubmText === submissionText) return;
-
-		correctText = newCorrectText;
-		submissionText = newSubmText;
-		updateDiff($activeSubmission);
-	}
-
-	async function onMistakeMerge(ev: CustomEvent) {
-		if (!$activeSubmission) return;
-		if (!$workspace) return;
-
-		const ids: string[] = ev.detail.ids;
-		const newMistakes = [...mistakes];
-		
-		const mergedMistakes = ids.map((id) => mistakes.find((m) => m.id === id)!);
-		const mergedMistake = Mistake.mergeMistakes(...mergedMistakes);
-		const entryMistakeArr = $workspace.dataset[$activeSubmission].mistakes!;
-
-		for (const id of ids) {
-			const delMistakeIndex = newMistakes.findIndex((m) => m.id === id);
-			const delMistakeHash = await newMistakes[delMistakeIndex].genHash();
-
-			newMistakes.splice(delMistakeIndex, 1);
-			entryMistakeArr.splice(entryMistakeArr.findIndex((m) => m.hash === delMistakeHash), 1);
-
-			const mistakeDataIndex = $workspace.mistakeData!.findIndex((m) => m.hash === delMistakeHash);
-			$workspace.mistakeData![mistakeDataIndex].occurrences--;
-
-			if ($workspace.mistakeData![mistakeDataIndex].occurrences === 0) {
-				$workspace.mistakeData!.splice(mistakeDataIndex, 1);
-			}
-
-			$workspaceSync.addMistakeChange($activeSubmission, id, "DELETE");
-		}
-
-		newMistakes.push(mergedMistake);
-		newMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-
-		const mergedHash = await mergedMistake.genHash();
-		const existingMistake = $workspace.mistakeData!.find((m) => m.hash === mergedHash);
-
-		if (existingMistake) {
-			existingMistake.occurrences++;
-		} else {
-			$workspace!.mistakeData.push({
-				mistake: mergedMistake,
-				occurrences: 1,
-				hash: mergedHash,
-				workspace: $workspace.key,
-			});
-		}
-
-		// entryMistakeArr.push({ hash: mergedHash, bo });
-		$workspaceSync.addMistakeChange($activeSubmission, mergedMistake.id, "ADD");
-
-		setMistakes(newMistakes);
-	}
-
-	async function onMistakeRegister(ev: CustomEvent) {
-		const id = ev.detail.id as string;
-		const data = ev.detail.data as RegisterEntry;
-		const action = ev.detail.action as RegisterEntryAction;
-		const addedToExisting = ev.detail.addedToExisting as boolean;
-		const mistake: Mistake = mistakes.find((m) => m.id === id)!;
-
-		if (addedToExisting) {
-			// TODO: NYI
-			mistake.isRegistered = true;
-		} else {
-			switch (action) {
-				case "ADD":
-					await actionRegister.addMistakeToRegister(mistake, data);
-					mistake.isRegistered = true;
-					break;
-				case "EDIT":
-					await actionRegister.updateMistakeInRegister(mistake, data);
-					mistake.isRegistered = true;
-					break;
-				case "DELETE":
-					await actionRegister.deleteMistakeFromRegister(mistake);
-					mistake.isRegistered = false;
-					break;
-			}
-		}
-
-		setMistakes(mistakes);
-	}
-
-	function onEssayIgnore(ev: CustomEvent) {
-		if ($workspace === null) return;
-		if ($activeSubmission === null) return;
-		
-		const bounds = ev.detail.bounds as Bounds[];
-		$workspace.dataset[$activeSubmission].ignoredText = bounds;
-		updateDiff($activeSubmission);
-	}
-
-	onMount(() => {
-		subToToolbarMode(onToolbarModeChange);
-		
-		$workspaceSync.addSaveCallback((w, changes, autosave) => {
-			console.log(`Autosave: ${autosave}`);
-			console.log(`Workspace: ${w.key}`);
-			console.log(changes);
-
-			$workspaceDatabase?.updateWorkspace($workspace!);
-		});
-	});
 </script>
 
 <div class="container">
@@ -302,50 +15,26 @@
 
 	<div class="essay-container essay1">
 		<h2>Paraugs</h2>
-		<div>
-			<EssayBox
-				bind:this={templateEssayBox}
-				text={correctText}
-				editable={$mode === ToolbarMode.EDIT}
-			/>
-		</div>
+		<div><TemplateEssayBox/></div>
 	</div>
 
 	<div class="essay-container essay2">
 		<h2>Labošana</h2>
-		<div>
-			<EssayBox
-				bind:this={diffEssayBox}
-				on:hover={onMistakeHover}
-				on:hoverout={onMistakeHoverOut}
-			/>
-		</div>
+		<div><DiffEssayBox/></div>
 	</div>
 
 	<div class="essay-container essay3">
 		<h2>Iesūtītais</h2>
-		<div>
-			<EssayBox
-				bind:this={submissionEssayBox}
-				editable={$mode === ToolbarMode.EDIT}
-				submEssay={true}
-				on:ignore={onEssayIgnore}
-			/>
-		</div>
+		<div><SubmissionEssayBox/></div>
 	</div>
 
 	<div class="info-container">
 		<div class="info-selector">
-			<EssaySelector on:select={onSubmissionSelect}/>
+			<EssaySelector/>
 		</div>
 		<div class="info-mistakes">
 			<MistakeList
 				actionRegister={actionRegister}
-				bind:this={mistakeList}
-				on:hover={onMistakeHover}
-				on:hoverout={onMistakeHoverOut}
-				on:merge={onMistakeMerge}
-				on:register={onMistakeRegister}
 			/>
 		</div>
 	</div>

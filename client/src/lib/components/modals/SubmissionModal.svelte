@@ -26,12 +26,12 @@
 	}
 
 	$: submArray = (() => {
-		const vals = $workspace === null ? [] : Object.values($workspace.dataset);
+		const vals = $workspace === null ? [] : Object.values($workspace.submissions);
 
 		if ($sort === SortMode.ID) {
 			vals.sort((a, b) => Number(a.id) - Number(b.id));
 		} else {
-			vals.sort((a, b) => b.mistakes!.length - a.mistakes!.length);
+			vals.sort((a, b) => b.data!.mistakes.length - a.data!.mistakes.length);
 		}
 		
 		return vals;
@@ -54,7 +54,7 @@
 				on:click={onEntryClick}
 			>
 				<h3 class="id">ID{entry.id}</h3>
-				<span class="errnr">{entry?.mistakes?.length} kļūdas</span>
+				<span class="errnr">{entry?.data?.mistakes.length} kļūdas</span>
 				<span class="open">Atvērt</span>
 			</div>
 		{/each}

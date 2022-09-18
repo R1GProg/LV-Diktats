@@ -89,7 +89,7 @@
 	on:custom={onCustom}
 >
 	<div class="container">
-		<!-- <label for="regVariation">Variācija esošam ierakstsam</label>
+		<label for="regVariation">Variācija esošam ierakstsam</label>
 		<input type="checkbox" id="regVariation" bind:checked={isVariation}>
 
 		{#if isVariation}
@@ -103,7 +103,7 @@
 				{/each}
 			</select>
 		</div>
-		{/if} -->
+		{/if}
 
 		<label for="regDescription">Kļūdas apraksts</label>
 		<textarea disabled={isVariation ? true : false} type="text" id="regDescription" placeholder="Kļūdas apraksts" cols="30" rows="5" bind:value={desc}/>
