@@ -3,7 +3,8 @@ import { get, readable, writable } from "svelte/store";
 import { ToolbarMode } from "./toolbar";
 import WorkspaceDatabase from "./WorkspaceDatabase";
 import { onMount } from "svelte";
-import { fetchSubmission } from "./networking";
+import { ds } from "./DiktifySocket";
+import { api } from "./DiktifyAPI";
 import type { MistakeId } from "@shared/diff-engine";
 
 export enum SortMode {
@@ -23,7 +24,7 @@ export const activeSubmission = readable<Promise<Submission> | null>(null, (set)
 		if (newID === null || get(workspace) === null) {
 			set(null);
 		} else {
-			set(fetchSubmission(newID, get(workspace)!.id));
+			set(ds.requestSubmission(newID, get(workspace)!.id));
 		}
 	});
 });

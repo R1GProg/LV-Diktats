@@ -31,8 +31,8 @@
 		}
 
 		const submission = await submissionPromise;
-		// const text = parseIgnoreBounds(submission.data!.text, submission.data!.ignoreText);
-		const text = submission.data!.text;
+		const text = parseIgnoreBounds(submission.data!.text, submission.data!.ignoreText);
+		// const text = submission.data!.text;
 
 		renderMistakes(text, submission.data!.mistakes);
 	}

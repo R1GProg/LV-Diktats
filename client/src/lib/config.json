@@ -1,5 +1,6 @@
 {
 	"endpointUrl": "http://localhost:3001",
+	"socketUrl": "http://localhost:3001/socket",
 	"pilotMode": false,
 	"incompleteFraction": 0.75,
 	"autosaveTime": 15
