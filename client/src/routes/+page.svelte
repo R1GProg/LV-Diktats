@@ -5,9 +5,6 @@
 	import SubmissionEssayBox from "$lib/components/EssayBox/SubmissionEssayBox.svelte";
 	import TemplateEssayBox from "$lib/components/EssayBox/TemplateEssayBox.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
-	import { ActionRegister } from "$lib/ts/ActionRegister";
-
-	const actionRegister = new ActionRegister();
 </script>
 
 <div class="container">
@@ -33,9 +30,7 @@
 			<EssaySelector/>
 		</div>
 		<div class="info-mistakes">
-			<MistakeList
-				actionRegister={actionRegister}
-			/>
+			<MistakeList/>
 		</div>
 	</div>
 </div>

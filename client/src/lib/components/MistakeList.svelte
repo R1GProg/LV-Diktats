@@ -1,62 +1,28 @@
 <script lang="ts">
-	import { mode, hideRegistered } from "$lib/ts/stores";
+	import { mode, hideRegistered, activeSubmission, hoveredMistake } from "$lib/ts/stores";
 	import { ToolbarMode } from "$lib/ts/toolbar";
-	import type { Mistake, MistakeId } from "@shared/diff-engine";
+	import type { MistakeId, MistakeData } from "@shared/diff-engine";
 	import { createEventDispatcher } from "svelte";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
-	import type { ActionRegister } from "$lib/ts/ActionRegister";
+	import type { Submission } from "@shared/api-types";
 
-	export let actionRegister: ActionRegister;
-	let mistakes: Mistake[] = [];
-	let hoverId: MistakeId | null = null;
+	let mistakes: MistakeData[] = [];
 	let listContainer: HTMLElement;
 	let activeMergeIDs: string[] = [];
 	let regModal: MistakeRegistrationModal;
 
 	const dispatch = createEventDispatcher();
 
-	export function set(mistakeArr: Mistake[]) {
-		mistakes = mistakeArr;
-	}
-
-	export function setMistakeHover(id: MistakeId) {
-		hoverId = id;
-		// listContainer.querySelector(`[data-id='${hoverId}']`)!.scrollIntoView({ behavior: "smooth" });
-	}
-
-	export function clearMistakeHover() {
-		hoverId = null;
-	}
-
-	let temp = "";
-
 	async function onMistakeHover(ev: Event) {
 		const target = ev.currentTarget as HTMLElement;
 		const id = target.dataset.id!;
-		hoverId = id;
-
-		const mistake = mistakes.find((m) => m.id === id)!;
-
-		if (mistake.isRegistered) {
-			temp = target.title;
-			target.title = (await actionRegister.getMistakeData(mistake))!.desc;
-		}
-
-		dispatch("hover", { source: "LIST", id });
+		$hoveredMistake = id;
 	}
 
 	function onMistakeHoverOut(ev: Event) {
 		const target = ev.currentTarget as HTMLElement;
 		const id = target.dataset.id!;
-		hoverId = null;
-
-		const mistake = mistakes.find((m) => m.id === id)!;
-
-		if (mistake.isRegistered) {
-			target.title = temp;
-		}
-
-		dispatch("hoverout", { source: "LIST", id });
+		$hoveredMistake = null;
 	}
 
 	async function onMistakeClick(ev: Event) {
@@ -74,8 +40,8 @@
 				break;
 			case ToolbarMode.REGISTER:
 				{
-					const data = await regModal.open(mistakes.find((m) => m.id === id)!);
-					dispatch("register", { id, data: data.data, action: data.action });
+					// const data = await regModal.open(mistakes.find((m) => m.id === id)!);
+					// dispatch("register", { id, data: data.data, action: data.action });
 				}
 				break;
 			default:
@@ -92,6 +58,18 @@
 
 		activeMergeIDs = [];
 	}
+
+	async function onSubmissionChange(submissionPromise: Promise<Submission> | null) {
+		if (submissionPromise === null) {
+			mistakes = [];
+			return;
+		}
+
+		const submission = await submissionPromise;
+		mistakes = submission.data!.mistakes;
+	}
+
+	$: onSubmissionChange($activeSubmission);
 </script>
 
 <svelte:body on:keypress={onBodyKeypress}/>
@@ -99,21 +77,20 @@
 <div class="container">
 	<div class="list" bind:this={listContainer}>
 		{#each mistakes as m}
+		<!-- class:registered={m.isRegistered}
+				class:hidden={m.isRegistered && $hideRegistered} -->
 			<div
 				data-id={m.id}
 				class="mistake {m.type}"
-				class:hover={hoverId === m.id}
+				class:hover={$hoveredMistake === m.id}
 				class:merging={activeMergeIDs.includes(m.id)}
-				class:registered={m.isRegistered}
-				class:hidden={m.isRegistered && $hideRegistered}
 				on:mouseenter={onMistakeHover}
 				on:focus={onMistakeHover}
 				on:mouseleave={onMistakeHoverOut}
 				on:blur={onMistakeHoverOut}
 				on:click={onMistakeClick}
 				title={JSON.stringify({
-					actions: m.actions.map((a) => ({char: a.char, charCorrect: a.charCorrect, type: a.type, indexDiff: a.indexDiff})),
-					boundsCheck: m.boundsCheck ?? m.actions[0].indexCheck,
+					boundsCheck: m.boundsCheck,
 					boundsCorrect: m.boundsCorrect,
 					boundsDiff: m.boundsDiff,
 					mType: m.subtype
@@ -122,7 +99,7 @@
 
 				<!-- <span>konservējis</span> -->
 				<span class="mistake-target">
-					{m.word}
+					{m.word === " " ? `< >` : (m.word === "\n" ? "\\n" : m.word)}
 				</span>
 				<!-- <span>ne dārzeņus</span> -->
 			</div>

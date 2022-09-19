@@ -10,7 +10,7 @@ export interface ActionOpts {
 	indexCorrect: number,
 	char: string,
 	subtype: ActionSubtype,
-	indexDiff?: number,
+	indexDiff: number,
 }
 
 export interface ActionData {
@@ -19,7 +19,7 @@ export interface ActionData {
 	subtype: ActionSubtype,
 	indexCheck: number,
 	indexCorrect: number,
-	indexDiff?: number,
+	indexDiff: number,
 	char: string
 }
 
@@ -36,7 +36,7 @@ export class Action {
 	
 	indexCorrect: number;
 	
-	indexDiff?: number; // Defined only for type=DEL
+	indexDiff: number;
 
 	char: string;
 

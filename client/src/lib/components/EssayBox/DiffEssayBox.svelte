@@ -2,7 +2,7 @@
 	import type { Submission } from "@shared/api-types";
 	import EssayBox from "./EssayBox.svelte";
 	import { activeSubmission, workspace, hoveredMistake } from "$lib/ts/stores";
-	import type { Bounds, Mistake, MistakeId } from "@shared/diff-engine";
+	import type { Bounds, Mistake, MistakeData, MistakeId } from "@shared/diff-engine";
 	import Diff from "@shared/diff-engine";
 
 	let essayEl: EssayBox;
@@ -31,85 +31,66 @@
 		}
 
 		const submission = await submissionPromise;
-		const text = parseIgnoreBounds(submission.data!.text, submission.data!.ignoreText);
-		essayEl.setPlainText(text);
+		// const text = parseIgnoreBounds(submission.data!.text, submission.data!.ignoreText);
+		const text = submission.data!.text;
 
-		// TODO: Load mistakes from dataset
-		
-		const diff = new Diff(text, $workspace!.template);
-		diff.calc();
-		renderMistakes(diff.getMistakes());
+		renderMistakes(text, submission.data!.mistakes);
 	}
 
-	function renderMistakes(mistakes: Mistake[]) {
-		const diffCopy = [...mistakes];
-		diffCopy.sort((a, b) => b.boundsDiff.start - a.boundsDiff.start);
+	function addMissingWordsToText(rawText: string, mistakes: MistakeData[]) {
+		let text = rawText;
 
+		// The ADD mistakes and MIXED mistake ADD characters need to be added
+		// in parallel, otherwise the diff indices drift from the correct positions
 
+		const addContentArr = mistakes
+			.filter((m) => m.type === "ADD")
+			.map((m) => ({ content: m.word, index: m.boundsDiff.start }));
 
-		// Create the highlight elements
-		// for (const mistake of diffCopy) {
-		// 	if (mistake.subtype === "WORD") {
-		// 		const start = mistake.boundsCheck?.start ?? mistake.actions[0].indexCheck;
-		// 		const end = mistake.boundsCheck?.end ?? mistake.actions[mistake.actions.length - 1].indexCheck; 
-		// 		let id: string | null;
+		const subContentArr = mistakes
+			.filter((m) => m.type === "MIXED")
+			.flatMap((m) => m.actions
+				.filter((a) => a.type === "ADD")
+				.map((a) => ({ content: a.char, index: m.boundsDiff.start + a.indexDiff }))
+			);
 
-		// 		switch (mistake.type) {
-		// 			case "DEL":
-		// 				id = essayEl.highlightText(start, end - start, "hl-0");
+		const contentArr = [...addContentArr, ...subContentArr];
 
-		// 				if (id) addHighlightToMap(id, mistake.id);
-		// 				break;
-		// 			case "ADD":
-		// 				id = essayEl.addHighlightedText(start, mistake.word!, "hl-1");
+		contentArr.sort((a, b) => a.index - b.index);
 
-		// 				if (id) addHighlightToMap(id, mistake.id);
-		// 				break;
-		// 			case "MIXED":
-		// 				{
-		// 					console.warn("NYI");
-		// 				}
+		for (const entry of contentArr) {
+			const textBefore = text.substring(0, entry.index);
+			const textAfter = text.substring(entry.index);
 
-		// 				break;
-		// 		}
-		// 	} else {
-		// 		const actionArrCopy = [...mistake.actions];
-		// 		actionArrCopy.reverse();
+			text = `${textBefore}${entry.content}${textAfter}`;
+		}
 
-		// 		for (const action of actionArrCopy) {
-		// 			let id: string | null;
+		return text;
+	}
 
-		// 			switch(action.type) {
-		// 				case "DEL":
-		// 					// Do error.char.length instead of 1, as error.char may contain spaces
-		// 					id = essayEl.highlightText(action.indexCheck, action.char.length, "hl-0");
-		// 					break;
-		// 				case "ADD":
-		// 					{ // In a block to scope the variable definition
-		// 						let char = action.char;
+	function renderMistakes(rawText: string, mistakes: MistakeData[]) {
+		// TODO: Render new line characters
 
-		// 						if (action.char === "\n") {
-		// 							char = "\\n\n";
-		// 						}
+		essayEl.setPlainText(addMissingWordsToText(rawText, mistakes));
 
-		// 						id = essayEl.addHighlightedText(action.indexCheck, char, "hl-1");
-		// 					}
-		// 					break;
-		// 			}
+		for (const m of mistakes) {
+			const highlightClassType = m.type === "DEL" ? 0 : (m.type === "ADD" ? 1 : 2);
+			const id = essayEl.highlightText(
+				m.boundsDiff.start,
+				m.word.length + m.actions.filter((a) => a.type === "ADD").length,
+				`hl-${highlightClassType}`
+			);
 
-		// 			if (id) {
-		// 				highlightMap[id] = mistake.id;
-		// 				mistakeMap[mistake.id] = [...(mistakeMap[mistake.id] ?? []), id];
-		// 			}
-		// 		}
-		// 	}
+			if (id) addHighlightToMap(id, m.id);
+		}
 
-			// if (mistake.isRegistered) {
-			// 	for (const id of mistakeMap[mistake.id]) {
-			// 		highlighter.addClass("hl-status-registered", id);
-			// 	}
-			// }
-		// }
+		for (const m of mistakes.filter((m) => m.type === "MIXED")) {
+			for (const a of m.actions) {
+				const actionType = a.type === "DEL" ? 0 : 1;
+				const id = essayEl.highlightText(m.boundsDiff.start + a.indexDiff!, 1, `hl-2${actionType}`);
+				if (id) addHighlightToMap(id, m.id);
+			}
+		}
 	}
 
 	function addHighlightToMap(highlightId: string, mistakeId: MistakeId) {
@@ -119,7 +100,8 @@
 	
 	function onMistakeHover(ev: CustomEvent) {
 		const id = ev.detail.id;
-		$hoveredMistake = highlightMap[id];
+
+		$hoveredMistake = highlightMap[id] ?? null;
 	}
 
 	function onMistakeHoverOut() {

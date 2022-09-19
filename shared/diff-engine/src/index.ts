@@ -19,8 +19,10 @@ export default class Diff {
 
 	private checkSequence: WordItem[] | null = null;
 	private correctSequence: WordItem[] | null = null;
+	private printSubAddCharacters = true;
 
-	constructor(check: string, correct: string) {
+	constructor(check: string, correct: string, printSubAddCharacters = true) {
+		this.printSubAddCharacters = printSubAddCharacters;
 		this.setData(check, correct);
 
 		this.diffAlg = new DiffONP<WordItem>(
@@ -81,13 +83,14 @@ export default class Diff {
 	private postprocess(diffData: DiffAction<WordItem>[]) {
 		this.mistakes = Diff.parseMistakes(this.checkText, diffData);
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+		this.consolidatePunctWhitespace();
+		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 		this.parseWordSubstitutions();
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 	}
 
 	private static parseMistakes(text: string, diffData: DiffAction<WordItem>[]) {
 		// const sortedDiff = diffData.sort((a, b) => a.indexCheck - b.indexCheck);
-		let checkTextCopy = text;
 		let delOffset = 0;
 		let addOffset = 0;
 		const mistakes: Mistake[] = [];
@@ -96,11 +99,8 @@ export default class Diff {
 			let indexStart = a.item.index + (a.type === "ADD" ? addOffset : delOffset);
 
 			const len = a.item.content.length;
-			const contentBefore = checkTextCopy.substring(0, indexStart);
-			const contentAfter = checkTextCopy.substring(indexStart);
 
 			if (a.type === "ADD") {
-				checkTextCopy = `${contentBefore}${a.item.content}${contentAfter}`;
 				delOffset += len;
 			} else {
 				addOffset += len;
@@ -125,6 +125,34 @@ export default class Diff {
 		return mistakes;
 	}
 
+	private consolidatePunctWhitespace() {
+		const punctMistakes = this.mistakes.filter((mistake) => mistake.subtype === "OTHER");
+
+		for (let i = 0; i < punctMistakes.length - 1; i++) {
+			const m = punctMistakes[i];
+			const nextM = punctMistakes[i + 1];
+
+			if (nextM.word !== " ") continue;
+			if (nextM.boundsDiff.start !== m.boundsDiff.end) continue;
+			if (nextM.type !== m.type) continue;
+
+			// Special case for em dash
+			if (m.word === "—") {
+				m.word = ` ${m.word}`;
+				m.boundsDiff.start--;
+				m.boundsCheck.start--;
+				m.boundsCorrect.start--;
+			} else {
+				m.word = `${m.word} `;
+				m.boundsDiff.end = nextM.boundsDiff.end;
+				m.boundsCheck.end = nextM.boundsCheck.end;
+				m.boundsCorrect.end = nextM.boundsCorrect.end;
+			}
+
+			this.mistakes.splice(this.mistakes.findIndex((sm) => sm.id === nextM.id), 1);
+		}
+	}
+
 	private parseWordSubstitutions() {
 		for (let i = 0; i < this.mistakes.length; i++) {
 			const m = this.mistakes[i];
@@ -132,19 +160,23 @@ export default class Diff {
 			// Match proceeding same-subtype mistakes
 			const nextWordIndex = this.mistakes.findIndex((mistake, index) => mistake.subtype === m.subtype && index > i);
 
-			// If no words are after the current word, just break
-			if (nextWordIndex === -1) break;
+			if (nextWordIndex === -1) continue;
 
 			const nextM = this.mistakes[nextWordIndex];
 
 			// To form a SUB mistake, an ADD and a DEL must be next to each other
 			if (m.type === nextM.type) continue;
 
+			let punctMistakeLength = 0;
 			const punctMistakesInMiddle = nextWordIndex - i - 1;
+
+			for (let j = i + 1; j < nextWordIndex; j++) {
+				punctMistakeLength += this.mistakes[j].word.length;
+			}
 
 			// If the next word doesnt start right after all punctuation mistakes,
 			// it is not a valid substitution mistake
-			if (m.boundsDiff.end + punctMistakesInMiddle !== nextM.boundsDiff.start) continue;
+			if (m.boundsDiff.end + punctMistakeLength !== nextM.boundsDiff.start) continue;
 
 			// Assume valid substitution mistake past this point
 
@@ -160,17 +192,39 @@ export default class Diff {
 			// Diff the words and generate the actions
 			const actions: Action[] = [];
 
-			const wordDiff = new DiffONP<string>(delMistake.word.split(""), addMistake.word.split(""));
+			const delWordSplit: WordItem[] = delMistake.word
+				.split("")
+				.map((c, index) => ({ content: c, index, type: "WORD" }));
+			const addWordSplit: WordItem[] = addMistake.word
+				.split("")
+				.map((c, index) => ({ content: c, index, type: "WORD" }));
+
+			const wordDiff = new DiffONP<WordItem>(
+				delWordSplit,
+				addWordSplit,
+				(a, b) => a.content === b.content
+			);
 			wordDiff.calc();
 			const wordDiffSeq = wordDiff.getSequence();
 
-			for (const el of wordDiffSeq) {
+			let addOffset = 0;
+			let delOffset = 0;
+
+			for (const a of wordDiffSeq) {
+				const indexDiff = a.item.index + (a.type === "ADD" ? addOffset : delOffset);
+
+				if (a.type === "ADD") {
+					delOffset++;
+				} else {
+					addOffset++;
+				}
+
 				actions.push(new Action({
-					type: el.type,
-					char: el.item,
-					indexCheck: el.indexCheck + delMistake.boundsCheck!.start,
-					indexCorrect: el.indexCorrect + addMistake.boundsCorrect!.start,
-					indexDiff: el.type === "DEL" ? el.indexCheck + subBounds.start : undefined,
+					type: a.type,
+					char: a.item.content,
+					indexCheck: a.indexCheck,
+					indexCorrect: a.indexCorrect,
+					indexDiff,
 					subtype: m.subtype === "WORD" ? "ORTHO" : "PUNCT",
 				}));
 			}
@@ -186,16 +240,20 @@ export default class Diff {
 				wordCorrect: addMistake.word
 			});
 
+			// It's probably not the best idea to modify the array
+			// you are iterating, but ¯\_(ツ)_/¯
 			this.mistakes.splice(i, 1, subMistake);
 			this.mistakes.splice(nextWordIndex, 1);
+
+			const adjIndex = this.printSubAddCharacters ? actions.filter((a) => a.type === "ADD").length : 0;
 
 			// Adjust boundsDiff of all punctuation in the middle of the sub
 			// to compensate for the possible difference in length of the previous
 			// leftmost ADD mistake
 			if (m.type === "ADD") {
-				for (let j = i; j < i + punctMistakesInMiddle; j++) {
+				for (let j = i + 1; j < i + punctMistakesInMiddle; j++) {
 					const mistake = this.mistakes[j];
-					const deltaIndex = delMistake.word.length - addMistake.word.length;
+					const deltaIndex = delMistake.word.length - addMistake.word.length + adjIndex;
 
 					mistake.boundsDiff.start += deltaIndex;
 					mistake.boundsDiff.end += deltaIndex;
@@ -206,7 +264,7 @@ export default class Diff {
 			// to compensate for the removal of the ADD mistake
 			for (let j = nextWordIndex; j < this.mistakes.length; j++) {
 				const mistake = this.mistakes[j];
-				const deltaIndex = addMistake.word.length;
+				const deltaIndex = addMistake.word.length - adjIndex;
 
 				mistake.boundsDiff.start -= deltaIndex;
 				mistake.boundsDiff.end -= deltaIndex;
