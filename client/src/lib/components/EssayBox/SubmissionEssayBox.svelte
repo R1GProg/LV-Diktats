@@ -9,13 +9,19 @@
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
 
-	async function onSubmissionChange(submissionPromise: Promise<Submission> | null) {
+	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
 		if (submissionPromise === null || $workspace === null) {
 			essayEl?.setPlainText("");
 			return;
 		}
 
 		const submission = await submissionPromise;
+
+		if (submission === null) {
+			essayEl?.setPlainText("");
+			return;
+		}
+
 		const newText = submission.data!.text;
 		const ignoredText = submission.data!.ignoreText ?? [];
 
@@ -70,7 +76,7 @@
 
 		haveUnsavedIgnores = false;
 
-		(await $activeSubmission!).data!.ignoreText = bounds;
+		(await $activeSubmission!)!.data!.ignoreText = bounds;
 		onSubmissionChange($activeSubmission);
 	}
 

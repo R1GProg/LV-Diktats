@@ -2,11 +2,13 @@
 	import Modal from "./Modal.svelte";
 	import { SortMode, workspace, sort } from "$lib/ts/stores";
 	import { createEventDispatcher } from "svelte";
+	import type { Submission, Workspace } from "@shared/api-types";
 
 	const dispatch = createEventDispatcher();
 
 	let modal: Modal;
 	let openSortMode: SortMode;
+	let submArray: Submission[] = [];
 
 	export function open() {
 		modal.open();
@@ -25,18 +27,25 @@
 		}
 	}
 
-	$: submArray = (() => {
-		return [];
-		// const vals = $workspace === null ? [] : Object.values($workspace.submissions);
+	async function onResort(workspace: Promise<Workspace> | null, sort: SortMode) {
+		if (workspace === null) {
+			submArray = [];
+			return;
+		}
 
-		// if ($sort === SortMode.ID) {
-		// 	vals.sort((a, b) => Number(a.id) - Number(b.id));
-		// } else {
-		// 	vals.sort((a, b) => b.data!.mistakes.length - a.data!.mistakes.length);
-		// }
+		const ws = await workspace;
+		const vals = Object.values(ws.submissions);
+
+		if (sort === SortMode.ID) {
+			vals.sort((a, b) => Number(a.id) - Number(b.id));
+		} else {
+			vals.sort((a, b) => b.data!.mistakes.length - a.data!.mistakes.length);
+		}
 		
-		// return vals;
-	})();
+		submArray = vals;
+	}
+
+	$: onResort($workspace, $sort);
 </script>
 
 <Modal title="Visi iesūtījumi" userClose={true} bind:this={modal} on:close={onClose}>

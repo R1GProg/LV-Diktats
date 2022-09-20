@@ -59,13 +59,19 @@
 		activeMergeIDs = [];
 	}
 
-	async function onSubmissionChange(submissionPromise: Promise<Submission> | null) {
+	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
 		if (submissionPromise === null) {
 			mistakes = [];
 			return;
 		}
 
 		const submission = await submissionPromise;
+
+		if (submission === null) {
+			mistakes = [];
+			return;
+		}
+
 		mistakes = submission.data!.mistakes;
 	}
 
