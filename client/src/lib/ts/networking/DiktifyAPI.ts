@@ -1,5 +1,5 @@
 import config from "$lib/config.json";
-import type { Setting, User, UUID, Workspace } from "@shared/api-types";
+import type { RegisterEntry, Setting, Submission, SubmissionID, User, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 
 type HTTPMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE";
 
@@ -65,12 +65,17 @@ export default class DiktifyAPI {
 		}
 	}
 
-	async getWorkspaces(): Promise<string[]> {
-		throw "NYI";
+	async getWorkspaces(): Promise<WorkspacePreview[]> {
+		return [{ id: "debugworkspaceid", name: "Mazsālīto gurķu blūzs (DEBUG)" }];
+		// throw "NYI";
 	}
 
 	async getWorkspace(workspaceId: UUID): Promise<Workspace> {
-		throw "NYI";
+		if (workspaceId === "debugworkspaceid") {
+			return loadDebugWorkspace();
+		} else {
+			throw "NYI";
+		}
 	}
 
 	async getSettings(): Promise<Setting[]> {
@@ -114,3 +119,40 @@ export default class DiktifyAPI {
 }
 
 export const api = new DiktifyAPI();
+
+async function loadDebugWorkspace(): Promise<Workspace> {
+	const id = "debugworkspaceid";
+	const name = "Mazsālīto gurķu blūzs";
+	
+	const req = await fetch("/output.json");
+	const pregen = await req.json();
+	
+	const template = pregen.template;
+	const entries: Submission[] = pregen.submissions
+	.map((s: any) => ({
+		id: s.id,
+		status: "UNGRADED",
+		data: {
+			text: s.message,
+			mistakes: s.mistakes,
+			ignoreText: s.ignoreText,
+		}
+	}))
+	.filter((e: Submission) => e.data!.text.length > template.length * config.incompleteFraction);
+	
+	const submissions: Record<SubmissionID, Submission> = {};
+	
+	for (const e of entries) {
+		submissions[e.id] = e;
+	}
+	
+	const register: RegisterEntry[] = [];	
+	
+	return {
+		id,
+		template,
+		submissions,
+		register,
+		name,
+	};
+}

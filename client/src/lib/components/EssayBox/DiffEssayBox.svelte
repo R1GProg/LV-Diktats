@@ -24,13 +24,19 @@
 		return text;
 	}
 
-	async function onSubmissionChange(submissionPromise: Promise<Submission> | null) {
+	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
 		if (submissionPromise === null) {
 			essayEl?.setPlainText("");
 			return;
 		}
 
 		const submission = await submissionPromise;
+
+		if (submission === null) {
+			essayEl?.setPlainText("");
+			return;
+		}
+
 		const text = parseIgnoreBounds(submission.data!.text, submission.data!.ignoreText);
 		// const text = submission.data!.text;
 

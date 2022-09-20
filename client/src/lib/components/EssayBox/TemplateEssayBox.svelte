@@ -3,7 +3,13 @@
 	import EssayBox from "./EssayBox.svelte";
 	import { mode, workspace } from "$lib/ts/stores";
 
-	$: text = $workspace?.template ?? "";
+	let text = "";
+
+	$: if ($workspace !== null) {
+		$workspace.then((ws) => { text = ws.template });
+	} else {
+		text = "";
+	}
 </script>
 
 <EssayBox

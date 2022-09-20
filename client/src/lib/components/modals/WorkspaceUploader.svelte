@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { parseCSVPromise } from "$lib/ts/csv";
 	import { readTextFile } from "$lib/ts/util";
-	import { saveLocalWorkspace } from "$lib/ts/WorkspaceLocalStorage";
-	import type { EssayEntry, Workspace } from "$lib/types";
+	import type { Submission, Workspace } from "@shared/api-types";
 	import { processString } from "@shared/normalization";
 	import InputModal from "./InputModal.svelte";
 	import FileUploadStatusModal from "./status/FileUploadStatusModal.svelte";
@@ -38,7 +37,7 @@
 				return;
 			}
 
-			const entries: Record<string, EssayEntry> = {};
+			const entries: Record<string, Submission> = {};
 			const data = await Promise.all([
 				readTextFile(uploadData.template[0]),
 				parseCSVPromise(uploadData.dataset[0], (result) => {
@@ -46,10 +45,10 @@
 
 					if (!id) return;
 
-					entries[id] = {
-						id,
-						text: processString(result.data.message),
-					};
+					// entries[id] = {
+					// 	id,
+					// 	text: processString(result.data.message),
+					// };
 				}),
 			]);
 
@@ -63,19 +62,15 @@
 			const key = encodeURIComponent(uploadData.name.toLowerCase());
 			const workspaceData: Workspace = {
 				name: uploadData.name,
-				key,
+				id: key,
 				template: processString(data[0]),
-				dataset: entries,
-				local: true,
-				register: {},
+				submissions: entries,
+				// local: true,
+				register: [],
 			};
 
 			modalResolve();
 			promiseResolve(workspaceData);
-
-			if (saveToLocalStorage) {
-				saveLocalWorkspace(workspaceData);
-			}
 		}));
 	}
 

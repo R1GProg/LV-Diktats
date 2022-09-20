@@ -4,7 +4,7 @@ import type { RegisterEntry, RegisterUpdateEventData, Submission, SubmissionData
 import type { Bounds, Mistake, MistakeHash } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
-import { workspace } from "./stores";
+import { workspace } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 
 // Here temporarily
@@ -56,14 +56,15 @@ export default class DiktifySocket {
 	async requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission> {
 		// TODO: Implement fetch from cache or fetch from server via Socket.io
 
-		const rawData = get(workspace)!.submissions[id];
+		const ws = (await get(workspace))!;
+		const rawData = ws.submissions[id];
 		
 		// rawData.data!.text = "Hedlw warld!";
 		// get(workspace)!.template = "Hello world!";
 	
 		const text = parseIgnoreBounds(rawData.data!.text, rawData.data!.ignoreText);
 		// const text = rawData.data!.text;
-		const diff = new Diff(text, get(workspace)!.template);
+		const diff = new Diff(text, ws.template);
 		diff.calc();
 		rawData.data!.mistakes = await Promise.all(diff.getMistakes().map((m: Mistake) => m.exportData()));
 	
@@ -96,6 +97,7 @@ export default class DiktifySocket {
 
 	async submissionStateChange() {
 
+		
 	}
 
 	private onSubmissionData(data: SubmissionDataEventData) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { APP_ONLINE } from "$lib/ts/networking";
+	import { APP_ONLINE } from "$lib/ts/networking/networking";
 	import { onMount } from "svelte";
 	import StatusModal from "./StatusModal.svelte";
 	let modal: StatusModal;

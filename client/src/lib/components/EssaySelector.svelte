@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
-	import { workspace, sort, SortMode, activeSubmissionID } from "$lib/ts/stores";
+	import { workspace, sort, SortMode, activeSubmissionID, activeWorkspaceID } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import { processString } from "@shared/normalization";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
@@ -16,31 +16,16 @@
 	let mistakeOrderMap: string[];
 	let activeWorkspaceKey: string;
 
-	// async function fetchData() {
-	// 	const raw = await fetch(config.endpointUrl + "/api/listSubmissions", {
-	// 		mode: "cors",
-	// 		method: "GET"
-	// 	});
-
-	// 	const result: number[] = await raw.json();
-
-	// 	result.forEach((x) => {
-	// 		entries[x.toString()] = {
-	// 			id: x.toString(),
-	// 			text: null
-	// 		}
-	// 	});
-	// }
-
 	async function onSelect(index: number | SubmissionID) {
 		if ($workspace === null) return;
 
+		const ws = await $workspace;
 		let id: string;
 		let setIndex: number;
 
 		if (typeof index === "number") {
 			if ($sort === SortMode.ID) {
-				const keys = Object.keys($workspace.submissions);
+				const keys = Object.keys(ws.submissions);
 				id = keys[index];
 			} else {
 				id = mistakeOrderMap[index];
@@ -49,10 +34,10 @@
 			setIndex = index;
 		} else {
 			id = index;
-			setIndex = Object.keys($workspace.submissions).findIndex((el) => el === id);
+			setIndex = Object.keys(ws.submissions).findIndex((el) => el === id);
 		}
 
-		if (!$workspace.submissions[id]) return;
+		if (!ws.submissions[id]) return;
 
 		activeIndex = setIndex;
 		activeID = id;
@@ -87,23 +72,25 @@
 		onSelect(id);
 	}
 
-	function initWorkspace() {
+	async function initWorkspace() {
 		if ($workspace === null) return;
 
+		const ws = await $workspace;
+
 		noData = false;
-		const keys = Object.keys($workspace.submissions);
+		const keys = Object.keys(ws.submissions);
 
 		mistakeOrderMap = keys;
-		mistakeOrderMap.sort((a, b) => $workspace!.submissions[b].data!.mistakes.length - $workspace!.submissions[a].data!.mistakes.length);
+		mistakeOrderMap.sort((a, b) => ws.submissions[b].data!.mistakes.length - ws!.submissions[a].data!.mistakes.length);
 
 		totalEntries = keys.length;
 		activeIndex = 0;
 		onSelect(0);
 
-		activeWorkspaceKey = $workspace.id;
+		activeWorkspaceKey = ws.id;
 	}
 
-	$: if ($workspace?.id !== activeWorkspaceKey) {
+	$: if ($activeWorkspaceID !== activeWorkspaceKey) {
 		initWorkspace();
 	} else if ($workspace === null) {
 		noData = true;
@@ -111,13 +98,13 @@
 
 	onMount(() => {
 		// A quick and dirty hack
-		setTimeout(() => {
-			initWorkspace();
-		}, 500);
+		// setTimeout(() => {
+		// 	initWorkspace();
+		// }, 500);
 	});
 
 	function onSortChange() {
-		initWorkspace();
+		// initWorkspace();
 	}
 </script>
 

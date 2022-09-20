@@ -36,6 +36,11 @@ export interface Workspace {
 	register: RegisterEntry[]
 }
 
+export interface WorkspacePreview {
+	id: UUID,
+	name: string,
+}
+
 export interface Submission {
 	id: SubmissionID,
 	state: SubmissionState,

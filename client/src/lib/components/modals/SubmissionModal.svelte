@@ -26,15 +26,16 @@
 	}
 
 	$: submArray = (() => {
-		const vals = $workspace === null ? [] : Object.values($workspace.submissions);
+		return [];
+		// const vals = $workspace === null ? [] : Object.values($workspace.submissions);
 
-		if ($sort === SortMode.ID) {
-			vals.sort((a, b) => Number(a.id) - Number(b.id));
-		} else {
-			vals.sort((a, b) => b.data!.mistakes.length - a.data!.mistakes.length);
-		}
+		// if ($sort === SortMode.ID) {
+		// 	vals.sort((a, b) => Number(a.id) - Number(b.id));
+		// } else {
+		// 	vals.sort((a, b) => b.data!.mistakes.length - a.data!.mistakes.length);
+		// }
 		
-		return vals;
+		// return vals;
 	})();
 </script>
 
