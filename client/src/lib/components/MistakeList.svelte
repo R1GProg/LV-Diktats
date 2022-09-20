@@ -1,10 +1,15 @@
 <script lang="ts">
-	import { mode, hideRegistered, activeSubmission, hoveredMistake } from "$lib/ts/stores";
+	import store, { type Stores } from "$lib/ts/stores";
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import type { MistakeId, MistakeData } from "@shared/diff-engine";
 	import { createEventDispatcher } from "svelte";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
 	import type { Submission } from "@shared/api-types";
+
+	const mode = store("mode") as Stores["mode"];
+	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
+	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 
 	let mistakes: MistakeData[] = [];
 	let listContainer: HTMLElement;

@@ -1,4 +1,4 @@
-import { mode } from "./stores";
+import type { Stores } from "./stores";
 
 export enum ToolbarMode {
 	READ,
@@ -22,7 +22,7 @@ export function subToToolbarMode(cb: ToolbarModeEventCallback) {
 	cbs.push(cb);
 }
 
-export function initSub() {
+export function initSub(mode: Stores["mode"]) {
 	mode.subscribe((newVal) => {
 		if (prevMode === newVal) return;
 	

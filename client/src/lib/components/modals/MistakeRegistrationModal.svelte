@@ -1,8 +1,10 @@
 <script lang="ts">
 	import type { Mistake, MistakeHash, MistakeId } from "@shared/diff-engine";
 	import InputModal from "./InputModal.svelte";
-	import { workspace } from "$lib/ts/stores";
 	import type { RegisterEntryData } from "$lib/types";
+	import store, { type Stores } from "$lib/ts/stores";
+
+	const workspace = store("workspace") as Stores["workspace"];
 
 	let modal: InputModal;
 	let desc = "";

@@ -3,6 +3,9 @@
 	import ServerCheckStatus from "$lib/components/modals/status/ServerCheckStatus.svelte";
 	import "@fontsource/roboto-condensed/400.css";
 	import "@fontsource/roboto/400.css";
+	import { initStores } from "$lib/ts/stores";
+
+	initStores();
 </script>
 
 <div class="page-container">

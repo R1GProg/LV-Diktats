@@ -1,8 +1,11 @@
 <script lang="ts">
 	import Modal from "./Modal.svelte";
-	import { SortMode, workspace, sort } from "$lib/ts/stores";
+	import store, { SortMode, type Stores } from "$lib/ts/stores";
 	import { createEventDispatcher } from "svelte";
 	import type { Submission, Workspace } from "@shared/api-types";
+
+	const workspace = store("workspace") as Stores["workspace"];
+	const sort = store("sort") as Stores["sort"];
 
 	const dispatch = createEventDispatcher();
 
@@ -34,7 +37,7 @@
 		}
 
 		const ws = await workspace;
-		const vals = Object.values(ws.submissions);
+		const vals = Object.values(ws.submissions) as Submission[];
 
 		if (sort === SortMode.ID) {
 			vals.sort((a, b) => Number(a.id) - Number(b.id));

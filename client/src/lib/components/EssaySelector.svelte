@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
-	import { workspace, sort, SortMode, activeSubmissionID, activeWorkspaceID } from "$lib/ts/stores";
+	import store, { SortMode, type Stores } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import { processString } from "@shared/normalization";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
 	import type { SubmissionID } from "@shared/api-types";
+
+	const workspace = store("workspace") as Stores["workspace"];
+	const sort = store("sort") as Stores["sort"];
+	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
+	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
 
 	const dispatch = createEventDispatcher();
 

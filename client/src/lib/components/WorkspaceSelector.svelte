@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { activeWorkspaceID, workspace } from "$lib/ts/stores";
+	import store, { type Stores } from "$lib/ts/stores";
 	import config from "$lib/config.json";
 	import WorkspaceUploader from "./modals/WorkspaceUploader.svelte";
 	import LoadingWorkspaceStatus from "./modals/status/LoadingWorkspaceStatus.svelte";
 	import type { UUID, WorkspacePreview } from "@shared/api-types";
 	import { api } from "$lib/ts/networking/DiktifyAPI";
+
+	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
+	const workspace = store("workspace") as Stores["workspace"];
 
 	let data: WorkspacePreview[] = [];
 	let active = "";

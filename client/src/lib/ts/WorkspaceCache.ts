@@ -1,6 +1,6 @@
 import type { Submission, SubmissionID, UUID } from "@shared/api-types";
 import config from "$lib/config.json";
-import { ds } from "$lib/ts/networking/DiktifySocket";
+import type DiktifySocket from "$lib/ts/networking/DiktifySocket";
 
 type CacheEntry = Record<SubmissionID, Submission>;
 
@@ -13,7 +13,11 @@ export default class WorkspaceCache {
 
 	private dbInitReject: (() => void) | null = null;
 
-	constructor() {
+	private ds: DiktifySocket;
+
+	constructor(ds: DiktifySocket) {
+		this.ds = ds;
+
 		const openReq = window.indexedDB.open("WorkspaceCache", 1);
 
 		this.dbInitPromise = new Promise<void>((res, rej) => {
@@ -261,6 +265,22 @@ export default class WorkspaceCache {
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
 
+	async removeSubmissionFromCache(id: SubmissionID, workspace: UUID) {
+		if (this.db === null) {
+			console.warn("Attempt to write before database initialization!");
+			return null;
+		}
+
+		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
+
+		if (!workspaceExists) return;
+
+		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
+		delete data[id];
+
+		await this.update<CacheEntry>("submissionCache", workspace, data);
+	}
+
 	async getSubmission(id: SubmissionID, workspace: UUID): Promise<Submission | null> {
 		if (this.db === null) {
 			console.warn("Attempt to read before database initialization!");
@@ -270,7 +290,7 @@ export default class WorkspaceCache {
 		if (await this.isSubmissionCached(id, workspace)) {
 			return (await this.read<CacheEntry>("submissionCache", workspace))[id];
 		} else {
-			const subm = await ds.requestSubmission(id, workspace);
+			const subm = await this.ds.requestSubmission(id, workspace);
 			await this.addSubmissionToCache(subm, workspace);
 			return subm;
 		}

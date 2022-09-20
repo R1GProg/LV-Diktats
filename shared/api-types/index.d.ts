@@ -3,36 +3,16 @@ import type { ActionSubtype, ActionType, Bounds, MistakeChild, MistakeData, Mist
 export type UUID = string;
 export type SubmissionID = string;
 
-export enum SubmissionState {
-	UNGRADED = "UNGRADED",
-	REJECTED = "REJECTED",
-	WIP = "WIP",
-	DONE = "DONE"
-}
-
-export enum SettingsType {
-	STRING = "STRING",
-	NUMBER = "NUMBER",
-	NESTED = "NESTED"
-}
-
-export enum UserRole {
-	NONE = "NONE",
-	EDITOR = "EDITOR",
-	ADMIN = "ADMIN"
-}
-
-export enum RegisterUpdateEventType {
-	ADD = "ADD",
-	EDIT = "EDIT",
-	DELETE = "DELETE"
-}
+export type SubmissionState = "UNGRADED" | "REJECTED" | "WIP" | "DONE";
+export type SettingsType = "STRING" | "NUMBER" | "NESTED";
+export type UserRole = "NONE" | "EDITOR" | "ADMIN";
+export type RegisterUpdateEventType = "ADD" | "EDIT" | "DELETE";
 
 export interface Workspace {
 	id: UUID,
 	name: string,
 	template: string,
-	submissions: Record<SubmissionID, Submission>,
+	submissions: Record<SubmissionID, SubmissionPreview>,
 	register: RegisterEntry[]
 }
 
@@ -44,20 +24,12 @@ export interface WorkspacePreview {
 export interface Submission {
 	id: SubmissionID,
 	state: SubmissionState,
-	data: {
-		text: string,
-		ignoreText: Bounds[],
-		mistakes: MistakeData[],
-		metadata: {
-			age: number,
-			language: string,
-			language_other: string,
-			level: string,
-			degree: string,
-			country: string,
-			city: string
-		}
-	} | null
+	data: SubmissionData
+}
+
+export interface SubmissionPreview {
+	id: SubmissionID,
+	state: SubmissionState
 }
 
 export interface RegisterEntry {
@@ -85,55 +57,67 @@ export interface User {
 }
 
 export interface RequestSubmissionEventData {
-	id: SubmissionID
+	id: SubmissionID,
+	workspace: UUID,
 }
 
 export interface RegisterNewEventData {
-	data: RegisterEntry
+	data: RegisterEntry,
+	workspace: UUID,
 }
 
 export interface RegisterEditEventData {
 	id: UUID,
+	workspace: UUID,
 	data: RegisterEntry
 }
 
 export interface RegisterDeleteEventData {
-	id: UUID
+	id: UUID,
+	workspace: UUID
 }
 
 export interface MistakeMergeEventData {
-	mistakes: MistakeHash[]
+	mistakes: MistakeHash[],
+	workspace: UUID
 }
 
 export interface MistakeUnmergeEventData {
-	mistake: MistakeHash
+	mistake: MistakeHash,
+	workspace: UUID,
 }
 
 export interface TextIgnoreEventData {
-	ignoreBounds: Bounds[]
+	ignoreBounds: Bounds[],
+	workspace: UUID
 }
 
 export interface SubmissionStateChangeEventData {
 	id: SubmissionID,
-	state: SubmissionState
+	state: SubmissionState,
+	workspace: UUID
 }
 
 export interface SubmissionDataEventData {
-	data: SubmissionData
+	id: SubmissionID,
+	data: SubmissionData,
+	state: SubmissionState,
+	workspace: UUID
 }
 
 export interface RegisterUpdateEventData {
 	id: UUID,
 	data: RegisterEntry,
-	type: RegisterUpdateEventType
+	type: RegisterUpdateEventType,
+	workspace: UUID
 }
 
 export interface SubmissionRegenEventData {
-	ids: SubmissionID[]
+	ids: SubmissionID[],
+	workspace: UUID
 }
 
 export interface SubmissionData {
-	id: SubmissionID,
 	text: string,
 	ignoreText: Bounds[],
 	mistakes: MistakeData[],

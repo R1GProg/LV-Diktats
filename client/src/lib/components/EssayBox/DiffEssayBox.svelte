@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Submission } from "@shared/api-types";
 	import EssayBox from "./EssayBox.svelte";
-	import { activeSubmission, workspace, hoveredMistake } from "$lib/ts/stores";
-	import type { Bounds, Mistake, MistakeData, MistakeId } from "@shared/diff-engine";
-	import Diff from "@shared/diff-engine";
+	import store, { type Stores } from "$lib/ts/stores";
+	import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
+
+	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 
 	let essayEl: EssayBox;
 	const highlightMap: Record<string, MistakeId> = {}; // HighlightID : MistakeID

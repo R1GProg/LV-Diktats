@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { initSub, ToolbarMode } from "$lib/ts/toolbar";
 	import { createEventDispatcher, onMount } from "svelte";
-	import { mode } from "$lib/ts/stores";
+	import store, { type Stores } from "$lib/ts/stores";
 	import config from "$lib/config.json";
+
+	const mode = store("mode") as Stores["mode"];
 
 	const dispatch = createEventDispatcher();
 
@@ -13,7 +15,7 @@
 	}
 
 	onMount(() => {
-		initSub();
+		initSub(mode);
 	});
 </script>
 

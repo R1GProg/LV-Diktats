@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { workspace } from "$lib/ts/stores";
 	import { downloadText } from "$lib/ts/util";
+	import store from "$lib/ts/stores";
 
 	function exportData() {
-		if ($workspace === null) return;
+		if (store("workspace") === null) return;
 
-		downloadText("dati.json", JSON.stringify($workspace));
+		downloadText("dati.json", JSON.stringify(store("workspace")));
 	}
 </script>
 
 <div class="container">
-	<button on:click={exportData} disabled={$workspace === null}>Eksportēt datus</button>
+	<button on:click={exportData} disabled={store("workspace") === null}>Eksportēt datus</button>
 </div>
 
 <style lang="scss">

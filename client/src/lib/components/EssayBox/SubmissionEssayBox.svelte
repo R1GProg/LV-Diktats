@@ -1,10 +1,15 @@
 <script lang="ts">
 	import EssayBox from "./EssayBox.svelte";
-	import { activeSubmission, mode, workspace } from "$lib/ts/stores";
 	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 	import type { Submission } from "@shared/api-types";
 	import type { Bounds } from "@shared/diff-engine";
 	import { onMount } from "svelte";
+	import type { Stores } from "$lib/ts/stores";
+	import store from "$lib/ts/stores";
+
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
+	const workspace = store("workspace") as Stores["workspace"];
+	const mode = store("mode") as Stores["mode"];
 
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
