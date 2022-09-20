@@ -1,5 +1,5 @@
 import type { Submission, SubmissionID, UUID } from "@shared/api-types";
-import { get } from "svelte/store";
+import config from "$lib/config.json";
 import { ds } from "$lib/ts/networking/DiktifySocket";
 
 type CacheEntry = Record<SubmissionID, Submission>;
@@ -26,9 +26,14 @@ export default class WorkspaceCache {
 			this.dbInitReject!();
 		};
 
-		openReq.onsuccess = () => {
+		openReq.onsuccess = async () => {
 			console.log("Workspace database initialized!");
 			this.db = openReq.result;
+
+			if (config.cacheSingleSession) {
+				await this.clearEntireCache();
+			}
+
 			this.dbInitResolve!();
 		}
 
@@ -112,6 +117,27 @@ export default class WorkspaceCache {
 		});
 	}
 
+	private delete(obj: string, key: string): Promise<boolean> {
+		return new Promise<boolean>((res, rej) => {
+			if (this.db === null) {
+				console.warn("Attempt to delete from database before initialization!");
+				rej();
+				return;
+			}
+	
+			const objStore = this.db.transaction(obj, "readwrite").objectStore(obj);
+			const req = objStore.delete(key);
+
+			req.onerror = (ev) => {
+				res(false);
+			};
+
+			req.onsuccess = (ev) => {
+				res(true);
+			};
+		});
+	}
+
 	private getKeys(obj: string): Promise<string[]> {
 		return new Promise<string[]>((res, rej) => {
 			if (this.db === null) {
@@ -182,6 +208,27 @@ export default class WorkspaceCache {
 		}
 	}
 
+	private clearStore(obj: string) {
+		return new Promise<void>((res, rej) => {
+			if (this.db === null) {
+				console.warn("Attempt to delete from database before initialization!");
+				rej();
+				return;
+			}
+	
+			const objStore = this.db.transaction(obj, "readwrite").objectStore(obj);
+			const req = objStore.clear();
+
+			req.onerror = (ev) => {
+				rej(req.error);
+			};
+
+			req.onsuccess = (ev) => {
+				res();
+			};
+		});
+	}
+
 	async readSubmissionCache(workspace: UUID) {
 		return this.read<CacheEntry>("submissionCache", workspace);
 	}
@@ -227,5 +274,13 @@ export default class WorkspaceCache {
 			await this.addSubmissionToCache(subm, workspace);
 			return subm;
 		}
+	}
+
+	async clearWorkspaceCache(workspace: UUID) {
+		this.delete("submissionCache", workspace);
+	}
+
+	async clearEntireCache() {
+		this.clearStore("submissionCache");
 	}
 }
