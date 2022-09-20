@@ -71,6 +71,8 @@ export default class DiktifySocket {
 		return new Promise<Submission>(async (res, rej) => {
 			this.submissionDataPromise = { res, rej };
 
+			// --- Temporary implementation for the debug dataset ---
+
 			const ws = (await (get(this.workspace)))!;
 
 			// Cast as Submission because for the debug workspace

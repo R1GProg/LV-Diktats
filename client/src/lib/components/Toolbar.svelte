@@ -19,39 +19,53 @@
 	});
 </script>
 
-<div>
-	<button
-		class="btn-read"
-		class:active={$mode === ToolbarMode.READ}
-		on:click={() => { onBtnClick(ToolbarMode.READ); }}
-		title="Lasīt"
-	></button>
-	{#if !config.pilotMode}
-	<button
-		class="btn-edit"
-		class:active={$mode === ToolbarMode.EDIT}
-		on:click={() => { onBtnClick(ToolbarMode.EDIT); }}
-		title="Rediģēt"
-	></button>
-	{/if}
-	<button
-		class="btn-ignore"
-		class:active={$mode === ToolbarMode.IGNORE}
-		on:click={() => { onBtnClick(ToolbarMode.IGNORE) }}
-		title="Izņemt tekstu"
-	></button>
-	<button
-		class="btn-merge"
-		class:active={$mode === ToolbarMode.MERGE}
-		on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
-		title="Apvienot kļūdas"
-	></button>
-	<button
-		class="btn-register"
-		class:active={$mode === ToolbarMode.REGISTER}
-		on:click={() => { onBtnClick(ToolbarMode.REGISTER); }}
-		title="Reģistrēt kļūdas"
-	></button>
+<div class="outer-container">
+	<div class="inner-container">
+		<button
+			class="btn-read"
+			class:active={$mode === ToolbarMode.READ}
+			on:click={() => { onBtnClick(ToolbarMode.READ); }}
+			title="Lasīt"
+		></button>
+		<span class:active={$mode === ToolbarMode.READ}>Lasīt</span>
+		{#if !config.pilotMode}
+		<button
+			class="btn-edit"
+			class:active={$mode === ToolbarMode.EDIT}
+			on:click={() => { onBtnClick(ToolbarMode.EDIT); }}
+			title="Rediģēt"
+		></button>
+		<span class:active={$mode === ToolbarMode.EDIT}>Rediģēt</span>
+		{/if}
+		<button
+			class="btn-ignore"
+			class:active={$mode === ToolbarMode.IGNORE}
+			on:click={() => { onBtnClick(ToolbarMode.IGNORE) }}
+			title="Izņemt tekstu"
+		></button>
+		<span class:active={$mode === ToolbarMode.IGNORE}>Izņemt tekstu</span>
+		<button
+			class="btn-resub"
+			class:active={$mode === ToolbarMode.RESUB}
+			on:click={() => { onBtnClick(ToolbarMode.RESUB) }}
+			title="Modificēt kļūdas"
+		></button>
+		<span class:active={$mode === ToolbarMode.RESUB}>Modificēt kļūdas</span>
+		<button
+			class="btn-merge"
+			class:active={$mode === ToolbarMode.MERGE}
+			on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
+			title="Apvienot kļūdas"
+		></button>
+		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span>
+		<button
+			class="btn-register"
+			class:active={$mode === ToolbarMode.REGISTER}
+			on:click={() => { onBtnClick(ToolbarMode.REGISTER); }}
+			title="Reģistrēt kļūdas"
+		></button>
+		<span class:active={$mode === ToolbarMode.REGISTER}>Reģistrēt kļūdas</span>
+	</div>
 </div>
 
 <style lang="scss">
@@ -59,21 +73,56 @@
 
 	$TOOLBAR_ICON_SIZE: clamp(35px, 2.5vw, 200px);
 
-	div {
+	.outer-container {
+		position: relative;
+		top: 20px;
+		width: $TOOLBAR_ICON_SIZE;
+	}
+
+	.inner-container {
 		border: 1px solid $COL_ACCENT;
 		border-left: none;
 		background-color: $COL_BG_DARK;
 		grid-area: "toolbar";
+		// width: $TOOLBAR_ICON_SIZE;
 		width: $TOOLBAR_ICON_SIZE;
 		height: fit-content;
-		padding: 7%;
+		padding: 10%;
 
 		display: grid;
-		grid-auto-flow: row;
+		align-items: center;
+		grid-template-columns: auto 1fr;
 		row-gap: calc(#{$TOOLBAR_ICON_SIZE} * 0.3);
-
-		position: relative;
+		overflow-x: hidden;
+		
+		position: absolute;
+		left: 0;
 		top: 0;
+		z-index: 10;
+
+		transition-timing-function: ease-in;
+		transition: width 0.5s;
+
+		&:hover {
+			width: calc(#{$TOOLBAR_ICON_SIZE} * 5.5);
+		}
+
+		span {
+			color: $COL_BG_LIGHT;
+			font-family: $FONT_HEADING;
+			white-space: nowrap;
+			font-weight: 400;
+			font-size: calc(#{$TOOLBAR_ICON_SIZE} * 0.45);
+			margin-left: 0.8em;
+			text-transform: uppercase;
+			cursor: default;
+			user-select: none;
+			transition: color 0.3s;
+
+			&.active {
+				color: $COL_FG_DARK;
+			}
+		}
 
 		button {
 			width: $TOOLBAR_ICON_SIZE;
@@ -119,6 +168,14 @@
 
 				-webkit-mask-size: 95%;
 				mask-size: 95%;
+			}
+
+			&.btn-resub {
+				-webkit-mask-image: url(/icons/icon-resub.svg);
+				mask-image: url(/icons/icon-resub.svg);
+
+				-webkit-mask-size: 105%;
+				mask-size: 105%;
 			}
 		}
 	}
