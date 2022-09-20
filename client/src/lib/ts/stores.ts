@@ -51,7 +51,7 @@ export function initStores() {
 		});
 	});
 
-	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace))
+	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID))
 
 	const cache = readable<Promise<WorkspaceCache>>(new Promise<WorkspaceCache>((res) => {
 		onMount(async () => {

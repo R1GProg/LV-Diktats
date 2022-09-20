@@ -7,9 +7,12 @@
 	import type { Stores } from "$lib/ts/stores";
 	import store from "$lib/ts/stores";
 
+	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
+	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const workspace = store("workspace") as Stores["workspace"];
 	const mode = store("mode") as Stores["mode"];
+	const ds = store("ds") as Stores["ds"];
 
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
@@ -81,8 +84,7 @@
 
 		haveUnsavedIgnores = false;
 
-		(await $activeSubmission!)!.data!.ignoreText = bounds;
-		onSubmissionChange($activeSubmission);
+		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, bounds);
 	}
 
 	$: onSubmissionChange($activeSubmission);

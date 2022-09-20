@@ -6,6 +6,7 @@
 
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
+	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 
 	let essayEl: EssayBox;
 	const highlightMap: Record<string, MistakeId> = {}; // HighlightID : MistakeID

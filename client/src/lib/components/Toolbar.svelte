@@ -25,7 +25,6 @@
 			class="btn-read"
 			class:active={$mode === ToolbarMode.READ}
 			on:click={() => { onBtnClick(ToolbarMode.READ); }}
-			title="Lasīt"
 		></button>
 		<span class:active={$mode === ToolbarMode.READ}>Lasīt</span>
 		{#if !config.pilotMode}
@@ -33,7 +32,6 @@
 			class="btn-edit"
 			class:active={$mode === ToolbarMode.EDIT}
 			on:click={() => { onBtnClick(ToolbarMode.EDIT); }}
-			title="Rediģēt"
 		></button>
 		<span class:active={$mode === ToolbarMode.EDIT}>Rediģēt</span>
 		{/if}
@@ -41,28 +39,24 @@
 			class="btn-ignore"
 			class:active={$mode === ToolbarMode.IGNORE}
 			on:click={() => { onBtnClick(ToolbarMode.IGNORE) }}
-			title="Izņemt tekstu"
 		></button>
 		<span class:active={$mode === ToolbarMode.IGNORE}>Izņemt tekstu</span>
 		<button
 			class="btn-resub"
 			class:active={$mode === ToolbarMode.RESUB}
 			on:click={() => { onBtnClick(ToolbarMode.RESUB) }}
-			title="Modificēt kļūdas"
 		></button>
 		<span class:active={$mode === ToolbarMode.RESUB}>Modificēt kļūdas</span>
 		<button
 			class="btn-merge"
 			class:active={$mode === ToolbarMode.MERGE}
 			on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
-			title="Apvienot kļūdas"
 		></button>
 		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span>
 		<button
 			class="btn-register"
 			class:active={$mode === ToolbarMode.REGISTER}
 			on:click={() => { onBtnClick(ToolbarMode.REGISTER); }}
-			title="Reģistrēt kļūdas"
 		></button>
 		<span class:active={$mode === ToolbarMode.REGISTER}>Reģistrēt kļūdas</span>
 	</div>

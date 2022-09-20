@@ -38,7 +38,13 @@ export default class DiktifySocket {
 
 	private workspace: Stores["workspace"];
 
-	constructor(url: string, workspace: Stores["workspace"]) {
+	private activeSubmissionID: Stores["activeSubmissionID"];
+
+	constructor(
+		url: string,
+		workspace: Stores["workspace"],
+		activeSubmissionID: Stores["activeSubmissionID"]
+	) {
 		this.connectPromise = new Promise(async (res, rej) => {
 			if (await APP_ONLINE) {
 				this.socket = io(url);
@@ -47,6 +53,7 @@ export default class DiktifySocket {
 		});
 
 		this.workspace = workspace;
+		this.activeSubmissionID = activeSubmissionID;
 
 		// TODO: Maybe have some sort of subscribe-to-workspace feature
 		// so the server would know which clients specifically should receive
@@ -63,6 +70,13 @@ export default class DiktifySocket {
 		this.socket.on("registerUpdate", (data) => { this.onRegisterUpdate(data); });
 		this.socket.on("submissionRegen", (data) => { this.onSubmissionRegen(data); });
 		this.socket.on("submissionStateChange", (data) => { this.onSubmissionStateChange(data); });
+	}
+
+	private reloadActiveSubmission() {
+		const id = get(this.activeSubmissionID);
+		
+		this.activeSubmissionID.set(null);
+		this.activeSubmissionID.set(id);
 	}
 
 	requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission> {
@@ -119,8 +133,14 @@ export default class DiktifySocket {
 
 	}
 
-	async textIgnore(bounds: Bounds[]) {
+	async textIgnore(submission: SubmissionID, workspace: UUID, bounds: Bounds[]) {
+		// TODO: Implement Socket event emit
 
+		const ws = (await (get(this.workspace)))!;
+		const rawData = ws.submissions[submission] as Submission;
+		rawData.data!.ignoreText = bounds;
+
+		this.onSubmissionRegen({ ids: [ submission ], workspace });
 	}
 
 	async submissionStateChange() {
@@ -130,11 +150,14 @@ export default class DiktifySocket {
 	private async onSubmissionData(data: SubmissionDataEventData) {
 		if (this.submissionDataPromise === null) return;
 
-		this.submissionDataPromise.res({
+		const submission: Submission = {
 			id: data.id,
 			state: data.state,
 			data: data.data
-		});
+		};
+
+		this.cache?.updateSubmissionInCache(submission, data.workspace);
+		this.submissionDataPromise.res(submission);
 	}
 
 	private onRegisterUpdate(data: RegisterUpdateEventData) {
@@ -144,8 +167,13 @@ export default class DiktifySocket {
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
 		// Clears the submission from the cache
 
-		for (const id of data.ids) {
-			this.cache!.removeSubmissionFromCache(id, data.workspace);
+		await Promise.all(data.ids.map((id) => this.cache!.removeSubmissionFromCache(id, data.workspace)))
+
+		const activeID = get(this.activeSubmissionID);
+
+		// If the active submission was regenerated, trigger a reload
+		if (activeID !== null && data.ids.includes(activeID)) {
+			this.reloadActiveSubmission();
 		}
 	}
 

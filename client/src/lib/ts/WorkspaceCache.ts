@@ -281,6 +281,25 @@ export default class WorkspaceCache {
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
 
+	async updateSubmissionInCache(submission: Submission, workspace: UUID) {
+		if (this.db === null) {
+			console.warn("Attempt to write before database initialization!");
+			return null;
+		}
+
+		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
+
+		if (!workspaceExists) {
+			console.warn(`Attempt to update cache for a workspace that doesnt exist (${workspace})!`)
+			return null;
+		}
+
+		const data = await this.readSubmissionCache(workspace);
+		data[submission.id] = submission;
+
+		await this.update<CacheEntry>("submissionCache", workspace, data);
+	}
+
 	async getSubmission(id: SubmissionID, workspace: UUID): Promise<Submission | null> {
 		if (this.db === null) {
 			console.warn("Attempt to read before database initialization!");
