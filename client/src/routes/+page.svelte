@@ -100,7 +100,7 @@
 
 		display: grid;
 		grid-template-areas: "selector" "mistakes";
-		grid-template-rows: 20vh calc(80vh - $HEADER_HEIGHT - 1px - 2vh);
+		grid-template-rows: 28vh calc(72vh - $HEADER_HEIGHT - 1px - 2vh);
 	}
 
 	.info-selector {

@@ -1,25 +1,26 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from "svelte";
 	import store, { SortMode, type Stores } from "$lib/ts/stores";
-	import config from "$lib/config.json";
-	import { processString } from "@shared/normalization";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
-	import type { SubmissionID } from "@shared/api-types";
+	import type { Submission, SubmissionID, SubmissionState } from "@shared/api-types";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
+	const ds = store("ds") as Stores["ds"];
 
-	const dispatch = createEventDispatcher();
-
-	let activeID = "";
 	let activeIndex = 0;
 	let totalEntries = 0;
 	let noData = true;
 	let submissionModal: SubmissionModal;
 	let mistakeOrderMap: string[];
 	let activeWorkspaceKey: string;
+
+	let submissionState: SubmissionState | null = null;
+	$: (async () => {
+		submissionState = (await $activeSubmission)?.state ?? null;
+	})();
 
 	async function onSelect(index: number | SubmissionID) {
 		if ($workspace === null) return;
@@ -45,25 +46,7 @@
 		if (!ws.submissions[id]) return;
 
 		activeIndex = setIndex;
-		activeID = id;
 		$activeSubmissionID = id;
-
-		// if (!$workspace.local && $workspace.submissions[id].text === null) {
-		// 	const req = await fetch(`${config.endpointUrl}/api/getSubmission?id=${id}`);
-		// 	const data = await req.text();
-
-		// 	$workspace.submissions[id] = {
-		// 		id,
-		// 		text: processString(data),
-		// 		ignoredText: [],
-		// 	};
-
-		// 	dispatch("select", { entry: id });
-		// } else {
-		// 	dispatch("select", { entry: id });
-		// }
-
-		dispatch("select", { entry: id });
 	}
 
 	export function changeSelectionBy(delta: number) {
@@ -81,12 +64,13 @@
 		if ($workspace === null) return;
 
 		const ws = await $workspace;
+		const submissions = ws.submissions as Record<SubmissionID, Submission>;
 
 		noData = false;
-		const keys = Object.keys(ws.submissions);
+		const keys = Object.keys(submissions);
 
 		mistakeOrderMap = keys;
-		mistakeOrderMap.sort((a, b) => ws.submissions[b].data!.mistakes.length - ws!.submissions[a].data!.mistakes.length);
+		mistakeOrderMap.sort((a, b) => submissions[b].data.mistakes.length - submissions[a].data.mistakes.length);
 
 		totalEntries = keys.length;
 		activeIndex = 0;
@@ -101,20 +85,35 @@
 		noData = true;
 	}
 
-	onMount(() => {
-		// A quick and dirty hack
-		// setTimeout(() => {
-		// 	initWorkspace();
-		// }, 500);
-	});
-
 	function onSortChange() {
-		// initWorkspace();
+		initWorkspace();
+	}
+
+	function onSubmissionStateClick(newState: SubmissionState) {
+		if ($activeSubmissionID === null || $activeWorkspaceID === null) return;
+
+		submissionState = newState;
+
+		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
 	}
 </script>
 
 <div class="container">
-	<h2 class="mainid">{noData ? "Nav datu" : `ID${activeID}`}</h2>
+	<h2 class="mainid">{noData ? "Nav datu" : `ID${$activeSubmissionID}`}</h2>
+	<div class="status-container">
+		<button
+			class="status-rejected"
+			class:active={submissionState === "REJECTED"}
+			disabled={noData}
+			on:click={() => { onSubmissionStateClick("REJECTED") }}
+		>Nelabos</button>
+		<button
+			class="status-done"
+			class:active={submissionState === "DONE"}
+			disabled={noData}
+			on:click={() => { onSubmissionStateClick("DONE") }}
+		>Izlabots</button>
+	</div>
 	{#if !noData}
 	<div class="selector">
 		<button class="prev" on:click={() => { changeSelectionBy(-1) }}></button>
@@ -132,7 +131,7 @@
 
 	.container {
 		display: grid;
-		grid-template-areas: "id" "selector" "openall";
+		grid-template-areas: "id" "status" "selector" "openall";
 		justify-content: center;
 		row-gap: 1.5vh;
 		margin-bottom: 3vh;
@@ -199,5 +198,61 @@
 		color: $COL_FG_DARK;
 
 		@include hover_filter;
+	}
+
+	.status-container {
+		grid-area: status;
+		width: 100%;
+
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+
+		margin-bottom: 1vh;
+
+		button {
+			background-color: $COL_BG_DARK;
+			border: none;
+			border-top: 1px solid $COL_ACCENT;
+			border-bottom: 1px solid $COL_ACCENT;
+
+			font-family: $FONT_HEADING;
+			color: $COL_BG_LIGHT;
+			font-size: 1.5rem;
+			cursor: pointer;
+			transition: background-color 0.3s, color 0.3s;
+
+			&:not([disabled]):not(.active):hover {
+				background-color: $COL_BG_REG;
+
+				&.status-rejected {
+					color: rgb(75, 15, 15);
+				}
+
+				&.status-done {
+					color: rgb(15, 75, 15);
+				}
+			}
+
+			&.active {
+				cursor: default;
+				background-color: $COL_BG_REG;
+
+				&.status-rejected {
+					color: rgb(150, 50, 50);
+				}
+
+				&.status-done {
+					color: rgb(30, 140, 30);
+				}
+			}
+
+			&:first-child {
+				border-right: 1px solid $COL_ACCENT;
+			}
+
+			&[disabled] {
+				visibility: hidden;
+			}
+		}
 	}
 </style>

@@ -1,6 +1,6 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
-import type { RegisterEntry, RegisterUpdateEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionStateChangeEventData, UUID } from "@shared/api-types";
+import type { RegisterEntry, RegisterUpdateEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, UUID } from "@shared/api-types";
 import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
@@ -190,8 +190,18 @@ export default class DiktifySocket {
 		this.onSubmissionRegen({ ids: [ submission ], workspace });
 	}
 
-	async submissionStateChange() {
+	async submissionStateChange(newState: SubmissionState, subId: SubmissionID, workspace: UUID) {
+		// TODO: Implement Socket event emit
 
+		const ws = (await (get(this.workspace)))!;
+		const rawData = ws.submissions[subId] as Submission;
+		rawData.state = newState;
+
+		this.onSubmissionStateChange({
+			state: newState,
+			id: subId,
+			workspace,
+		});
 	}
 
 	private async onSubmissionData(data: SubmissionDataEventData) {
@@ -223,7 +233,14 @@ export default class DiktifySocket {
 		}
 	}
 
-	private onSubmissionStateChange(data: SubmissionStateChangeEventData) {
+	private async onSubmissionStateChange(data: SubmissionStateChangeEventData) {
+		// TODO: Will later also update the submission status in the Submission List
 
+		if (!this.cache || !(await this.cache.isSubmissionCached(data.id, data.workspace))) return;
+
+		// Retrieve submission from cache, update the state, rewrite it to the cache
+		const existingData = (await this.cache.getSubmission(data.id, data.workspace))!;
+		existingData.state = data.state;
+		await this.cache.updateSubmissionInCache(existingData, data.workspace);
 	}
 }
