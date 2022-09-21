@@ -75,10 +75,17 @@
 		width: 0;
 		transition-timing-function: ease-in;
 		transition: width 0.5s;
-		overflow-x: hidden;
+
+		.inner-container {
+			width: 0;
+		}
 
 		&.active {
 			width: calc($TOOLBAR_ICON_SIZE * 1.3);
+
+			.inner-container {
+				width: $TOOLBAR_ICON_SIZE;
+			}
 		}
 	}
 
@@ -87,8 +94,6 @@
 		border-left: none;
 		background-color: $COL_BG_DARK;
 		grid-area: "toolbar";
-		// width: $TOOLBAR_ICON_SIZE;
-		width: $TOOLBAR_ICON_SIZE;
 		height: fit-content;
 		padding: 10%;
 
@@ -107,7 +112,7 @@
 		transition: width 0.5s;
 
 		&:hover {
-			width: calc(#{$TOOLBAR_ICON_SIZE} * 5.5);
+			width: calc(#{$TOOLBAR_ICON_SIZE} * 5.5) !important;
 		}
 
 		span {
