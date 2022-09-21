@@ -5,6 +5,7 @@
 	import config from "$lib/config.json";
 
 	const mode = store("mode") as Stores["mode"];
+	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 
 	const dispatch = createEventDispatcher();
 
@@ -19,7 +20,7 @@
 	});
 </script>
 
-<div class="outer-container">
+<div class="outer-container" class:active={$activeSubmissionID !== null}>
 	<div class="inner-container">
 		<button
 			class="btn-read"
@@ -70,7 +71,15 @@
 	.outer-container {
 		position: relative;
 		top: 20px;
-		width: $TOOLBAR_ICON_SIZE;
+
+		width: 0;
+		transition-timing-function: ease-in;
+		transition: width 0.5s;
+		overflow-x: hidden;
+
+		&.active {
+			width: calc($TOOLBAR_ICON_SIZE * 1.3);
+		}
 	}
 
 	.inner-container {
