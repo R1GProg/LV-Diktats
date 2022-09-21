@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@shared/api-types": "file:../shared/api-types",
     "@shared/diff-engine": "file:../shared/diff-engine",
     "@shared/normalization": "file:../shared/normalization",
     "@types/cors": "^2.8.12",
