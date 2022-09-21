@@ -121,7 +121,7 @@ export default class DiktifySocket {
 					.filter((m) => mistakes.includes(m.hash))
 					.map((m) => Mistake.fromData(m));
 
-				const mergedMistake = await Mistake.mergeMistakes(...targetSubMistakes);
+				const mergedMistake = Mistake.mergeMistakes(...targetSubMistakes);
 
 				for (const prevMistake of targetSubMistakes) {
 					subMistakes.splice(subMistakes.findIndex((m) => m.id === prevMistake.id), 1);
@@ -139,8 +139,33 @@ export default class DiktifySocket {
 		this.onSubmissionRegen({ workspace, ids: targetSubmissions });
 	}
 	
-	async mistakeUnmerge(mistakes: MistakeHash) {
+	async mistakeUnmerge(targetMistake: MistakeHash, workspace: UUID) {
+		// TODO: Server implementation
 		
+		const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
+		const targetSubmissions = Object.values(subData)
+			.filter((s) => s.data.mistakes.map((m) => m.hash).includes(targetMistake));
+		
+		const parsePromises: Promise<void>[] = [];
+		
+		for (const sub of targetSubmissions) {
+			parsePromises.push(new Promise<void>(async (res) => {
+				const subMistakes = sub.data.mistakes;
+				const targetSubMistake = subMistakes.findIndex((m) => m.hash === targetMistake)!;
+				const unmergedMistakes = Mistake.unmergeMistake(Mistake.fromData(subMistakes[targetSubMistake]));
+				
+				subMistakes.splice(targetSubMistake, 1);
+				
+				subMistakes.push(...await Promise.all(unmergedMistakes.map((m) => m.exportData())));
+				subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+				
+				res();
+			}));
+		}
+		
+		await Promise.all(parsePromises);
+
+		this.onSubmissionRegen({ workspace, ids: targetSubmissions.map((s) => s.id) });
 	}
 
 	async registerNew(data: RegisterEntry) {
@@ -189,9 +214,6 @@ export default class DiktifySocket {
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
 		// Clears the submissions from the cache
 		await Promise.all(data.ids.map((id) => this.cache!.removeSubmissionFromCache(id, data.workspace)))
-
-		console.log(data);
-		console.log(await this.cache?.getSubmission("121", "debugworkspaceid"));
 
 		const activeID = get(this.activeSubmissionID);
 

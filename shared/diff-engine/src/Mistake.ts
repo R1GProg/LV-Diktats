@@ -119,7 +119,7 @@ export class Mistake {
 		}
 	}
 
-	static async mergeMistakes(...mistakes: Mistake[]) {
+	static mergeMistakes(...mistakes: Mistake[]) {
 		const mergedActions = mistakes.flatMap((m) => m.actions);
 		mergedActions.sort((a, b) => a.indexDiff - b.indexDiff);
 
@@ -163,6 +163,21 @@ export class Mistake {
 			wordCorrect,
 			children
 		});
+	}
+
+	static unmergeMistake(mergedMistake: Mistake): Mistake[] {
+		if (mergedMistake.subtype !== "MERGED") {
+			console.warn("Attempt to unmerge a non-merged mistake");
+			return [ mergedMistake ];
+		}
+
+		const children = [...mergedMistake.children];
+		
+		for (const m of children) {
+			m.mergedId = null;
+		}
+
+		return children;
 	}
 
 	static fromData(data: MistakeData): Mistake {

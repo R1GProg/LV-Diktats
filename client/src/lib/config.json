@@ -4,5 +4,6 @@
 	"pilotMode": false,
 	"incompleteFraction": 0.75,
 	"autosaveTime": 15,
-	"cacheSingleSession": true
+	"cacheSingleSession": true,
+	"highlightDelay": 200
 }

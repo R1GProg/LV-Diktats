@@ -2,10 +2,9 @@
 	import store, { type Stores } from "$lib/ts/stores";
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import type { MistakeId, MistakeData } from "@shared/diff-engine";
-	import { createEventDispatcher } from "svelte";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
 	import type { Submission } from "@shared/api-types";
-	import { children } from "svelte/internal";
+	import Toolbar from "./Toolbar.svelte";
 
 	const mode = store("mode") as Stores["mode"];
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
@@ -55,6 +54,17 @@
 		}
 	}
 
+	async function onMistakeRightClick(ev: Event) {
+		if ($mode !== ToolbarMode.MERGE) return;
+
+		const id = (ev.currentTarget as HTMLElement).dataset.id!;
+		const mistake = mistakes.find((m) => m.id === id);
+
+		if (!mistake || mistake.subtype !== "MERGED") return;
+
+		$ds.mistakeUnmerge(mistake.hash, $activeWorkspaceID!);
+	}
+
 	async function onBodyKeypress(ev: KeyboardEvent) {
 		if (ev.key !== "Enter") return;
 		if ($mode !== ToolbarMode.MERGE) return;
@@ -102,6 +112,7 @@
 				on:mouseleave={onMistakeHoverOut}
 				on:blur={onMistakeHoverOut}
 				on:click={onMistakeClick}
+				on:contextmenu|preventDefault={onMistakeRightClick}
 				title={JSON.stringify({
 					boundsCheck: m.boundsCheck,
 					boundsCorrect: m.boundsCorrect,

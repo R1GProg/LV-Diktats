@@ -3,11 +3,15 @@
 	import EssayBox from "./EssayBox.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
 	import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
+	import config from "$lib/config.json";
 
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 
+	// The timeout ensures that you wont get 50 essays trying to render at once
+	// if cycling through them quickly
+	let highlightDelayTimeout: number | null = null;
 	let essayEl: EssayBox;
 	const highlightMap: Record<string, MistakeId> = {}; // HighlightID : MistakeID
 	const mistakeMap: Record<MistakeId, string[]> = {} // MistakeID : HighlightID[]
@@ -32,6 +36,14 @@
 			essayEl?.setPlainText("");
 			return;
 		}
+
+		if (highlightDelayTimeout !== null) {
+			clearTimeout(highlightDelayTimeout);
+		}
+
+		await new Promise<void>((res) => {
+			highlightDelayTimeout = window.setTimeout(res, config.highlightDelay);
+		});
 
 		const submission = await submissionPromise;
 
