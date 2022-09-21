@@ -121,38 +121,16 @@ export default class DiktifyAPI {
 export const api = new DiktifyAPI();
 
 async function loadDebugWorkspace(): Promise<Workspace> {
-	const id = "debugworkspaceid";
-	const name = "Mazsālīto gurķu blūzs";
-	
 	const req = await fetch("/output.json");
-	const pregen = await req.json();
-	
-	const template = pregen.template;
-	const entries: Submission[] = pregen.submissions
-	.map((s: any) => ({
-		id: s.id,
-		status: "UNGRADED",
-		data: {
-			text: s.message,
-			mistakes: s.mistakes,
-			ignoreText: s.ignoreText,
+	const ws = await req.json() as Workspace;
+
+	for (const id of Object.keys(ws.submissions)) {
+		const sub = ws.submissions[id] as Submission;
+
+		if (sub.data.text.length < ws.template.length * config.incompleteFraction) {
+			delete ws.submissions[id];
 		}
-	}))
-	.filter((e: Submission) => e.data!.text.length > template.length * config.incompleteFraction);
-	
-	const submissions: Record<SubmissionID, Submission> = {};
-	
-	for (const e of entries) {
-		submissions[e.id] = e;
 	}
-	
-	const register: RegisterEntry[] = [];	
-	
-	return {
-		id,
-		template,
-		submissions,
-		register,
-		name,
-	};
+
+	return ws;
 }

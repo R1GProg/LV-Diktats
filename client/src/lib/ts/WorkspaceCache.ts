@@ -273,9 +273,15 @@ export default class WorkspaceCache {
 
 		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
 
-		if (!workspaceExists) return;
+		if (!workspaceExists) {
+			console.warn(`Attempt to remove submission from a workspace cache (${workspace}) that doesn't exist!`);
+			return;
+		}
 
 		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
+
+		if (!(id in data)) return;
+
 		delete data[id];
 
 		await this.update<CacheEntry>("submissionCache", workspace, data);

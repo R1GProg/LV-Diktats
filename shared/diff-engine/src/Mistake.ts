@@ -17,17 +17,7 @@ export interface MistakeOpts {
 	boundsDiff: Bounds,
 	word: string,
 	wordCorrect?: string,
-}
-
-// Used to represent a base mistake that is part of a merged mistake
-export interface MistakeChild {
-	type: MistakeType,
-	hash: string,
-	word: string,
-	wordCorrect?: string, // Not sure if this is needed, but probably a nice to have
-	boundsDiff: Bounds,
-	boundsCorrect: Bounds,
-	boundsCheck: Bounds,
+	children?: Mistake[] // Used only when creating subtype=MERGED
 }
 
 export interface MistakeData {
@@ -42,7 +32,8 @@ export interface MistakeData {
 	word: string,
 	wordCorrect?: string,
 	registerId: string | null,
-	children: MistakeChild[]
+	children: MistakeData[],
+	mergedId: MistakeId | null,
 }
 
 export type MistakeHash = string;
@@ -68,7 +59,9 @@ export class Mistake {
 
 	id: MistakeId;
 
-	children: MistakeChild[] = []; // Populated only for type=MERGED
+	children: Mistake[] = []; // Populated only for subtype=MERGED
+
+	mergedId: MistakeId | null = null; // Used only for children of a merged mistake
 
 	private cachedHash: string | null = null;
 
@@ -82,6 +75,13 @@ export class Mistake {
 		this.boundsDiff = opts.boundsDiff;
 		this.word = opts.word;
 		this.wordCorrect = opts.wordCorrect;
+		this.children = opts.children ?? [];
+
+		if (this.subtype === "MERGED") {
+			for (const m of this.children) {
+				m.mergedId = this.id;
+			}
+		}
 	}
 
 	async genHash(force = false): Promise<MistakeHash> {
@@ -114,62 +114,63 @@ export class Mistake {
 			word: this.word,
 			wordCorrect: this.wordCorrect,
 			registerId: this.registerId,
-			children: this.children,
+			children: await Promise.all(this.children.map((m) => m.exportData())),
+			mergedId: this.mergedId,
 		}
 	}
 
-	static mergeMistakes(...mistakes: Mistake[]) {
-		console.warn("NYI");
-		// const actions = mistakes.flatMap((m) => m.actions);
-		// actions.sort((a, b) => a.indexDiff! - b.indexDiff!);
+	static async mergeMistakes(...mistakes: Mistake[]) {
+		const mergedActions = mistakes.flatMap((m) => m.actions);
+		mergedActions.sort((a, b) => a.indexDiff - b.indexDiff);
 
-		// const inputTypes = mistakes.map((m) => m.type);
-		// const type = inputTypes.every((t) => t === "ADD") ? "ADD" : (inputTypes.every((t) => t === "DEL") ? "DEL" : "MIXED");
+		const isAdd = mistakes.every((m) => m.type === "ADD");
+		const isDel = mistakes.every((m) => m.type === "DEL");
 
-		// const inputSubtypes = mistakes.map((m) => m.subtype);
-		// const subtype = inputSubtypes.every((m) => m === "WORD") ? "WORD" : "MERGED";
+		const type: MistakeType = isAdd ? "ADD" : (isDel ? "DEL" : "MIXED");
+		
+		const boundsCheck = {
+			start: Math.min(...mistakes.map((m) => m.boundsCheck.start)),
+			end: Math.max(...mistakes.map((m) => m.boundsCheck.end))
+		};
 
-		// let boundsCheck: Bounds | null = null;
+		const boundsCorrect = {
+			start: Math.min(...mistakes.map((m) => m.boundsCorrect.start)),
+			end: Math.max(...mistakes.map((m) => m.boundsCorrect.end))
+		};
 
-		// if (type !== "ADD") {
-		// 	const inputBoundsCheck = mistakes.map((m) => m.boundsCheck).filter((b) => b !== null) as Bounds[];
-		// 	boundsCheck = {
-		// 		start: getMinElement<Bounds>(inputBoundsCheck, (b) => b.start).start,
-		// 		end: getMaxElement<Bounds>(inputBoundsCheck, (b) => b.end).end
-		// 	}
-		// }
+		const boundsDiff = {
+			start: Math.min(...mistakes.map((m) => m.boundsDiff.start)),
+			end: Math.max(...mistakes.map((m) => m.boundsDiff.end))
+		};
 
-		// let boundsCorrect: Bounds | null = null;
+		const word = mistakes.map((m) => m.word).join("..");
+		const wordCorrect = mistakes
+			.filter((m) => m.type !== "DEL")
+			.map((m) => m.type === "ADD" ? m.word : m.wordCorrect)
+			.join("..");
 
-		// if (type !== "DEL") {
-		// 	const inputBoundsCorrect = mistakes.map((m) => m.boundsCorrect).filter((b) => b !== null) as Bounds[];
-		// 	boundsCorrect = {
-		// 		start: getMinElement<Bounds>(inputBoundsCorrect, (b) => b.start).start,
-		// 		end: getMaxElement<Bounds>(inputBoundsCorrect, (b) => b.end).end
-		// 	}
-		// }
+		const children = [...mistakes];
+		children.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
-		// const inputBoundsDiff = mistakes.map((m) => m.boundsDiff);
-		// const boundsDiff: Bounds = {
-		// 	start: getMinElement<Bounds>(inputBoundsDiff, (b) => b.start).start,
-		// 	end: getMaxElement<Bounds>(inputBoundsDiff, (b) => b.end).end
-		// }
-
-		// const word = mistakes.map((m) => m.word).join(" ");
-
-		// return new Mistake({
-		// 	type,
-		// 	subtype,
-		// 	actions,
-		// 	boundsCheck,
-		// 	boundsCorrect,
-		// 	boundsDiff,
-		// 	word
-		// });
+		return new Mistake({
+			actions: mergedActions,
+			type,
+			subtype: "MERGED",
+			boundsCheck,
+			boundsCorrect,
+			boundsDiff,
+			word,
+			wordCorrect,
+			children
+		});
 	}
 
-	static fromData(data: MistakeData) {
-		const m = new Mistake({ ...data, actions: data.actions.map((a) => Action.fromData(a)) });
+	static fromData(data: MistakeData): Mistake {
+		const m = new Mistake({
+			...data,
+			actions: data.actions.map((a) => Action.fromData(a)),
+			children: data.subtype === "MERGED" ? data.children.map((m) => Mistake.fromData(m)) : []
+		});
 
 		m.id = data.id;
 		m.registerId = data.registerId;

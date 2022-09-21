@@ -80,9 +80,12 @@
 	function renderMistakes(rawText: string, mistakes: MistakeData[]) {
 		// TODO: Render new line characters
 
-		essayEl.setPlainText(addMissingWordsToText(rawText, mistakes));
+		// Parse MERGED mistakes
+		const parsedMistakes = mistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
 
-		for (const m of mistakes) {
+		essayEl.setPlainText(addMissingWordsToText(rawText, parsedMistakes));
+
+		for (const m of parsedMistakes) {
 			const highlightClassType = m.type === "DEL" ? 0 : (m.type === "ADD" ? 1 : 2);
 			const id = essayEl.highlightText(
 				m.boundsDiff.start,
@@ -90,14 +93,14 @@
 				`hl-${highlightClassType}`
 			);
 
-			if (id) addHighlightToMap(id, m.id);
+			if (id) addHighlightToMap(id, m.mergedId ?? m.id);
 		}
 
-		for (const m of mistakes.filter((m) => m.type === "MIXED")) {
+		for (const m of parsedMistakes.filter((m) => m.type === "MIXED")) {
 			for (const a of m.actions) {
 				const actionType = a.type === "DEL" ? 0 : 1;
 				const id = essayEl.highlightText(m.boundsDiff.start + a.indexDiff!, 1, `hl-2${actionType}`);
-				if (id) addHighlightToMap(id, m.id);
+				if (id) addHighlightToMap(id, m.mergedId ?? m.id);
 			}
 		}
 	}
@@ -118,12 +121,9 @@
 	}
 
 	function onHoveredMistakeChange(id: MistakeId | null) {
-		if (id === null) {
-			essayEl?.clearAllHighlightClassInstances("hover");
-			return;
-		}
+		essayEl?.clearAllHighlightClassInstances("hover");
 
-		if (!mistakeMap[id]) return;
+		if (id === null || !mistakeMap[id]) return;
 
 		for (const h of mistakeMap[id]) {
 			essayEl.setHighlightClass(h, "hover");

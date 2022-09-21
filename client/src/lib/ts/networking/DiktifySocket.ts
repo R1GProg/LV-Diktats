@@ -1,12 +1,13 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
 import type { RegisterEntry, RegisterUpdateEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionStateChangeEventData, UUID } from "@shared/api-types";
-import type { Bounds, Mistake, MistakeHash } from "@shared/diff-engine";
+import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
+import { getAllSubmissionsWithMistakes } from "../util";
 
 // Here temporarily
 function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
@@ -74,13 +75,13 @@ export default class DiktifySocket {
 
 	private reloadActiveSubmission() {
 		const id = get(this.activeSubmissionID);
-		
+
 		this.activeSubmissionID.set(null);
 		this.activeSubmissionID.set(id);
 	}
 
 	requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission> {
-		// TODO: Implement fetch from cache or fetch from server via Socket.io
+		// TODO: Implement fetch from server via Socket.io
 
 		return new Promise<Submission>(async (res, rej) => {
 			this.submissionDataPromise = { res, rej };
@@ -89,32 +90,53 @@ export default class DiktifySocket {
 
 			const ws = (await (get(this.workspace)))!;
 
-			// Cast as Submission because for the debug workspace
-			// data-wise, it's the Submission data
+			// Cast as Submission because the debug workspace
+			// includes the submission data
 			const rawData = ws.submissions[id] as Submission;
-			
+
 			// rawData.data!.text = "Hedlw warld!";
 			// get(workspace)!.template = "Hello world!";
-		
-			const text = parseIgnoreBounds(rawData.data!.text, rawData.data!.ignoreText);
-			// const text = rawData.data!.text;
-			const diff = new Diff(text, ws.template);
-			diff.calc();
 
 			this.onSubmissionData({
 				id,
 				workspace: workspaceId,
 				state: "UNGRADED",
-				data: {
-					...rawData.data!,
-					mistakes: await Promise.all(diff.getMistakes().map((m: Mistake) => m.exportData()))
-				}
+				data: rawData.data,
 			});
 		});
 	}
 	
-	async mistakeMerge(mistakes: MistakeHash[]) {
-		
+	async mistakeMerge(mistakes: MistakeHash[], workspace: UUID) {
+		// TODO: Implement Socket event
+
+		const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
+		const targetSubmissions = getAllSubmissionsWithMistakes(Object.values(subData), mistakes);
+
+		const parsePromises: Promise<void>[] = [];
+
+		for (const subId of targetSubmissions) {
+			parsePromises.push(new Promise<void>(async (res) => {
+				const subMistakes = subData[subId].data.mistakes;
+				const targetSubMistakes = subMistakes
+					.filter((m) => mistakes.includes(m.hash))
+					.map((m) => Mistake.fromData(m));
+
+				const mergedMistake = await Mistake.mergeMistakes(...targetSubMistakes);
+
+				for (const prevMistake of targetSubMistakes) {
+					subMistakes.splice(subMistakes.findIndex((m) => m.id === prevMistake.id), 1);
+				}
+
+				subMistakes.push(await mergedMistake.exportData());
+				subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
+				res();
+			}));
+		}
+
+		await Promise.all(parsePromises);
+
+		this.onSubmissionRegen({ workspace, ids: targetSubmissions });
 	}
 	
 	async mistakeUnmerge(mistakes: MistakeHash) {
@@ -165,9 +187,11 @@ export default class DiktifySocket {
 	}
 
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
-		// Clears the submission from the cache
-
+		// Clears the submissions from the cache
 		await Promise.all(data.ids.map((id) => this.cache!.removeSubmissionFromCache(id, data.workspace)))
+
+		console.log(data);
+		console.log(await this.cache?.getSubmission("121", "debugworkspaceid"));
 
 		const activeID = get(this.activeSubmissionID);
 

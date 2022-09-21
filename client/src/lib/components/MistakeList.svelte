@@ -5,18 +5,19 @@
 	import { createEventDispatcher } from "svelte";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
 	import type { Submission } from "@shared/api-types";
+	import { children } from "svelte/internal";
 
 	const mode = store("mode") as Stores["mode"];
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
+	const ds = store("ds") as Stores["ds"];
+	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
 
 	let mistakes: MistakeData[] = [];
 	let listContainer: HTMLElement;
-	let activeMergeIDs: string[] = [];
+	let activeMergeIDs: MistakeId[] = [];
 	let regModal: MistakeRegistrationModal;
-
-	const dispatch = createEventDispatcher();
 
 	async function onMistakeHover(ev: Event) {
 		const target = ev.currentTarget as HTMLElement;
@@ -54,12 +55,13 @@
 		}
 	}
 
-	function onBodyKeypress(ev: KeyboardEvent) {
+	async function onBodyKeypress(ev: KeyboardEvent) {
 		if (ev.key !== "Enter") return;
 		if ($mode !== ToolbarMode.MERGE) return;
 		if (activeMergeIDs.length <= 1) return;
 
-		dispatch("merge", { ids: activeMergeIDs });
+		const hashes = activeMergeIDs.map((id) => mistakes.find((m) => m.id === id)!.hash);
+		await $ds.mistakeMerge(hashes, $activeWorkspaceID!);
 
 		activeMergeIDs = [];
 	}
