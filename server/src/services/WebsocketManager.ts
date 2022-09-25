@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { test } from "../events/DebugEvents";
+import { handleMistakeMergeEvent, handleMistakeUnmergeEvent } from "../events/MistakeEvents";
 import { handleRegisterDeleteEvent, handleRegisterEditEvent, handleRegisterNewEvent } from "../events/RegisterEvents";
 import { handleRequestSubmissionEvent, handleSubmissionStateChangeEvent, handleTextIgnoreEvent } from "../events/SubmissionEvents";
 
@@ -13,7 +14,9 @@ const handlerMap: Record<string, { (...args: any[]): void; }> = {
 	"registerEdit": handleRegisterEditEvent,
 	"registerDelete": handleRegisterDeleteEvent,
 	"submissionStateChange": handleSubmissionStateChangeEvent,
-	"ignoreText": handleTextIgnoreEvent
+	"ignoreText": handleTextIgnoreEvent,
+	"mistakeMerge": handleMistakeMergeEvent,
+	"mistakeUnmerge": handleMistakeUnmergeEvent
 }
 
 export function registerHandler(io: Server, socket: Socket) {
