@@ -15,7 +15,7 @@ import { RegisterEntry, Submission, SubmissionPreview, SubmissionState, Workspac
 async function removeMistakeFromSubmission(mistakeID: Types.ObjectId) {
 	const submissions = await SubmissionDoc.find({ "data.mistakes": { $elemMatch: mistakeID } });
 	for (const submission of submissions) {
-		submission.data.mistakes.splice(submission.data.mistakes.findIndex(id => id.toString() === mistakeID.toString()));
+		submission.data.mistakes.splice(submission.data.mistakes.findIndex(id => id.toString() === mistakeID.toString()), 1);
 		await submission.save();
 	}
 }
@@ -23,7 +23,7 @@ async function removeMistakeFromSubmission(mistakeID: Types.ObjectId) {
 async function removeMistakeHashFromRegister(hash: string) {
 	const registers = await RegisterDoc.find({ mistakes: { $elemMatch: hash } });
 	for (const register of registers) {
-		register.mistakes.splice(register.mistakes.findIndex(x => x === hash));
+		register.mistakes.splice(register.mistakes.findIndex(x => x === hash), 1);
 		if (register.mistakes.length === 0) {
 			await register.delete();
 			continue;
@@ -56,7 +56,7 @@ export async function deleteRegister(registerID: string, workspaceID: string) {
 	// Remove the register reference from workspace.
 	const index = workspace.register.findIndex(x => x.toString() === register._id.toString());
 	if (index !== -1) {
-		workspace.register.splice(index);
+		workspace.register.splice(index, 1);
 		await workspace.save();
 	}
 
@@ -142,7 +142,8 @@ export async function insertWorkspaceDataset(workspace: WorkspaceDataset) {
 	const workspaceStore: WorkspaceStore = {
 		...workspace,
 		submissions: submissionIDs,
-		register: registerIDs
+		register: registerIDs,
+		mergedMistakes: []
 	}
 
 	// Save the workspace to DB.
@@ -353,9 +354,9 @@ export async function updateSubmissionIgnoreTextByID(submissionID: string, works
 	return true;
 }
 // - Merge Mistakes by hash
-export async function mergeMistakesByHash(mistakeHashes: string[], workspaceID: string) {
+export async function mergeMistakesByHash(mistakeHashes: string[], workspaceID: string): Promise<string[]> {
 	const mistakes = await MistakeDoc.find({ hash: { $in: mistakeHashes }, workspace: workspaceID });
-	if (mistakes.length === 0) return false;
+	if (mistakes.length === 0) return [];
 
 	const affectedSubmissions = await SubmissionDoc.find({ "data.mistakes": { $elemMatch: { $in: mistakes.map(x => x._id) } } });
 	const submissionMistakeMap: Record<string, Types.ObjectId[]> = {}; // Key is Submission ID, value is mistakes
@@ -385,13 +386,18 @@ export async function mergeMistakesByHash(mistakeHashes: string[], workspaceID: 
 	}
 	await Promise.all(removalPromises);
 
+	const workspace = await WorkspaceDoc.findOne({ id: workspaceID });
+	if (!workspace) return [];
+	workspace.mergedMistakes.push(mistakeHashes);
+	await workspace.save();
+
 
 	return affectedSubmissions.map(x => x.id);
 }
 // - Unmerge Mistakes by hash
-export async function unmergeMistakesByHash(mistakeHash: string, workspaceID: string) {
+export async function unmergeMistakesByHash(mistakeHash: string, workspaceID: string): Promise<string[]> {
 	const mistakes = await MistakeDoc.find({ hash: mistakeHash, workspace: workspaceID });
-	if (mistakes.length === 0) return false;
+	if (mistakes.length === 0) return [];
 
 	const affectedSubmissions = await SubmissionDoc.find({ "data.mistakes": { $elemMatch: { $in: mistakes.map(x => x._id) } } });
 	const submissionMistakeMap: Record<string, Types.ObjectId> = {}; // Key is Submission ID, value is mistake
@@ -404,6 +410,7 @@ export async function unmergeMistakesByHash(mistakeHash: string, workspaceID: st
 	}
 
 	const removalPromises = [];
+	let mergedHashes: string[] = [];
 	for (const submissionID in submissionMistakeMap) {
 		const mistakeID = submissionMistakeMap[submissionID];
 		const mistakeData = await fetchMistakeByObjectID(mistakeID);
@@ -414,6 +421,7 @@ export async function unmergeMistakesByHash(mistakeHash: string, workspaceID: st
 
 		const unmergedMistakesPromises = unmergedMistakes.map(async x => await x.exportData());
 		const unmergedMistakesData = await Promise.all(unmergedMistakesPromises);
+		if (mergedHashes.length === 0) mergedHashes = unmergedMistakesData.map(x => x.hash);
 		const unmergedMistakesIdsPromises = unmergedMistakesData.map(async x => await fetchMistakeObjectIDByHash(x.id, workspaceID));
 		const unmergedMistakesIds = await Promise.all(unmergedMistakesIdsPromises);
 
@@ -425,6 +433,12 @@ export async function unmergeMistakesByHash(mistakeHash: string, workspaceID: st
 		await submission.save();
 	}
 	await Promise.all(removalPromises);
+
+	const workspace = await WorkspaceDoc.findOne({ id: workspaceID });
+	if (!workspace) return [];
+	const index = workspace.mergedMistakes.findIndex(x => x.every(y => mergedHashes.includes(y)));
+	if (index === -1) workspace.mergedMistakes.splice(index, 1);
+	await workspace.save();
 
 
 	return affectedSubmissions.map(x => x.id);
@@ -461,5 +475,12 @@ async function regenerateMistakesInSubmission(submissionID: string, workspaceID:
 	submission.data.mistakes = mistakeIDs;
 
 	await submission.save();
+
+	const mergePromises = [];
+	for (const mistakeHashes of workspace.mergedMistakes) {
+		mergePromises.push(mergeMistakesByHash(mistakeHashes, workspaceID));
+	}
+	await Promise.all(mergePromises);
+
 	return;
 }

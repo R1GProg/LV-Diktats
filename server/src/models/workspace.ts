@@ -9,6 +9,7 @@ export interface WorkspaceStore {
 	template: string;
 	submissions: Types.ObjectId[];
 	register: Types.ObjectId[];
+	mergedMistakes: string[][]; // Hashes of mistakes that have been merged.
 }
 
 const workspaceSchema = new Schema<WorkspaceStore>({
@@ -16,7 +17,8 @@ const workspaceSchema = new Schema<WorkspaceStore>({
 	name: String,
 	template: String,
 	submissions: [Schema.Types.ObjectId],
-	register: [Schema.Types.ObjectId]
+	register: [Schema.Types.ObjectId],
+	mergedMistakes: [[String]]
 });
 
 export const WorkspaceDoc = model<WorkspaceStore>('Workspace', workspaceSchema);
