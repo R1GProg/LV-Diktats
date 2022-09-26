@@ -1,105 +1,50 @@
-import { Bounds } from "@shared/diff-engine/src";
-import mongoose from "mongoose";
-import { IMistake, Mistake } from "./mistake";
+import { MistakeData } from '@shared/diff-engine';
+import { Bounds } from '@shared/diff-engine';
+import { Submission } from '@shared/api-types';
+import { model, Schema, Types } from 'mongoose';
 
-enum SubmissionStates {
-	UNGRADED = "UNGRADED",
-	REJECTED = "REJECTED",
-	WIP = "WIP",
-	DONE = "DONE"
-}
-export { SubmissionStates };
-
-export interface ISubmission {
-	id: number;
-	message: string;
-	age: number;
-	language: string;
-	language_other: string;
-	level: string;
-	degree: string;
-	country: string;
-	city: string;
-	state: SubmissionStates;
-	mistakes: mongoose.Schema.Types.ObjectId[];
-	ignoreText: Bounds[];
-	workspace: string;
-}
-
-interface SubmissionDoc extends mongoose.Document {
-	id: number;
-	message: string;
-	age: number;
-	language: string;
-	language_other: string;
-	level: string;
-	degree: string;
-	country: string;
-	city: string;
-	state: SubmissionStates;
-	mistakes: mongoose.Schema.Types.ObjectId[];
-	ignoreText: Bounds[];
-	workspace: string;
-}
-
-interface submissionModelInterface extends mongoose.Model<SubmissionDoc> {
-	build(attr: ISubmission): SubmissionDoc;
-}
-
-const submissionSchema = new mongoose.Schema({
-	id: {
-		type: Number,
-		required: true
-	},
-	message: {
-		type: String,
-		required: true
-	},
-	age: {
-		type: Number
-	},
-	language: {
-		type: String
-	},
-	language_other: {
-		type: String
-	},
-	level: {
-		type: String
-	},
-	degree: {
-		type: String
-	},
-	country: {
-		type: String
-	},
-	city: {
-		type: String
-	},
-	state: {
-		type: String,
-		enum: SubmissionStates,
-		default: SubmissionStates.UNGRADED
-	},
-	mistakes: [{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: "Mistake"
-	}],
-	ignoredText: [{
-		start: {
-			type: Number
-		},
-		end: {
-			type: Number
+// A variation of Submission that stores only IDs of Mistakes, as Mistakes will be stored in their own document.
+export interface SubmissionStore {
+	id: string,
+	state: string,
+	data: {
+		text: string,
+		ignoreText: Bounds[],
+		mistakes: Types.ObjectId[],
+		metadata: {
+			age: number,
+			language: string,
+			language_other: string,
+			level: string,
+			degree: string,
+			country: string,
+			city: string
 		}
-	}],
+	},
+	workspace: string
+}
+
+const submissionSchema = new Schema<SubmissionStore>({
+	id: String,
+	state: String,
+	data: {
+		text: String,
+		ignoreText: [{
+			start: Number,
+			end: Number
+		}],
+		mistakes: [Schema.Types.ObjectId],
+		metadata: {
+			age: Number,
+			language: String,
+			language_other: String,
+			level: String,
+			degree: String,
+			country: String,
+			city: String
+		}
+	},
 	workspace: String
 });
 
-submissionSchema.statics.build = (attr: ISubmission) => {
-	return new Submission(attr);
-}
-
-const Submission = mongoose.model<SubmissionDoc, submissionModelInterface>("Submissions", submissionSchema);
-
-export { Submission }
+export const SubmissionDoc = model<SubmissionStore>('Submission', submissionSchema);

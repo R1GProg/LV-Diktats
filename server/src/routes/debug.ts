@@ -1,7 +1,6 @@
-import { Logger } from 'yatsl';
 import express, { Request, Response } from 'express';
+import { logger } from '..';
 
-const logger = new Logger();
 const router = express.Router();
 
 router.get('/api/test', (req: Request, res: Response) => {

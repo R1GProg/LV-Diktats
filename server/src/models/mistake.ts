@@ -1,132 +1,57 @@
-// import { ActionType, ActionSubtype } from '@shared/diff-engine/Action';
-// import { Bounds } from '@shared/diff-engine/langUtil';
-// import { MistakeType } from '@shared/diff-engine/Mistake';
-import type { ActionType, ActionSubtype } from "@shared/diff-engine/src/Action";
-import type { Bounds } from "@shared/diff-engine";
-import type { MistakeType } from '@shared/diff-engine/src/Mistake';
-import mongoose from "mongoose";
+import { Bounds } from '@shared/diff-engine';
+import { model, Schema, Types } from 'mongoose';
 
-export interface IAction {
-	// hash: string;
-	id: string;
-	type: ActionType;
-	subtype: ActionSubtype;
-	indexCheck: number;
-	indexCorrect: number;
-	indexDiff: number;
-	char: string;
-	charCorrect: string | undefined;
-	hash: string;
+// A variation of Mistake that stores only IDs of Actions, as Actions will be stored in their own document.
+export interface MistakeStore {
+	id: string,
+	hash: string,
+	type: string,
+	subtype: string,
+	actions: Types.ObjectId[],
+	boundsCheck: Bounds,
+	boundsCorrect: Bounds,
+	boundsDiff: Bounds,
+	word: string,
+	wordCorrect?: string,
+	registerId: string | null,
+	children: Types.ObjectId[],
+	workspace: string,
+	mergedId: string | null
 }
 
-export interface IMistake {
-	// hash: string;
-	actions: IAction[];
-	type: MistakeType;
-	registerId: string | undefined;
-	boundsCorrect: Bounds | null;
-	boundsCheck: Bounds | null;
-	boundsDiff: Bounds | null;
-	hash: string;
-	workspace: string;
-	ocurrences: number;
-	id?: string;
-	word?: string;
-	subtype?: string;
-}
-
-interface MistakeDoc extends mongoose.Document {
-	actions: IAction[];
-	type: MistakeType;
-	registerId: string | undefined;
-	boundsCorrect: Bounds | null;
-	boundsCheck: Bounds | null;
-	boundsDiff: Bounds | null;
-	hash: string;
-	workspace: string;
-	ocurrences: number;
-}
-
-interface mistakeModelInterface extends mongoose.Model<MistakeDoc> {
-	build(attr: IMistake): MistakeDoc;
-}
-
-const mistakeSchema = new mongoose.Schema({
-	actions: [{
-		id: {
-			type: String,
-			required: true
-		},
-		type: {
-			type: String
-		},
-		subtype: {
-			type: String
-		},
-		indexCheck: {
-			type: Number
-		},
-		indexCorrect: {
-			type: Number
-		},
-		indexDiff: {
-			type: Number
-		},
-		char: {
-			type: String
-		},
-		charCorrect: {
-			type: String,
-			nullable: true
-		},
-		hash: {
-			type: String
-		}
-	}],
-	type: {
-		type: String
+const mistakeSchema = new Schema<MistakeStore>({
+	id: String,
+	hash: String,
+	type: String,
+	subtype: String,
+	actions: [Schema.Types.ObjectId],
+	boundsCheck: {
+		start: Number,
+		end: Number
 	},
-	registerId: {
-		// type: mongoose.Schema.Types.ObjectId,
-		// ref: "Register",
+	boundsCorrect: {
+		start: Number,
+		end: Number
+	},
+	boundsDiff: {
+		start: Number,
+		end: Number
+	},
+	word: String,
+	wordCorrect: {
 		type: String,
 		nullable: true
 	},
-	boundsCorrect: {
-		start: {
-			type: Number
-		},
-		end: {
-			type: Number
-		}
+	registerId: {
+		type: String,
+		nullable: true
 	},
-	boundsCheck: {
-		start: {
-			type: Number
-		},
-		end: {
-			type: Number
-		}
-	},
-	boundsDiff: {
-		start: {
-			type: Number
-		},
-		end: {
-			type: Number
-		}
-	},
-	hash: {
-		type: String
-	},
+	children: [Schema.Types.ObjectId],
 	workspace: String,
-	ocurrences: Number
+	mergedId: {
+		type: String,
+		nullable: true
+	}
 });
 
-mistakeSchema.statics.build = (attr: IMistake) => {
-	return new Mistake(attr);
-}
-
-const Mistake = mongoose.model<MistakeDoc, mistakeModelInterface>("Mistake", mistakeSchema);
-
-export { Mistake }
+export const MistakeDoc = model<MistakeStore>('Mistake', mistakeSchema);
