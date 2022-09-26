@@ -2,7 +2,7 @@
 	import Modal from "./Modal.svelte";
 	import store, { SortMode, type Stores } from "$lib/ts/stores";
 	import { createEventDispatcher } from "svelte";
-	import type { Submission, Workspace } from "@shared/api-types";
+	import type { Submission, SubmissionPreview, Workspace } from "@shared/api-types";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
@@ -11,7 +11,7 @@
 
 	let modal: Modal;
 	let openSortMode: SortMode;
-	let submArray: Submission[] = [];
+	let submArray: SubmissionPreview[] = [];
 
 	export function open() {
 		modal.open();
@@ -37,12 +37,12 @@
 		}
 
 		const ws = await workspace;
-		const vals = Object.values(ws.submissions) as Submission[];
+		const vals = Object.values(ws.submissions);
 
 		if (sort === SortMode.ID) {
 			vals.sort((a, b) => Number(a.id) - Number(b.id));
 		} else {
-			vals.sort((a, b) => b.data!.mistakes.length - a.data!.mistakes.length);
+			vals.sort((a, b) => b.mistakeCount - a.mistakeCount);
 		}
 		
 		submArray = vals;
@@ -67,7 +67,7 @@
 				on:click={onEntryClick}
 			>
 				<h3 class="id">ID{entry.id}</h3>
-				<span class="errnr">{entry?.data?.mistakes.length} kļūdas</span>
+				<span class="errnr">{entry?.mistakeCount} kļūdas</span>
 				<span class="open">Atvērt</span>
 			</div>
 		{/each}

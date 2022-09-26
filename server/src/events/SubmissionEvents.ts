@@ -1,4 +1,4 @@
-import { SubmissionState } from "@shared/api-types";
+import { RequestSubmissionEventData, SubmissionDataEventData, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData } from "@shared/api-types";
 import { Bounds } from "@shared/diff-engine";
 import { Socket } from "socket.io";
 import { io } from "..";
@@ -6,29 +6,41 @@ import { fetchSubmissionByID, updateSubmissionIgnoreTextByID, updateSubmissionSt
 
 // Handles events related to Submissions.
 
-export async function handleRequestSubmissionEvent(socket: Socket, id: string, workspace: string) {
-	const submission = await fetchSubmissionByID(id, workspace);
+export async function handleRequestSubmissionEvent(socket: Socket, eventData: RequestSubmissionEventData) {
+	const submission = await fetchSubmissionByID(eventData.id, eventData.workspace);
 	if (!submission) socket.emit("error", "Invalid Submission ID and/or Workspace ID!");
-	else socket.emit("submissionData", JSON.stringify(submission.data));
+	else {
+		const response: SubmissionDataEventData = {
+			id: submission.id,
+			state: submission.state,
+			data: submission.data,
+			workspace: eventData.workspace
+		}
+		socket.emit("submissionData", response);
+	}
 }
 
-export async function handleSubmissionStateChangeEvent(socket: Socket, id: string, workspace: string, state: string) {
-	const trueState: SubmissionState = state as SubmissionState;
-	if (!trueState) {
-		socket.emit("error", "Invalid Submission state!");
-		return;
-	}
-	const result = await updateSubmissionStateByID(id, workspace, trueState);
+export async function handleSubmissionStateChangeEvent(socket: Socket, eventData: SubmissionStateChangeEventData) {
+	const result = await updateSubmissionStateByID(eventData.id, eventData.workspace, eventData.state);
 	if (!result) socket.emit("error", "Invalid Submission ID and/or Workspace ID!");
-	else io.emit("submissionStateChange", id, state);
+	else {
+		const response: SubmissionStateChangeEventData = {
+			id: eventData.id,
+			workspace: eventData.workspace,
+			state: eventData.state
+		}
+		io.emit("submissionStateChange", response);
+	}
 }
 
-export async function handleTextIgnoreEvent(socket: Socket, id: string, workspace: string, ignoreBounds: Bounds[]) {
-	if (!ignoreBounds) {
-		socket.emit("error", "Invalid bounds data!");
-		return;
-	}
-	const result = await updateSubmissionIgnoreTextByID(id, workspace, ignoreBounds);
+export async function handleTextIgnoreEvent(socket: Socket, eventData: TextIgnoreEventData) {
+	const result = await updateSubmissionIgnoreTextByID(eventData.id, eventData.workspace, eventData.ignoreBounds);
 	if (!result) socket.emit("error", "Invalid Submission ID and/or Workspace ID!");
-	else io.emit("submissionRegen", [id]);
+	else {
+		const response: SubmissionRegenEventData = {
+			ids: [eventData.id],
+			workspace: eventData.workspace
+		}
+		io.emit("submissionRegen", response);
+	}
 }

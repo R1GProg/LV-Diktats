@@ -71,7 +71,9 @@ export default class DiktifyAPI {
 		}
 		
 		// TODO: SERVER FETCH
-		throw "NYI";
+		const request = await fetch(`${config.endpointUrl}/api/workspaces`);
+		const response: WorkspacePreview[] = await request.json();
+		return response;
 	}
 
 	async getWorkspace(workspaceId: UUID): Promise<Workspace> {
@@ -80,7 +82,9 @@ export default class DiktifyAPI {
 		}
 
 		// TODO: SERVER FETCH
-		throw "NYI";
+		const request = await fetch(`${config.endpointUrl}/api/workspace/${workspaceId}`);
+		const response: Workspace = await request.json();
+		return response;
 	}
 
 	async getSettings(): Promise<Setting[]> {

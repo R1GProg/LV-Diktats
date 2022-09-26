@@ -21,6 +21,9 @@ const handlerMap: Record<string, { (...args: any[]): void; }> = {
 
 export function registerHandler(io: Server, socket: Socket) {
 	for (const event in handlerMap) {
-		socket.on(event, (...args: any[]) => handlerMap[event](socket, ...args));
+		socket.on(event, async (...args: any[]) => {
+			const _ = handlerMap[event](socket, ...args);
+			return;
+		});
 	}
 }

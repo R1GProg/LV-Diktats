@@ -29,7 +29,8 @@ export interface Submission {
 
 export interface SubmissionPreview {
 	id: SubmissionID,
-	state: SubmissionState
+	state: SubmissionState,
+	mistakeCount: number
 }
 
 export interface RegisterEntry {
@@ -97,6 +98,7 @@ export interface MistakeUnmergeEventData {
 }
 
 export interface TextIgnoreEventData {
+	id: SubmissionID,
 	ignoreBounds: Bounds[],
 	workspace: UUID
 }

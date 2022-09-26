@@ -1,6 +1,6 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
-import type { RegisterEntry, RegisterEntryData, RegisterUpdateEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, UUID } from "@shared/api-types";
+import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RequestSubmissionEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
 import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
@@ -102,6 +102,13 @@ export default class DiktifySocket {
 				});
 			} else {
 				// TODO: SERVER IMPLEMENTATION
+				if (this.socket) {
+					const request: RequestSubmissionEventData = {
+						id,
+						workspace: workspaceId
+					}
+					this.socket.emit("requestSubmission", request);
+				}
 			}
 		});
 	}
@@ -138,6 +145,13 @@ export default class DiktifySocket {
 			this.onSubmissionRegen({ workspace, ids: targetSubmissions });
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				const request: MistakeMergeEventData = {
+					mistakes,
+					workspace
+				}
+				this.socket.emit("mistakeMerge", request);
+			}
 		}
 	}
 	
@@ -169,6 +183,13 @@ export default class DiktifySocket {
 			this.onSubmissionRegen({ workspace, ids: targetSubmissions.map((s) => s.id) });
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				const request: MistakeUnmergeEventData = {
+					mistake,
+					workspace
+				}
+				this.socket.emit("mistakeUnmerge", request);
+			}
 		}
 	}
 
@@ -194,6 +215,21 @@ export default class DiktifySocket {
 			this.onRegisterUpdate({ data: [{ type: "ADD", entry: serverData }], workspace });
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				if (!data.mistakes || !data.description || !data.ignore) throw new Error("Invalid RegisterEntryData!");
+				const payloadData: RegisterEntry = {
+					id: uuidv4(),
+					mistakes: data.mistakes,
+					description: data.description,
+					ignore: data.ignore,
+					count: 0, // The Server will do the counting
+				}
+				const request: RegisterNewEventData = {
+					data: payloadData,
+					workspace
+				}
+				this.socket.emit("registerNew", request);
+			}
 		}
 	}
 
@@ -219,6 +255,22 @@ export default class DiktifySocket {
 			this.onRegisterUpdate({ data: [{ type: "EDIT", entry: serverData }], workspace });
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				if (!data.id || !data.mistakes || !data.description || !data.ignore) throw new Error("Invalid RegisterEntryData!");
+				const payloadData: RegisterEntry = {
+					id: data.id,
+					mistakes: data.mistakes,
+					description: data.description,
+					ignore: data.ignore,
+					count: 0, // The Server will do the counting
+				}
+				const request: RegisterEditEventData = {
+					id: data.id,
+					data: payloadData,
+					workspace
+				}
+				this.socket.emit("registerEdit", request);
+			}
 		}
 	}
 
@@ -235,6 +287,14 @@ export default class DiktifySocket {
 			this.onRegisterUpdate({ data: [{ type: "DELETE", entry: serverData }], workspace });
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				if (!data.id) throw new Error("Invalid RegisterEntryData!");
+				const request: RegisterDeleteEventData = {
+					id: data.id,
+					workspace
+				}
+				this.socket.emit("registerDelete", request);
+			}
 		}
 	}
 
@@ -247,6 +307,14 @@ export default class DiktifySocket {
 			this.onSubmissionRegen({ ids: [ submission ], workspace });
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				const request: TextIgnoreEventData = {
+					id: submission,
+					ignoreBounds: bounds,
+					workspace
+				}
+				this.socket.emit("ignoreText", request);
+			}
 		}
 	}
 
@@ -263,6 +331,14 @@ export default class DiktifySocket {
 			});
 		} else {
 			// TODO: SERVER IMPLEMENTATION
+			if (this.socket) {
+				const request: SubmissionStateChangeEventData = {
+					id: subId,
+					state: newState,
+					workspace
+				}
+				this.socket.emit("submissionStateChange", request);
+			}
 		}
 	}
 
@@ -274,6 +350,8 @@ export default class DiktifySocket {
 			state: data.state,
 			data: data.data
 		};
+
+		console.log(submission);
 
 		this.cache?.updateSubmissionInCache(submission, data.workspace);
 		this.submissionDataPromise.res(submission);

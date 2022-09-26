@@ -7,6 +7,11 @@ const router = express.Router();
 
 // Routes concerning workspaces
 
+// GET / - Returns 200, used to check if the server is alive
+router.get('/', (req: Request, res: Response) => {
+	return res.sendStatus(200);
+});
+
 // GET /api/workspaces - Returns a list of available workspaces
 router.get('/api/workspaces', async (req: Request, res: Response) => {
 	const workspaces = await listWorkspaces();
