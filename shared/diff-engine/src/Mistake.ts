@@ -31,7 +31,6 @@ export interface MistakeData {
 	boundsDiff: Bounds,
 	word: string,
 	wordCorrect?: string,
-	registerId: string | null,
 	children: MistakeData[],
 	mergedId: MistakeId | null,
 }
@@ -44,8 +43,6 @@ export class Mistake {
 	type: MistakeType;
 
 	subtype: MistakeSubtype;
-
-	registerId: string | null = null;
 
 	boundsCheck: Bounds;
 	
@@ -113,7 +110,6 @@ export class Mistake {
 			boundsDiff: this.boundsDiff,
 			word: this.word,
 			wordCorrect: this.wordCorrect,
-			registerId: this.registerId,
 			children: await Promise.all(this.children.map((m) => m.exportData())),
 			mergedId: this.mergedId,
 		}
@@ -188,7 +184,6 @@ export class Mistake {
 		});
 
 		m.id = data.id;
-		m.registerId = data.registerId;
 
 		return m;
 	}

@@ -1,30 +1,27 @@
 <script lang="ts">
-	import { workspace } from "$lib/ts/stores";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
-	import { ActionRegister } from "$lib/ts/ActionRegister";
+	import store, { type Stores } from "$lib/ts/stores";
+
+	const workspace = store("workspace") as Stores["workspace"];
 
 	let modal: MistakeRegistrationModal;
-	let actionRegister: ActionRegister = new ActionRegister();
 
 	async function onEntryClick(ev: MouseEvent) {
 		if ($workspace === null) return;
 
-		const hash = (ev.currentTarget as HTMLElement).dataset.hash!;
-		const data = await modal.open(hash, true);
+		const id = (ev.currentTarget as HTMLElement).dataset.id!;
+
+		console.log(id);
+
+		// const data = await modal.open(hash, true);
 		
-		if (data.action === "EDIT") {
-			await actionRegister.updateMistakeInRegister(hash, data.data);
-		} else if (data.action === "DELETE") {
-			await actionRegister.deleteMistakeFromRegister(hash);
-		}
+		// if (data.action === "EDIT") {
+		// 	await actionRegister.updateMistakeInRegister(hash, data.data);
+		// } else if (data.action === "DELETE") {
+		// 	await actionRegister.deleteMistakeFromRegister(hash);
+		// }
 
-		$workspace.register = $workspace.register;
-	}
-
-	function getMistakeOccurences(hash: string) {
-		console.log($workspace!.mistakeData!.find((m) => m.hash === hash));
-
-		return $workspace!.mistakeData!.find((m) => m.hash === hash)!.occurrences;
+		// $workspace.register = $workspace.register;
 	}
 </script>
 
@@ -36,15 +33,16 @@
 		<th>Uzskatāma par kļūdu?</th>
 		<th>Gadījumu skaits</th>
 	</tr>
-	{#each Object.keys($workspace.register) as hash (hash)}
-	{@const entry = $workspace.register[hash]}
-	<tr data-hash={hash} on:click={onEntryClick}>
-		<td><h3>{entry.word}</h3></td>
-		<td class="desc"><span>{entry.desc}</span></td>
-		<td><span>{entry.ignore ? "Nav kļūda" : ""}</span></td>
-		<td><span>{getMistakeOccurences(hash)}</span></td>
-	</tr>
-	{/each}
+	{#await $workspace then ws}
+		{#each ws.register as entry (entry.id)}
+		<tr data-id={entry.id} on:click={onEntryClick}>
+			<td><h3>WIP (Will print all registered mistake words)</h3></td>
+			<td class="desc"><span>{entry.description}</span></td>
+			<td><span>{entry.ignore ? "Nav kļūda" : ""}</span></td>
+			<td><span>{entry.count}</span></td>
+		</tr>
+		{/each}
+	{/await}
 	{:else}
 	<h2>Nav izvēlēti dati</h2>
 	{/if}

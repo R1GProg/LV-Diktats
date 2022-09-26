@@ -1,13 +1,15 @@
 <script lang="ts">
-	import type { Submission } from "@shared/api-types";
+	import type { RegisterEntry, Submission } from "@shared/api-types";
 	import EssayBox from "./EssayBox.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
 	import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
+	import { mistakeInRegister } from "$lib/ts/util";
 
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
+	const workspace = store("workspace") as Stores["workspace"];
 
 	// The timeout ensures that you wont get 50 essays trying to render at once
 	// if cycling through them quickly
@@ -15,6 +17,8 @@
 	let essayEl: EssayBox;
 	const highlightMap: Record<string, MistakeId> = {}; // HighlightID : MistakeID
 	const mistakeMap: Record<MistakeId, string[]> = {} // MistakeID : HighlightID[]
+
+	let register: RegisterEntry[] = [];
 
 	function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
 		let text = rawText;
@@ -51,6 +55,8 @@
 			essayEl?.setPlainText("");
 			return;
 		}
+
+		register = (await $workspace)!.register;
 
 		const text = parseIgnoreBounds(submission.data!.text, submission.data!.ignoreText);
 		// const text = submission.data!.text;
@@ -105,14 +111,31 @@
 				`hl-${highlightClassType}`
 			);
 
-			if (id) addHighlightToMap(id, m.mergedId ?? m.id);
+			if (id) {
+				addHighlightToMap(id, m.mergedId ?? m.id);
+
+				const mHash = m.mergedId ? mistakes.find((parentM) => parentM.id === m.mergedId)!.hash : m.hash;
+
+				if (mistakeInRegister(mHash, register)) {
+					essayEl.setHighlightClass(id, "hl-status-registered");
+				}
+			}
 		}
 
 		for (const m of parsedMistakes.filter((m) => m.type === "MIXED")) {
 			for (const a of m.actions) {
 				const actionType = a.type === "DEL" ? 0 : 1;
 				const id = essayEl.highlightText(m.boundsDiff.start + a.indexDiff!, 1, `hl-2${actionType}`);
-				if (id) addHighlightToMap(id, m.mergedId ?? m.id);
+				
+				if (id) {
+					addHighlightToMap(id, m.mergedId ?? m.id);
+
+					const mHash = m.mergedId ? mistakes.find((parentM) => parentM.id === m.mergedId)!.hash : m.hash;
+
+					if (mistakeInRegister(mHash, register)) {
+						essayEl.setHighlightClass(id, "hl-status-registered");
+					}
+				}
 			}
 		}
 	}

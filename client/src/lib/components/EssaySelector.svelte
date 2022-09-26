@@ -92,7 +92,7 @@
 	function onSubmissionStateClick(newState: SubmissionState) {
 		if ($activeSubmissionID === null || $activeWorkspaceID === null) return;
 
-		submissionState = newState;
+		submissionState = submissionState === newState ? null : newState;
 
 		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
 	}
@@ -234,7 +234,6 @@
 			}
 
 			&.active {
-				cursor: default;
 				background-color: $COL_BG_REG;
 
 				&.status-rejected {

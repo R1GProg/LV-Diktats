@@ -1,4 +1,4 @@
-import type { Submission } from "@shared/api-types";
+import type { RegisterEntry, Submission } from "@shared/api-types";
 import type { MistakeHash } from "@shared/diff-engine";
 
 export function readTextFile(file: File) {
@@ -35,4 +35,20 @@ export function getAllSubmissionsWithMistakes(submissions: Submission[], mistake
 	}
 
 	return output;
+}
+
+export function submissionContainsMistake(submission: Submission, mistake: MistakeHash) {
+	for (const m of submission.data.mistakes) {
+		if (m.hash === mistake) return true;
+	}
+
+	return false;
+}
+
+export function mistakeInRegister(hash: MistakeHash, register: RegisterEntry[]) {
+	return !!register.find((e) => e.mistakes.includes(hash));
+}
+
+export function getRegisterId(hash: MistakeHash, register: RegisterEntry[]) {
+	return register.find((e) => e.mistakes.includes(hash))?.id ?? null;
 }

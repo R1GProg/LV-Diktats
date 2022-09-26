@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type { Mistake, MistakeHash, MistakeId } from "@shared/diff-engine";
+	import type { MistakeHash } from "@shared/diff-engine";
 	import InputModal from "./InputModal.svelte";
-	import type { RegisterEntryData } from "$lib/types";
 	import store, { type Stores } from "$lib/ts/stores";
+	import type { RegisterEntry, RegisterEntryData, UUID } from "@shared/api-types";
+	import { v4 as uuidv4 } from "uuid";
 
 	const workspace = store("workspace") as Stores["workspace"];
 
@@ -13,52 +14,65 @@
 	let variation = "";
 	
 	let edit = false;
-	let curMistake: Mistake | MistakeHash;
+	let curMistake: MistakeHash;
+	let curRegisterEntry: UUID | null = null;
+	let register: RegisterEntry[] = [];
 
 	let promiseResolve: (entry: RegisterEntryData) => void;
 	let promiseReject: () => void;
 
-	export function open(m: Mistake | MistakeHash, editHash = false) {
+	export function open(
+		hash: MistakeHash,
+		mode: "ADD" | "EDIT" = "ADD",
+		registerId: UUID | null = null
+	) {
 		return new Promise<RegisterEntryData>(async (res, rej) => {
-			if ($workspace === null) rej();
+			const ws = await $workspace;
 
-			if (typeof m === "string") {
-				if (editHash) {
-					const entry = $workspace!.register[m];
-					desc = entry.desc;
-					ignore = entry.ignore;
-				} else {
-					desc = "";
-					ignore = false;
-				}
-				
-				edit = editHash;
-			} else {
-				if (m.isRegistered) {
-					const hash = await m.genHash();
-					const entry = $workspace!.register[hash];
-
-					desc = entry.desc;
-					ignore = entry.ignore;
-					edit = true;
-				} else {
-					desc = "";
-					ignore = false;
-					edit = false
-				}
+			if (ws === null) {
+				rej();
+				return;
 			}
 
-			curMistake = m;
+			register = ws.register;
+
+			if (mode === "ADD") {
+				desc = "";
+				ignore = false;
+				edit = false;
+			} else {
+				const existingEntry = register.find((e) => e.id === registerId);
+
+				if (!existingEntry) {
+					rej();
+					return;
+				}
+
+				desc = existingEntry.description;
+				ignore = existingEntry.ignore;
+				edit = true;
+			}
+
+			curRegisterEntry = registerId;
+			curMistake = hash;
+
 			modal.open();
 			promiseResolve = res;
 			promiseReject = rej;
 		})
 	}
 
-	function onConfirm() {
-		let word = typeof curMistake === "string" ? $workspace!.register[curMistake].word : curMistake.word;
+	async function onConfirm() {
+		const ws = await $workspace;
+		if (ws === null) return;
 
-		promiseResolve({ data: { desc, ignore, word, wordCorrect: "" }, action: edit ? "EDIT" : "ADD" });
+		promiseResolve({
+			id: curRegisterEntry ?? undefined,
+			mistakes: [ curMistake ],
+			description: desc,
+			ignore,
+			action: edit ? "EDIT" : "ADD"
+		});
 	}
 
 	function onCancel() {
@@ -70,14 +84,21 @@
 
 		if (key !== "delete") return;
 
-		promiseResolve({data: { desc: "", ignore: false, word: "", wordCorrect: "" }, action: "DELETE" });
+		promiseResolve({
+			action: "DELETE",
+			id: curRegisterEntry!,
+			mistakes: [ curMistake ]
+		});
 	}
 
-	function onVariationSelect() {
-		const entry = $workspace!.register[variation];
+	async function onVariationSelect() {
+		const ws = await $workspace;
+		if (ws === null) return;
 
-		desc = entry.desc;
-		ignore = entry.ignore;
+		// const entry = ws.register[variation];
+
+		// desc = entry.desc;
+		// ignore = entry.ignore;
 	}
 </script>
 
@@ -94,7 +115,7 @@
 		<label for="regVariation">Variācija esošam ierakstsam</label>
 		<input type="checkbox" id="regVariation" bind:checked={isVariation}>
 
-		{#if isVariation}
+		<!-- {#if isVariation}
 		<label for="regVariationSelect">Esošais ieraksts</label>
 		<div class="regVariationSelectContainer">
 			<select id="regVariationSelect" on:change={onVariationSelect} bind:value={variation}>
@@ -105,7 +126,7 @@
 				{/each}
 			</select>
 		</div>
-		{/if}
+		{/if} -->
 
 		<label for="regDescription">Kļūdas apraksts</label>
 		<textarea disabled={isVariation ? true : false} type="text" id="regDescription" placeholder="Kļūdas apraksts" cols="30" rows="5" bind:value={desc}/>

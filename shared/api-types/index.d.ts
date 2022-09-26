@@ -40,6 +40,15 @@ export interface RegisterEntry {
 	count: number
 }
 
+// The uninitialized data (Not yet processed to DB), sent from client
+export interface RegisterEntryData {
+	action: RegisterUpdateEventType,
+	id?: UUID,
+	mistakes?: MistakeHash[],
+	description?: string,
+	ignore?: boolean,
+}
+
 export interface Setting {
 	id: UUID,
 	key: string,
@@ -106,9 +115,10 @@ export interface SubmissionDataEventData {
 }
 
 export interface RegisterUpdateEventData {
-	id: UUID,
-	data: RegisterEntry,
-	type: RegisterUpdateEventType,
+	data: {
+		entry: RegisterEntry,
+		type: RegisterUpdateEventType
+	}[],
 	workspace: UUID
 }
 

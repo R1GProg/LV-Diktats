@@ -3,8 +3,8 @@
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import type { MistakeId, MistakeData } from "@shared/diff-engine";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
-	import type { Submission } from "@shared/api-types";
-	import Toolbar from "./Toolbar.svelte";
+	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
+	import { getRegisterId, mistakeInRegister } from "$lib/ts/util";
 
 	const mode = store("mode") as Stores["mode"];
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
@@ -12,8 +12,11 @@
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 	const ds = store("ds") as Stores["ds"];
 	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
+	const workspace = store("workspace") as Stores["workspace"];
 
 	let mistakes: MistakeData[] = [];
+	let register: RegisterEntry[] = [];
+
 	let listContainer: HTMLElement;
 	let activeMergeIDs: MistakeId[] = [];
 	let regModal: MistakeRegistrationModal;
@@ -45,8 +48,21 @@
 				break;
 			case ToolbarMode.REGISTER:
 				{
-					// const data = await regModal.open(mistakes.find((m) => m.id === id)!);
-					// dispatch("register", { id, data: data.data, action: data.action });
+					const mHash = mistakes.find((m) => m.id === id)!.hash;
+					const regId = getRegisterId(mHash, register);
+					const data = await regModal.open(mHash, regId ? "EDIT" : "ADD", regId);
+
+					switch (data.action) {
+						case "ADD":
+							$ds.registerNew(data, $activeWorkspaceID!);
+							break;
+						case "EDIT":
+							$ds.registerUpdate(data, $activeWorkspaceID!);
+							break;
+						case "DELETE":
+							$ds.registerDelete(data, $activeWorkspaceID!);
+							break;
+					}
 				}
 				break;
 			default:
@@ -92,7 +108,19 @@
 		mistakes = submission.data!.mistakes;
 	}
 
+	async function onWorkspaceChange(workspacePromise: Promise<Workspace> | null) {
+		const ws = await workspacePromise;
+
+		if (ws === null) {
+			register = [];
+			return;
+		}
+
+		register = ws.register;
+	}
+
 	$: onSubmissionChange($activeSubmission);
+	$: onWorkspaceChange($workspace);
 </script>
 
 <svelte:body on:keypress={onBodyKeypress}/>
@@ -100,13 +128,14 @@
 <div class="container">
 	<div class="list" bind:this={listContainer}>
 		{#each mistakes as m}
-		<!-- class:registered={m.isRegistered}
-				class:hidden={m.isRegistered && $hideRegistered} -->
+			{@const mInReg = mistakeInRegister(m.hash, register)}
 			<div
 				data-id={m.id}
 				class="mistake {m.type}"
 				class:hover={$hoveredMistake === m.id}
 				class:merging={activeMergeIDs.includes(m.id)}
+				class:registered={mInReg}
+				class:hidden={mInReg && $hideRegistered}
 				on:mouseenter={onMistakeHover}
 				on:focus={onMistakeHover}
 				on:mouseleave={onMistakeHoverOut}

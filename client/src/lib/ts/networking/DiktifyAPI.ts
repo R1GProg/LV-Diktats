@@ -66,16 +66,21 @@ export default class DiktifyAPI {
 	}
 
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
-		return [{ id: "debugworkspaceid", name: "Mazsālīto gurķu blūzs (DEBUG)" }];
-		// throw "NYI";
+		if (config.debug) {
+			return [{ id: "debugworkspaceid", name: "Mazsālīto gurķu blūzs (DEBUG)" }];
+		}
+		
+		// TODO: SERVER FETCH
+		throw "NYI";
 	}
 
 	async getWorkspace(workspaceId: UUID): Promise<Workspace> {
 		if (workspaceId === "debugworkspaceid") {
 			return loadDebugWorkspace();
-		} else {
-			throw "NYI";
 		}
+
+		// TODO: SERVER FETCH
+		throw "NYI";
 	}
 
 	async getSettings(): Promise<Setting[]> {

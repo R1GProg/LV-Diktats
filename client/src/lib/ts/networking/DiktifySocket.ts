@@ -1,13 +1,14 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
-import type { RegisterEntry, RegisterUpdateEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, UUID } from "@shared/api-types";
+import type { RegisterEntry, RegisterEntryData, RegisterUpdateEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, UUID } from "@shared/api-types";
 import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
-import { getAllSubmissionsWithMistakes } from "../util";
+import { getAllSubmissionsWithMistakes, submissionContainsMistake } from "../util";
+import { v4 as uuidv4 } from "uuid";
 
 // Here temporarily
 function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
@@ -86,122 +87,183 @@ export default class DiktifySocket {
 		return new Promise<Submission>(async (res, rej) => {
 			this.submissionDataPromise = { res, rej };
 
-			// --- Temporary implementation for the debug dataset ---
+			if (config.debug) {
+				const ws = (await (get(this.workspace)))!;
 
-			const ws = (await (get(this.workspace)))!;
+				// Cast as Submission because the debug workspace
+				// includes the submission data
+				const rawData = ws.submissions[id] as Submission;
 
-			// Cast as Submission because the debug workspace
-			// includes the submission data
-			const rawData = ws.submissions[id] as Submission;
-
-			// rawData.data!.text = "Hedlw warld!";
-			// get(workspace)!.template = "Hello world!";
-
-			this.onSubmissionData({
-				id,
-				workspace: workspaceId,
-				state: "UNGRADED",
-				data: rawData.data,
-			});
+				this.onSubmissionData({
+					id,
+					workspace: workspaceId,
+					state: "UNGRADED",
+					data: rawData.data,
+				});
+			} else {
+				// TODO: SERVER IMPLEMENTATION
+			}
 		});
 	}
 	
 	async mistakeMerge(mistakes: MistakeHash[], workspace: UUID) {
-		// TODO: Implement Socket event
+		if (config.debug) {
+			const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
+			const targetSubmissions = getAllSubmissionsWithMistakes(Object.values(subData), mistakes);
 
-		const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
-		const targetSubmissions = getAllSubmissionsWithMistakes(Object.values(subData), mistakes);
+			const parsePromises: Promise<void>[] = [];
 
-		const parsePromises: Promise<void>[] = [];
+			for (const subId of targetSubmissions) {
+				parsePromises.push(new Promise<void>(async (res) => {
+					const subMistakes = subData[subId].data.mistakes;
+					const targetSubMistakes = subMistakes
+						.filter((m) => mistakes.includes(m.hash))
+						.map((m) => Mistake.fromData(m));
 
-		for (const subId of targetSubmissions) {
-			parsePromises.push(new Promise<void>(async (res) => {
-				const subMistakes = subData[subId].data.mistakes;
-				const targetSubMistakes = subMistakes
-					.filter((m) => mistakes.includes(m.hash))
-					.map((m) => Mistake.fromData(m));
+					const mergedMistake = Mistake.mergeMistakes(...targetSubMistakes);
 
-				const mergedMistake = Mistake.mergeMistakes(...targetSubMistakes);
+					for (const prevMistake of targetSubMistakes) {
+						subMistakes.splice(subMistakes.findIndex((m) => m.id === prevMistake.id), 1);
+					}
 
-				for (const prevMistake of targetSubMistakes) {
-					subMistakes.splice(subMistakes.findIndex((m) => m.id === prevMistake.id), 1);
-				}
+					subMistakes.push(await mergedMistake.exportData());
+					subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
-				subMistakes.push(await mergedMistake.exportData());
-				subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+					res();
+				}));
+			}
 
-				res();
-			}));
+			await Promise.all(parsePromises);
+
+			this.onSubmissionRegen({ workspace, ids: targetSubmissions });
+		} else {
+			// TODO: SERVER IMPLEMENTATION
 		}
-
-		await Promise.all(parsePromises);
-
-		this.onSubmissionRegen({ workspace, ids: targetSubmissions });
 	}
 	
 	async mistakeUnmerge(targetMistake: MistakeHash, workspace: UUID) {
-		// TODO: Server implementation
-		
-		const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
-		const targetSubmissions = Object.values(subData)
-			.filter((s) => s.data.mistakes.map((m) => m.hash).includes(targetMistake));
-		
-		const parsePromises: Promise<void>[] = [];
-		
-		for (const sub of targetSubmissions) {
-			parsePromises.push(new Promise<void>(async (res) => {
-				const subMistakes = sub.data.mistakes;
-				const targetSubMistake = subMistakes.findIndex((m) => m.hash === targetMistake)!;
-				const unmergedMistakes = Mistake.unmergeMistake(Mistake.fromData(subMistakes[targetSubMistake]));
-				
-				subMistakes.splice(targetSubMistake, 1);
-				
-				subMistakes.push(...await Promise.all(unmergedMistakes.map((m) => m.exportData())));
-				subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-				
-				res();
-			}));
+		if (config.debug) {
+			const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
+			const targetSubmissions = Object.values(subData)
+				.filter((s) => s.data.mistakes.map((m) => m.hash).includes(targetMistake));
+			
+			const parsePromises: Promise<void>[] = [];
+			
+			for (const sub of targetSubmissions) {
+				parsePromises.push(new Promise<void>(async (res) => {
+					const subMistakes = sub.data.mistakes;
+					const targetSubMistake = subMistakes.findIndex((m) => m.hash === targetMistake)!;
+					const unmergedMistakes = Mistake.unmergeMistake(Mistake.fromData(subMistakes[targetSubMistake]));
+					
+					subMistakes.splice(targetSubMistake, 1);
+					
+					subMistakes.push(...await Promise.all(unmergedMistakes.map((m) => m.exportData())));
+					subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+					
+					res();
+				}));
+			}
+			
+			await Promise.all(parsePromises);
+
+			this.onSubmissionRegen({ workspace, ids: targetSubmissions.map((s) => s.id) });
+		} else {
+			// TODO: SERVER IMPLEMENTATION
 		}
-		
-		await Promise.all(parsePromises);
-
-		this.onSubmissionRegen({ workspace, ids: targetSubmissions.map((s) => s.id) });
 	}
 
-	async registerNew(data: RegisterEntry) {
+	async registerNew(data: RegisterEntryData, workspace: UUID) {
+		if (config.debug) {
+			const ws = await get(this.workspace);
+			if (ws === null) return;
 
+			let count = 0;
+
+			for (const m of data.mistakes!) {
+				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as Submission[], [ m ]).length;
+			}
+
+			const serverData: RegisterEntry = {
+				id: uuidv4(),
+				mistakes: data.mistakes!,
+				description: data.description!,
+				ignore: data.ignore!,
+				count,
+			};
+
+			this.onRegisterUpdate({ data: [{ type: "ADD", entry: serverData }], workspace });
+		} else {
+			// TODO: SERVER IMPLEMENTATION
+		}
 	}
 
-	async registerDelete(id: UUID) {
+	async registerUpdate(data: RegisterEntryData, workspace: UUID) {
+		if (config.debug) {
+			const ws = await get(this.workspace);
+			if (ws === null) return;
 
+			let count = 0;
+
+			for (const m of data.mistakes!) {
+				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as Submission[], [ m ]).length;
+			}
+
+			const serverData: RegisterEntry = {
+				id: data.id!,
+				mistakes: data.mistakes!,
+				description: data.description!,
+				ignore: data.ignore!,
+				count,
+			};
+			
+			this.onRegisterUpdate({ data: [{ type: "EDIT", entry: serverData }], workspace });
+		} else {
+			// TODO: SERVER IMPLEMENTATION
+		}
 	}
 
-	async registerEdit(id: UUID, data: RegisterEntry) {
-
+	async registerDelete(data: RegisterEntryData, workspace: UUID) {
+		if (config.debug) {
+			const serverData: RegisterEntry = {
+				id: data.id!,
+				mistakes: data.mistakes!,
+				description: data.description!,
+				ignore: data.ignore!,
+				count: 0,
+			};
+	
+			this.onRegisterUpdate({ data: [{ type: "DELETE", entry: serverData }], workspace });
+		} else {
+			// TODO: SERVER IMPLEMENTATION
+		}
 	}
 
 	async textIgnore(submission: SubmissionID, workspace: UUID, bounds: Bounds[]) {
-		// TODO: Implement Socket event emit
+		if (config.debug) {
+			const ws = (await (get(this.workspace)))!;
+			const rawData = ws.submissions[submission] as Submission;
+			rawData.data!.ignoreText = bounds;
 
-		const ws = (await (get(this.workspace)))!;
-		const rawData = ws.submissions[submission] as Submission;
-		rawData.data!.ignoreText = bounds;
-
-		this.onSubmissionRegen({ ids: [ submission ], workspace });
+			this.onSubmissionRegen({ ids: [ submission ], workspace });
+		} else {
+			// TODO: SERVER IMPLEMENTATION
+		}
 	}
 
 	async submissionStateChange(newState: SubmissionState, subId: SubmissionID, workspace: UUID) {
-		// TODO: Implement Socket event emit
+		if (config.debug) {
+			const ws = (await (get(this.workspace)))!;
+			const rawData = ws.submissions[subId] as Submission;
+			rawData.state = newState;
 
-		const ws = (await (get(this.workspace)))!;
-		const rawData = ws.submissions[subId] as Submission;
-		rawData.state = newState;
-
-		this.onSubmissionStateChange({
-			state: newState,
-			id: subId,
-			workspace,
-		});
+			this.onSubmissionStateChange({
+				state: newState,
+				id: subId,
+				workspace,
+			});
+		} else {
+			// TODO: SERVER IMPLEMENTATION
+		}
 	}
 
 	private async onSubmissionData(data: SubmissionDataEventData) {
@@ -217,8 +279,60 @@ export default class DiktifySocket {
 		this.submissionDataPromise.res(submission);
 	}
 
-	private onRegisterUpdate(data: RegisterUpdateEventData) {
+	private async onRegisterUpdate(data: RegisterUpdateEventData) {
+		const ws = await get(this.workspace);
 
+		if (ws === null) return;
+
+		for (const entry of data.data) {
+			switch(entry.type) {
+				case "ADD":
+					ws.register.push(entry.entry);
+					break;
+				case "EDIT":
+					{
+						const targetIndex = ws.register.findIndex((e) => e.id === entry.entry.id);
+
+						if (targetIndex === -1) {
+							console.warn(`Attempt to update a register entry that doesn't exist! (${entry.entry.id})`);
+							break;
+						}
+
+						ws.register[targetIndex] = entry.entry;
+					}
+
+					break;
+				case "DELETE":
+					{
+						const targetIndex = ws.register.findIndex((e) => e.id === entry.entry.id);
+
+						if (targetIndex === -1) {
+							console.warn(`Attempt to delete a register entry that doesn't exist! (${entry.entry.id})`);
+							break;
+						}
+
+						ws.register.splice(targetIndex, 1);
+					}
+					
+					break;
+			}
+
+			const activeID = get(this.activeSubmissionID);
+			const curSub = activeID ? ws.submissions[activeID] as Submission : null;
+
+			if (curSub === null) continue;
+
+			let reloadCurrent = false;
+
+			for (const m of entry.entry.mistakes) {
+				if (submissionContainsMistake(curSub, m)) {
+					reloadCurrent = true;
+					break;
+				}
+			}
+
+			if (reloadCurrent) this.reloadActiveSubmission();
+		}
 	}
 
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
