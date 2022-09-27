@@ -37,14 +37,18 @@
 		essayEl.setPlainText(newText);
 
 		for (const b of ignoredText) {
-			const id = essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored")!;
-			const els = essayEl.getHighlightEls(id);
+			try {
+				const id = essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored")!;
+				const els = essayEl.getHighlightEls(id);
 
-			for (const el of els) {
-				el.addEventListener("contextmenu", (ev) => {
-					ev.preventDefault();
-					onHighlightRightClick(id);
-				});
+				for (const el of els) {
+					el.addEventListener("contextmenu", (ev) => {
+						ev.preventDefault();
+						onHighlightRightClick(id);
+					});
+				}
+			} catch (err) {
+				console.warn(err);
 			}
 		}
 	}

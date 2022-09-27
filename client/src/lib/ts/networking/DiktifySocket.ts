@@ -90,15 +90,23 @@ export default class DiktifySocket {
 			if (config.debug) {
 				const ws = (await (get(this.workspace)))!;
 
-				// Cast as Submission because the debug workspace
+				// Cast as unknown as Submission because the debug workspace
 				// includes the submission data
-				const rawData = ws.submissions[id] as Submission;
+				const rawData = ws.submissions[id] as unknown as Submission;
+
+				const diff = new Diff(parseIgnoreBounds(rawData.data.text, rawData.data.ignoreText), ws.template);
+				diff.calc();
+
+				const updatedData = {
+					...rawData.data,
+					mistakes: await Promise.all(diff.getMistakes().map((m) => m.exportData()))
+				};
 
 				this.onSubmissionData({
 					id,
 					workspace: workspaceId,
 					state: "UNGRADED",
-					data: rawData.data,
+					data: updatedData,
 				});
 			} else {
 				// TODO: SERVER IMPLEMENTATION
@@ -115,7 +123,7 @@ export default class DiktifySocket {
 	
 	async mistakeMerge(mistakes: MistakeHash[], workspace: UUID) {
 		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
+			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
 			const targetSubmissions = getAllSubmissionsWithMistakes(Object.values(subData), mistakes);
 
 			const parsePromises: Promise<void>[] = [];
@@ -157,7 +165,7 @@ export default class DiktifySocket {
 	
 	async mistakeUnmerge(targetMistake: MistakeHash, workspace: UUID) {
 		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as Record<SubmissionID, Submission>;
+			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
 			const targetSubmissions = Object.values(subData)
 				.filter((s) => s.data.mistakes.map((m) => m.hash).includes(targetMistake));
 			
@@ -201,7 +209,7 @@ export default class DiktifySocket {
 			let count = 0;
 
 			for (const m of data.mistakes!) {
-				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as Submission[], [ m ]).length;
+				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]).length;
 			}
 
 			const serverData: RegisterEntry = {
@@ -241,7 +249,7 @@ export default class DiktifySocket {
 			let count = 0;
 
 			for (const m of data.mistakes!) {
-				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as Submission[], [ m ]).length;
+				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]).length;
 			}
 
 			const serverData: RegisterEntry = {
@@ -301,7 +309,7 @@ export default class DiktifySocket {
 	async textIgnore(submission: SubmissionID, workspace: UUID, bounds: Bounds[]) {
 		if (config.debug) {
 			const ws = (await (get(this.workspace)))!;
-			const rawData = ws.submissions[submission] as Submission;
+			const rawData = ws.submissions[submission] as unknown as Submission;
 			rawData.data!.ignoreText = bounds;
 
 			this.onSubmissionRegen({ ids: [ submission ], workspace });
@@ -321,7 +329,7 @@ export default class DiktifySocket {
 	async submissionStateChange(newState: SubmissionState, subId: SubmissionID, workspace: UUID) {
 		if (config.debug) {
 			const ws = (await (get(this.workspace)))!;
-			const rawData = ws.submissions[subId] as Submission;
+			const rawData = ws.submissions[subId] as unknown as Submission;
 			rawData.state = newState;
 
 			this.onSubmissionStateChange({
@@ -350,8 +358,6 @@ export default class DiktifySocket {
 			state: data.state,
 			data: data.data
 		};
-
-		console.log(submission);
 
 		this.cache?.updateSubmissionInCache(submission, data.workspace);
 		this.submissionDataPromise.res(submission);
@@ -396,7 +402,7 @@ export default class DiktifySocket {
 			}
 
 			const activeID = get(this.activeSubmissionID);
-			const curSub = activeID ? ws.submissions[activeID] as Submission : null;
+			const curSub = activeID ? ws.submissions[activeID] as unknown as Submission : null;
 
 			if (curSub === null) continue;
 
