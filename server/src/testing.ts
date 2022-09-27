@@ -17,4 +17,5 @@ async function writeToDb() {
 	writeWorkspaceToDB(dataset);
 }
 
-generateDataset();
+// generateDataset();
+writeToDb();

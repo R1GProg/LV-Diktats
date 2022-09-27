@@ -64,13 +64,13 @@
 		if ($workspace === null) return;
 
 		const ws = await $workspace;
-		const submissions = ws.submissions as Record<SubmissionID, Submission>;
+		const submissions = ws.submissions;
 
 		noData = false;
 		const keys = Object.keys(submissions);
 
 		mistakeOrderMap = keys;
-		mistakeOrderMap.sort((a, b) => submissions[b].data.mistakes.length - submissions[a].data.mistakes.length);
+		mistakeOrderMap.sort((a, b) => submissions[b].mistakeCount - submissions[a].mistakeCount);
 
 		totalEntries = keys.length;
 		activeIndex = 0;

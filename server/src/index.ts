@@ -7,6 +7,7 @@ import { workspaceRouter } from './routes/workspace';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { registerHandler } from './services/WebsocketManager';
+import cors from 'cors';
 
 export const logger = new Logger({
 	minLevel: parseInt(process.env["LOGLEVEL"] as string) as LogLevel | undefined
@@ -20,13 +21,14 @@ mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56
 
 // Express to listen for REST API requests.
 const app = express();
+app.use(cors());
 app.use(workspaceRouter);
 
 // Pass express to Socket.IO and start a Socket.IO to listen for Websocket Requests
 const server = createServer(app);
 export const io = new Server(server, {
 	cors: {
-		origin: [process.env["FRONTEND_URL"] as string]
+		origin: process.env["FRONTEND_URL"]
 	}
 });
 
