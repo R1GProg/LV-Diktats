@@ -1,52 +1,59 @@
-import * as dotenv from 'dotenv'
-dotenv.config();
-import express from 'express';
-import mongoose from 'mongoose';
+import * as dotenv from 'dotenv';
+import * as config from "../config.json";
+import path from 'path';
+import { isMainThread, TransferListItem, Worker } from 'worker_threads';
 import { Logger, LogLevel } from 'yatsl';
-import { workspaceRouter } from './routes/workspace';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { registerHandler } from './services/WebsocketManager';
-import cors from 'cors';
+import { MessageType } from './services/types/MessageTypes';
+dotenv.config();
 
-export const logger = new Logger({
-	minLevel: parseInt(process.env["LOGLEVEL"] as string) as LogLevel | undefined
-});
+// Teikums - The #1 Diktify Service Manager Service
 
-mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/${process.env["DBNAME"]}?retryWrites=true&w=majority`, {}).catch((e) => {
-	logger.error(e);
-}).then(() => {
-	logger.info("Connected to MongoDB!");
-});
+if (isMainThread) {
+	const name = config.serviceNames.main;
+	const logger = new Logger({
+		minLevel: parseInt(process.env["LOGLEVEL"] as string) as LogLevel | undefined,
+		name: name
+	});
 
-// Express to listen for REST API requests.
-const app = express();
-app.use(cors());
-app.use(workspaceRouter);
+	// TODO: Modularise this, add checks for whether services are up and automatically reboot them if not.
+	// Activate Divdabis
+	const dataService = new Worker(path.resolve(__dirname, './services/DataService.ts'));
+	dataService.on("online", () => {
+		logger.log("Divdabis is now online!");
+	});
+	dataService.on("error", (err: Error) => {
+		logger.error(`Divdabis has crashed: ${err.message}`);
+	});
+	dataService.on("exit", () => {
+		logger.info("Divdabis is now offline!");
+	});
 
-// Pass express to Socket.IO and start a Socket.IO to listen for Websocket Requests
-const server = createServer(app);
-export const io = new Server(server, {
-	cors: {
-		origin: process.env["FRONTEND_URL"]
-	}
-});
+	// Activate Saiklis
+	const networkService = new Worker(path.resolve(__dirname, './services/NetworkingService.ts'));
+	networkService.on("online", () => {
+		logger.log("Saiklis is now online!");
+	});
+	networkService.on("error", (err: Error) => {
+		logger.error(`Saiklis has crashed: ${err.message}`);
+	});
+	networkService.on("exit", () => {
+		logger.info("Saiklis is now offline!");
+	});
 
-// app.get('/', (req: Request, res: Response) => {
-// 	res.sendStatus(200);
-// });
-
-let prod = process.env["PRODUCTION"] === "yes";
-const PORT = process.env.PORT || 3001;
-
-// app.listen(PORT, () => {
-// 	logger.info(`The application is listening on port ${PORT}!`);
-// });
-
-io.on("connection", (socket) => {
-	logger.log("An user has connected to the socket.");
-	registerHandler(io, socket);
-});
-
-server.listen(PORT);
-logger.info(`The server is now listening on port ${PORT}!`);
+	// Hook both up with a communication channel
+	const { port1, port2 } = new MessageChannel();
+	dataService.postMessage({
+		origin: name,
+		type: MessageType.CHANNEL_INIT,
+		payload: {
+			port: port1
+		}
+	}, [port1 as unknown as TransferListItem]);
+	networkService.postMessage({
+		origin: name,
+		type: MessageType.CHANNEL_INIT,
+		payload: {
+			port: port2
+		}
+	}, [port2 as unknown as TransferListItem]);
+}

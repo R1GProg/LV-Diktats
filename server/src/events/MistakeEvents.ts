@@ -1,7 +1,7 @@
 import { MistakeMergeEventData, MistakeUnmergeEventData, SubmissionRegenEventData } from "@shared/api-types";
 import { Socket } from "socket.io";
-import { io, logger } from "..";
-import { mergeMistakesByHash, unmergeMistakesByHash } from "../services/DatabaseManager";
+import { mergeMistakesByHash, unmergeMistakesByHash } from "../controllers/DatabaseController";
+import { io } from "../services/NetworkingService";
 
 // Handles events related to Mistakes.
 

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { parseCSV, readWorkspaceFromDisk, writeWorkspaceToDB, writeWorkspaceToDisk } from './services/DatasetManager';
+import { parseCSV, readWorkspaceFromDisk, writeWorkspaceToDB, writeWorkspaceToDisk } from './controllers/DatasetController';
 import path from 'path';
 
 async function generateDataset() {

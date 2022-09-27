@@ -1,8 +1,7 @@
 import { RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterNewEventData, RegisterUpdateEventData } from "@shared/api-types";
 import { Socket } from "socket.io";
-import { io, logger } from "..";
-import { deleteRegister, insertRegisterEntry, updateRegisterByID } from "../services/DatabaseManager";
-import { tryParseJSON } from "../services/FormatManager";
+import { deleteRegister, insertRegisterEntry, updateRegisterByID } from "../controllers/DatabaseController";
+import { io } from "../services/NetworkingService";
 
 // Handles events related to the Register.
 

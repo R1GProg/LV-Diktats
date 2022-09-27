@@ -1,0 +1,9 @@
+{
+	"dbName": "Development",
+	"frontendUrl": "http://localhost:3000",
+	"serviceNames": {
+		"main": "Teikums",
+		"data": "Divdabis",
+		"network": "Saiklis"
+	}
+}

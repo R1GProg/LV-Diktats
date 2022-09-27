@@ -1,8 +1,7 @@
 import { RequestSubmissionEventData, SubmissionDataEventData, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData } from "@shared/api-types";
-import { Bounds } from "@shared/diff-engine";
 import { Socket } from "socket.io";
-import { io } from "..";
-import { fetchSubmissionByID, updateSubmissionIgnoreTextByID, updateSubmissionStateByID } from "../services/DatabaseManager";
+import { fetchSubmissionByID, updateSubmissionIgnoreTextByID, updateSubmissionStateByID } from "../controllers/DatabaseController";
+import { io } from "../services/NetworkingService";
 
 // Handles events related to Submissions.
 
