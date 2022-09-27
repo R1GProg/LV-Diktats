@@ -6,6 +6,7 @@
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
+	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 
 	const dispatch = createEventDispatcher();
 
@@ -16,6 +17,7 @@
 	export function open() {
 		modal.open();
 		openSortMode = $sort;
+		onResort($workspace, $sort);
 	}
 
 	function onEntryClick(ev: MouseEvent) {
@@ -42,7 +44,7 @@
 		if (sort === SortMode.ID) {
 			vals.sort((a, b) => Number(a.id) - Number(b.id));
 		} else {
-			vals.sort((a, b) => b.mistakeCount - a.mistakeCount);
+			vals.sort((a, b) => (b.mistakeCount ?? b.data.mistakes.length) - (a.mistakeCount ?? a.data.mistakes.length));
 		}
 		
 		submArray = vals;
@@ -64,10 +66,12 @@
 		{#each submArray as entry (entry.id)}
 			<div
 				data-id={entry.id}
+				data-state={entry.state}
+				data-active={entry.id === $activeSubmissionID ? "" : null}
 				on:click={onEntryClick}
 			>
 				<h3 class="id">ID{entry.id}</h3>
-				<span class="errnr">{entry?.mistakeCount} kļūdas</span>
+				<span class="errnr">{entry?.mistakeCount ?? entry.data.mistakes.length} kļūdas</span>
 				<span class="open">Atvērt</span>
 			</div>
 		{/each}
@@ -132,6 +136,24 @@
 				display: flex;
 				justify-self: flex-end;
 				text-transform: uppercase;
+			}
+
+			&[data-state="DONE"] {
+				h3 {
+					color: $COL_SUBM_DONE;
+				}
+			}
+
+			&[data-state="REJECTED"] {
+				h3 {
+					color: $COL_SUBM_REJECTED;
+				}
+			}
+
+			&[data-active] {
+				h3 {
+					color: rgb(210, 180, 20);
+				}
 			}
 		}
 	}

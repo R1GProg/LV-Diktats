@@ -432,7 +432,10 @@ export default class DiktifySocket {
 	}
 
 	private async onSubmissionStateChange(data: SubmissionStateChangeEventData) {
-		// TODO: Will later also update the submission status in the Submission List
+		const ws = await get(this.workspace);
+		if (ws === null) return;
+
+		ws.submissions[data.id].state = data.state;
 
 		if (!this.cache || !(await this.cache.isSubmissionCached(data.id, data.workspace))) return;
 

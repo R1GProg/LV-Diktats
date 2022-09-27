@@ -134,10 +134,11 @@ async function loadDebugWorkspace(): Promise<Workspace> {
 	const ws = await req.json() as Workspace;
 
 	for (const id of Object.keys(ws.submissions)) {
-		const sub = ws.submissions[id] as Submission;
+		const sub = ws.submissions[id] as unknown as Submission;
 
 		if (sub.data.text.length < ws.template.length * config.incompleteFraction) {
-			delete ws.submissions[id];
+			// delete ws.submissions[id];
+			ws.submissions[id].state = "REJECTED";
 		}
 	}
 
