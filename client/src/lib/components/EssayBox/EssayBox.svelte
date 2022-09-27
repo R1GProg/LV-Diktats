@@ -170,6 +170,20 @@
 		dispatch("highlight-hoverout", { id });
 	}
 
+	export function addHighlighterEventListener(event: string, cb: (id: string) => void) {
+		highlighter.on(event, ({ id }) => {
+			cb(id);
+		});
+	}
+
+	export function getHighlightEls(id: string) {
+		return highlighter.getDoms(id);
+	}
+
+	export function removeHighlight(id: string) {
+		highlighter.remove(id);
+	}
+
 	async function initHighlighting() {
 		const svelteClass = textContainer.className.match(/(s|svelte)-.+?( |$)/)![0].trim();
 		const Highlighter = (await import("web-highlighter")).default;
@@ -182,13 +196,8 @@
 			}
 		});
 
-		highlighter.on(Highlighter.event.HOVER, ({ id }) => {
-			onHighlightHover(id);
-		});
-
-		highlighter.on(Highlighter.event.HOVER_OUT, ({ id }) => {
-			onHighlightHoverOut(id);
-		});
+		addHighlighterEventListener(Highlighter.event.HOVER, onHighlightHover);
+		addHighlighterEventListener(Highlighter.event.HOVER_OUT, onHighlightHoverOut);
 	}
 
 	onMount(async () => {
