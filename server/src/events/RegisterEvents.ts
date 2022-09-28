@@ -1,7 +1,6 @@
 import { RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterNewEventData, RegisterUpdateEventData } from "@shared/api-types";
 import { Socket } from "socket.io";
-import { deleteRegister, insertRegisterEntry, updateRegisterByID } from "../controllers/DatabaseController";
-import { io } from "../services/NetworkingService";
+import { requestAddRegisterEntry, requestDeleteRegisterEntry, requestEditRegisterEntry } from "../services/NetworkingService";
 
 // Handles events related to the Register.
 
@@ -10,20 +9,7 @@ export async function handleRegisterNewEvent(socket: Socket, eventData: Register
 		socket.emit("error", "Invalid RegisterEntry object!");
 		return;
 	}
-	const register = await insertRegisterEntry(eventData.data, eventData.workspace);
-	if (!register) socket.emit("error", "Register already exists and/or invalid Workspace ID!");
-	else {
-		const response: RegisterUpdateEventData = {
-			data: [
-				{
-					entry: register,
-					type: "ADD"
-				}
-			],
-			workspace: eventData.workspace
-		}
-		io.emit("registerUpdate", response);
-	}
+	requestAddRegisterEntry(eventData.data, eventData.workspace);
 }
 
 export async function handleRegisterEditEvent(socket: Socket, eventData: RegisterEditEventData) {
@@ -31,35 +17,9 @@ export async function handleRegisterEditEvent(socket: Socket, eventData: Registe
 		socket.emit("error", "Invalid RegisterEntry object!");
 		return;
 	}
-	const register = await updateRegisterByID(eventData.data, eventData.workspace);
-	if (!register) socket.emit("error", "Register already exists and/or invalid Workspace ID!");
-	else {
-		const response: RegisterUpdateEventData = {
-			data: [
-				{
-					entry: register,
-					type: "EDIT"
-				}
-			],
-			workspace: eventData.workspace
-		}
-		io.emit("registerUpdate", response);
-	}
+	requestEditRegisterEntry(eventData.data, eventData.workspace);
 }
 
 export async function handleRegisterDeleteEvent(socket: Socket, eventData: RegisterDeleteEventData) {
-	const register = await deleteRegister(eventData.id, eventData.workspace);
-	if (!register) socket.emit("error", "Register doesn't exist and/or invalid Workspace ID!");
-	else {
-		const response: RegisterUpdateEventData = {
-			data: [
-				{
-					entry: register,
-					type: "DELETE"
-				}
-			],
-			workspace: eventData.workspace
-		}
-		io.emit("registerUpdate", response);
-	}
+	requestDeleteRegisterEntry(eventData.id, eventData.workspace);
 }
