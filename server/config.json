@@ -5,5 +5,6 @@
 		"main": "Teikums",
 		"data": "Divdabis",
 		"network": "Saiklis"
-	}
+	},
+	"incompleteFraction": 0.75
 }

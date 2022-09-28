@@ -25,34 +25,11 @@ async function writeToDb() {
 	writeWorkspaceToDB(dataset);
 }
 
-async function registerWriteTest() {
-	const registerEntry: RegisterEntry = {
-		id: "t",
-		mistakes: ["aaa"],
-		ignore: false,
-		description: "aaaa",
-		count: 0
-	}
-	const register = await insertRegisterEntry(registerEntry, "debug");
-	logger.log(register);
-	logger.log(register);
-	if (!register) return null;
-	const messagePayload: RegisterUpdatedMessagePayload = {
-		workspaceId: "debug",
-		data: [{
-			entry: registerEntry,
-			type: "ADD"
-		}]
-	};
-	logger.log(messagePayload);
-	return messagePayload;
-}
-
 // generateDataset();
 mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/${config.dbName}?retryWrites=true&w=majority`, {}).catch((e) => {
 	logger.error(e);
 }).then(async () => {
 	logger.info("Connected to MongoDB!");
-	// writeToDb();
-	await registerWriteTest();
+	writeToDb();
+	// await registerWriteTest();
 });

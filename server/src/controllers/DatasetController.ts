@@ -5,6 +5,7 @@ import fs from "fs";
 import { RegisterEntry, Submission, SubmissionID } from '@shared/api-types';
 import { deleteWorkspace, insertWorkspaceDataset } from './DatabaseController';
 import { logger } from 'yatsl';
+import * as config from '../../config.json';
 
 // Generates and saves datasets from CSV.
 
@@ -44,8 +45,9 @@ export async function parseCSV(csv: string, template: string, workspaceID: strin
 
 	for await (const val of parser) {
 		// logger.info(`Beginning processing of submission #${val.id}...`);
-		val.message = processString(val.message);
-		const diff = new DiffONP(val.message, template);
+		const submission = processString(val.message);
+		const normalTemplate = processString(template);
+		const diff = new DiffONP(submission, normalTemplate);
 		diff.calc();
 
 		const id = val.id.toString();
@@ -54,7 +56,7 @@ export async function parseCSV(csv: string, template: string, workspaceID: strin
 
 		const curSub: Submission = {
 			id,
-			state: "UNGRADED",
+			state: submission.length / normalTemplate.length > config.incompleteFraction ? "UNGRADED" : "REJECTED",
 			data: {
 				text: val.message,
 				ignoreText: [],
