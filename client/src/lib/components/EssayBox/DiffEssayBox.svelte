@@ -85,8 +85,6 @@
 
 		contentArr.sort((a, b) => a.index - b.index);
 
-		console.log(contentArr);
-
 		for (const entry of contentArr) {
 			const textBefore = text.substring(0, entry.index);
 			const textAfter = text.substring(entry.index);

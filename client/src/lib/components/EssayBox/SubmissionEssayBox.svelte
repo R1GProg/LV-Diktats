@@ -16,6 +16,7 @@
 
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
+	let isSelecting = false;
 
 	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
 		if (submissionPromise === null || $workspace === null) {
@@ -36,29 +37,67 @@
 		essayEl.setPlainText(newText);
 
 		for (const b of ignoredText) {
-			essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored");
+			try {
+				const id = essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored")!;
+				const els = essayEl.getHighlightEls(id);
+
+				for (const el of els) {
+					el.addEventListener("contextmenu", (ev) => {
+						ev.preventDefault();
+						onHighlightRightClick(id);
+					});
+				}
+			} catch (err) {
+				console.warn(err);
+			}
 		}
 	}
 
-	function onKeyPress(ev: KeyboardEvent) {
-		if (ev.key !== "Enter") return;
+	function onMouseDown() {
 		if ($mode !== ToolbarMode.IGNORE) return;
 
-		const selection = window.getSelection();
+		isSelecting = true;
+	}
 
+	function onMouseUp() {
+		if (!isSelecting) return;
+
+		const selection = window.getSelection();
+		
 		if (selection === null) return;
+		if (!essayEl?.getTextContainer()?.contains(selection.anchorNode)) return;
+
+		if (
+			selection.anchorNode?.parentElement?.classList?.contains("highlight")
+			|| selection.focusNode?.parentElement?.classList?.contains("highlight")
+		) {
+			selection.removeAllRanges();
+			return;
+		}
 
 		const range = selection.getRangeAt(0);
-		essayEl.highlightRange(range, "hl-status-ignored");
+
+		const id = essayEl.highlightRange(range, "hl-status-ignored");
+		selection.removeAllRanges();
+
+		const els = essayEl.getHighlightEls(id);
+
+		for (const el of els) {
+			el.addEventListener("contextmenu", (ev) => {
+				ev.preventDefault();
+				onHighlightRightClick(id);
+			});
+		}
 
 		haveUnsavedIgnores = true;
 	}
 
-	function onSelect() {
+	function onHighlightRightClick(id: string) {
 		if ($mode !== ToolbarMode.IGNORE) return;
-		
-		// const selection = window.getSelection();
-		// TODO: To be used for better UI when selecting text for ignore and for mistake merge
+
+		essayEl.removeHighlight(id);
+
+		haveUnsavedIgnores = true;
 	}
 
 	async function onToolbarModeChange(ev: ToolbarModeEvent) {
@@ -90,8 +129,8 @@
 	$: onSubmissionChange($activeSubmission);
 
 	onMount(() => {
-		document.addEventListener("keydown", onKeyPress);
-		document.addEventListener("selectionchange", onSelect);
+		document.addEventListener("mouseup", onMouseUp);
+		document.addEventListener("mousedown", onMouseDown);
 
 		subToToolbarMode(onToolbarModeChange);
 	});

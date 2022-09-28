@@ -49,10 +49,35 @@
 		$activeSubmissionID = id;
 	}
 
-	export function changeSelectionBy(delta: number) {
-		if ($workspace === null) return;
+	export async function getNextUngradedIndex(direction: number, minDelta: number = 0) {
+		const ws = await $workspace;
+		if (ws === null) return;
 
-		onSelect(activeIndex + delta);
+		const searchArr = $sort === SortMode.ID ? Object.keys(ws.submissions) : mistakeOrderMap;
+
+		if (direction < 0) {
+			const revArr = [...searchArr].reverse();
+			const revActiveIndex = searchArr.length - activeIndex - 1;
+			const index = revArr.findIndex((id, i) => (
+				ws!.submissions[id].state === "UNGRADED"
+				&& i >= revActiveIndex - minDelta
+				&& id !== $activeSubmissionID
+			));
+
+			return searchArr.length - index - 1;
+		} else {
+			return searchArr.findIndex((id, i) => (
+				i >= activeIndex + minDelta
+				&& ws!.submissions[id].state === "UNGRADED"
+			));
+		}
+	}
+
+	export async function changeSelectionBy(delta: number) {
+		const ws = await $workspace;
+		if (ws === null) return;
+
+		onSelect((await getNextUngradedIndex(Math.sign(delta), delta))!);
 	}
 
 	function onEntryOpen(ev: CustomEvent) {
@@ -70,11 +95,11 @@
 		const keys = Object.keys(submissions);
 
 		mistakeOrderMap = keys;
-		mistakeOrderMap.sort((a, b) => submissions[b].mistakeCount - submissions[a].mistakeCount);
+		mistakeOrderMap.sort((a, b) => (submissions[b].mistakeCount ?? submissions[b].data.mistakes.length) - (submissions[a].mistakeCount ?? submissions[a].data.mistakes.length));
 
 		totalEntries = keys.length;
-		activeIndex = 0;
-		onSelect(0);
+		activeIndex = (await getNextUngradedIndex(1))!;
+		onSelect(activeIndex);
 
 		activeWorkspaceKey = ws.id;
 	}
@@ -225,11 +250,11 @@
 				background-color: $COL_BG_REG;
 
 				&.status-rejected {
-					color: rgb(75, 15, 15);
+					color: $COL_SUBM_REJECTED_DARK;
 				}
 
 				&.status-done {
-					color: rgb(15, 75, 15);
+					color: $COL_SUBM_DONE_DARK;
 				}
 			}
 
@@ -237,11 +262,11 @@
 				background-color: $COL_BG_REG;
 
 				&.status-rejected {
-					color: rgb(150, 50, 50);
+					color: $COL_SUBM_REJECTED;
 				}
 
 				&.status-done {
-					color: rgb(30, 140, 30);
+					color: $COL_SUBM_DONE;
 				}
 			}
 
