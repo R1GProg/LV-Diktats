@@ -7,9 +7,15 @@ import { WorkspaceDoc, WorkspaceStore } from "../models/workspace";
 import DiffONP, { ActionData, ActionSubtype, ActionType, Bounds, Mistake, MistakeData, MistakeSubtype, MistakeType } from '@shared/diff-engine';
 import { RegisterEntry, Submission, SubmissionID, SubmissionPreview, SubmissionState, Workspace, WorkspacePreview } from '@shared/api-types';
 import { processString } from '@shared/normalization';
+import { Logger } from "yatsl";
 
 // Manages database interactions, providing an abstraction layer between DB types and shared data types.
 
+// Register logger
+let logger = new Logger();
+export function registerLogger(newLogger: Logger) {
+	logger = newLogger;
+}
 
 export interface WorkspaceDataset {
 	id: string,
@@ -30,7 +36,7 @@ async function removeMistakeFromSubmission(mistakeID: Types.ObjectId) {
 }
 // - Removes Mistake from all Register, useful in cases of unmerging
 async function removeMistakeHashFromRegister(hash: string) {
-	const registers = await RegisterDoc.find({ mistakes: { $elemMatch: hash } });
+	const registers = await RegisterDoc.find({ mistakes: { $elemMatch: { $eq: hash } } });
 	for (const register of registers) {
 		register.mistakes.splice(register.mistakes.findIndex(x => x === hash), 1);
 		if (register.mistakes.length === 0) {
@@ -137,7 +143,7 @@ async function insertSubmission(submission: Submission, workspace: string): Prom
 }
 // - Insert RegisterEntry
 async function insertRegister(register: RegisterEntry, workspace: string): Promise<Types.ObjectId> {
-	const mistakes = await MistakeDoc.find({ workspace, hash: { $in: register.mistakes } }); // Count all the mistakes whose hashes match with register to get count.
+	const mistakes = await MistakeDoc.find({ workspace, hash: { $in: register.mistakes } }).lean(); // Count all the mistakes whose hashes match with register to get count.
 	const entry = new RegisterDoc({ ...register, workspace, count: mistakes.length });
 	await entry.save();
 	return entry._id;
@@ -432,6 +438,8 @@ export async function mergeMistakesByHash(mistakeHashes: string[], workspaceID: 
 export async function unmergeMistakesByHash(mistakeHash: string, workspaceID: string): Promise<string[]> {
 	const mistakes = await MistakeDoc.find({ hash: mistakeHash, workspace: workspaceID }).lean();
 	if (mistakes.length === 0) return [];
+
+	// logger.log(mistakes);
 
 	const affectedSubmissions = await SubmissionDoc.find({ "data.mistakes": { $elemMatch: { $in: mistakes.map(x => x._id) } } });
 	const submissionMistakeMap: Record<string, Types.ObjectId> = {}; // Key is Submission ID, value is mistake

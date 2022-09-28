@@ -2,13 +2,14 @@
 
 import * as config from "../../config.json";
 import mongoose from "mongoose";
-import { parentPort, MessagePort } from "worker_threads";
+import { parentPort, MessagePort, TransferListItem } from "worker_threads";
 import { Logger, LogLevel } from "yatsl";
 import { AddRegisterMessagePayload, ChangeRegisterMessagePayload, ChangeSubmissionStateMessagePayload, ChangeSubmissionTextIgnoreMessagePayload, ChannelInitMessagePayload, DeleteRegisterMessagePayload, MergeMistakesMessagePayload, Message, MessageType, QuerySubmissionMessagePayload, QueryWorkspaceListMessagePayload, QueryWorkspaceMessagePayload, RegenSubmissionsMessagePayload, RegisterUpdatedMessagePayload, SubmissionDataMessagePayload, SubmissionStateChangedMessagePayload, UnmergeMistakesMessagePayload, WorkspaceDataMessagePayload, WorkspaceListMessagePayload } from "./types/MessageTypes";
-import { deleteRegister, fetchSubmissionByID, getWorkspace, insertRegisterEntry, listWorkspaces, mergeMistakesByHash, unmergeMistakesByHash, updateRegisterByID, updateSubmissionIgnoreTextByID, updateSubmissionStateByID } from "../controllers/DatabaseController";
+import { deleteRegister, fetchSubmissionByID, getWorkspace, insertRegisterEntry, listWorkspaces, mergeMistakesByHash, registerLogger, unmergeMistakesByHash, updateRegisterByID, updateSubmissionIgnoreTextByID, updateSubmissionStateByID } from "../controllers/DatabaseController";
+import { RegisterUpdateEventType } from "@shared/api-types";
 
 const name = config.serviceNames.data;
-export const logger = new Logger({
+const logger = new Logger({
 	minLevel: parseInt(process.env["LOGLEVEL"] as string) as LogLevel | undefined,
 	name: name
 });
@@ -17,6 +18,8 @@ if (!parentPort) {
 	logger.error("This service cannot be run standalone. Please run index.ts.");
 	process.exit();
 }
+
+registerLogger(logger);
 
 let currentPort: MessagePort | null = null;
 
@@ -131,52 +134,53 @@ async function handleModifyTextIgnore(payload: ChangeSubmissionTextIgnoreMessage
 	});
 }
 async function handleAddRegisterEntry(payload: AddRegisterMessagePayload) {
+	try {
 	if (!currentPort) return logger.error("No port registered, unable to process message!");
-	const result = await insertRegisterEntry(payload.registerEntry, payload.workspaceId);
-	if (!result) return logger.error("Adding RegisterEntry failed!");
-	currentPort?.postMessage({
-		origin: name,
-		type: MessageType.REGISTER_UPDATED,
-		payload: {
-			workspaceId: payload.workspaceId,
-			data: [{
-				entry: result,
+		const register = await insertRegisterEntry(payload.registerEntry, payload.workspaceId);
+		if (!register) return logger.error("Adding RegisterEntry failed!");
+		const message: Message = {
+			origin: name,
+			type: MessageType.REGISTER_UPDATED,
+			payload: {
+				workspaceId: payload.workspaceId,
+				entry: register,
 				type: "ADD"
-			}]
-		} as RegisterUpdatedMessagePayload
-	});
+			} as RegisterUpdatedMessagePayload
+		};
+		currentPort?.postMessage(JSON.stringify(message)); // Shitty workaround for the fact that for some reason Register Updated messages refuses to send
+	} catch (e) {
+		logger.error(e);
+	}
 }
 async function handleEditRegisterEntry(payload: ChangeRegisterMessagePayload) {
 	if (!currentPort) return logger.error("No port registered, unable to process message!");
 	const result = await updateRegisterByID(payload.registerEntry, payload.workspaceId);
 	if (!result) return logger.error("Editing RegisterEntry failed!");
-	currentPort?.postMessage({
+	const message: Message = {
 		origin: name,
 		type: MessageType.REGISTER_UPDATED,
 		payload: {
 			workspaceId: payload.workspaceId,
-			data: [{
-				entry: result,
-				type: "EDIT"
-			}]
+			entry: result,
+			type: "EDIT" as RegisterUpdateEventType
 		} as RegisterUpdatedMessagePayload
-	});
+	};
+	currentPort?.postMessage(JSON.stringify(message));
 }
 async function handleDeleteRegisterEntry(payload: DeleteRegisterMessagePayload) {
 	if (!currentPort) return logger.error("No port registered, unable to process message!");
 	const result = await deleteRegister(payload.registerId, payload.workspaceId);
 	if (!result) return logger.error("Deleting RegisterEntry failed!");
-	currentPort?.postMessage({
+	const message: Message = {
 		origin: name,
 		type: MessageType.REGISTER_UPDATED,
 		payload: {
 			workspaceId: payload.workspaceId,
-			data: [{
-				entry: result,
-				type: "DELETE"
-			}]
+			entry: result,
+			type: "DELETE" as RegisterUpdateEventType
 		} as RegisterUpdatedMessagePayload
-	});
+	};
+	currentPort?.postMessage(JSON.stringify(message));
 }
 async function handleMergeMistakes(payload: MergeMistakesMessagePayload) {
 	if (!currentPort) return logger.error("No port registered, unable to process message!");

@@ -19,25 +19,28 @@ if (isMainThread) {
 	// Activate Divdabis
 	const dataService = new Worker(path.resolve(__dirname, './services/DataService.ts'));
 	dataService.on("online", () => {
-		logger.log("Divdabis is now online!");
+		logger.log(`${config.serviceNames.data} is now online!`);
 	});
-	dataService.on("error", (err: Error) => {
-		logger.error(`Divdabis has crashed: ${err.message}`);
+	dataService.on("error", (err: any) => {
+		logger.log(err);
+		logger.error(`${config.serviceNames.data} has crashed: { ${err.name} | ${err.message} }`);
+		logger.error(err.stack);
 	});
 	dataService.on("exit", () => {
-		logger.info("Divdabis is now offline!");
+		logger.info(`${config.serviceNames.data} is now online!`);
 	});
 
 	// Activate Saiklis
 	const networkService = new Worker(path.resolve(__dirname, './services/NetworkingService.ts'));
 	networkService.on("online", () => {
-		logger.log("Saiklis is now online!");
+		logger.log(`${config.serviceNames.network} is now online!`);
 	});
 	networkService.on("error", (err: Error) => {
-		logger.error(`Saiklis has crashed: ${err.message}`);
+		logger.error(`${config.serviceNames.network} has crashed: { ${err.name} | ${err.message} }`);
+		logger.error(err.stack);
 	});
 	networkService.on("exit", () => {
-		logger.info("Saiklis is now offline!");
+		logger.info(`${config.serviceNames.network} is now offline!`);
 	});
 
 	// Hook both up with a communication channel

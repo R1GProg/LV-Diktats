@@ -10,7 +10,7 @@ import { registerHandler } from "../controllers/WebsocketController";
 import { workspaceRouter } from "../routes/workspace";
 import { parentPort, MessagePort } from "worker_threads";
 import { AddRegisterMessagePayload, ChangeRegisterMessagePayload, ChangeSubmissionStateMessagePayload, ChangeSubmissionTextIgnoreMessagePayload, ChannelInitMessagePayload, DeleteRegisterMessagePayload, MergeMistakesMessagePayload, Message, MessageType, QuerySubmissionMessagePayload, QueryWorkspaceListMessagePayload, QueryWorkspaceMessagePayload, RegenSubmissionsMessagePayload, RegisterUpdatedMessagePayload, SubmissionDataMessagePayload, SubmissionStateChangedMessagePayload, UnmergeMistakesMessagePayload, WorkspaceDataMessagePayload, WorkspaceListMessagePayload } from "./types/MessageTypes";
-import { RegisterEntry, RegisterUpdateEventData, Submission, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, UUID, Workspace } from "@shared/api-types";
+import { RegisterEntry, RegisterUpdateEventData, RegisterUpdateEventType, Submission, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, UUID, Workspace } from "@shared/api-types";
 import { v4 as uuidv4 } from "uuid";
 import { Bounds } from "@shared/diff-engine";
 
@@ -148,7 +148,10 @@ export function requestUnmergeMistakes(mistake: string, workspace: string) {
 }
 
 // Sets the thread up to listen to ports.
-function handlePortMessage(message: Message) {
+function handlePortMessage(messageRaw: Message | string) {
+	let message: Message;
+	if (typeof (messageRaw) === "object") message = messageRaw;
+	else message = JSON.parse(messageRaw); // Hacky workaround for REGISTER_UPDATED type messages not sending
 	switch (message.type) {
 		case MessageType.WORKSPACE_LIST:
 			handleWorkspaceList(message.payload as WorkspaceListMessagePayload);
@@ -212,7 +215,10 @@ function handleRegenSubmissions(payload: RegenSubmissionsMessagePayload) {
 }
 function handleRegisterUpdate(payload: RegisterUpdatedMessagePayload) {
 	const data: RegisterUpdateEventData = {
-		data: payload.data,
+		data: [{
+			entry: payload.entry,
+			type: payload.type as RegisterUpdateEventType
+		}],
 		workspace: payload.workspaceId
 	}
 	io.emit("registerUpdate", data);

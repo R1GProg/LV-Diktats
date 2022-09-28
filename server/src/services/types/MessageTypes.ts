@@ -100,10 +100,8 @@ export interface SubmissionStateChangedMessagePayload extends MessagePayload {
 }
 export interface RegisterUpdatedMessagePayload extends MessagePayload {
 	workspaceId: string,
-	data: {
-		entry: RegisterEntry,
-		type: RegisterUpdateEventType
-	}[]
+	entry: RegisterEntry,
+	type: string
 }
 export interface WorkspaceListMessagePayload extends MessagePayload {
 	id: UUID,
