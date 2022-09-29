@@ -6,5 +6,5 @@
 	"autosaveTime": 15,
 	"cacheSingleSession": true,
 	"highlightDelay": 200,
-	"debug": true
+	"debug": false
 }

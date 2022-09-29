@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { logger } from '..';
+import { logger } from 'yatsl';
 
 const router = express.Router();
 

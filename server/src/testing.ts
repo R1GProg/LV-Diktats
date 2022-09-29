@@ -1,6 +1,14 @@
 import fs from 'fs';
-import { parseCSV, readWorkspaceFromDisk, writeWorkspaceToDB, writeWorkspaceToDisk } from './services/DatasetManager';
+import { parseCSV, readWorkspaceFromDisk, writeWorkspaceToDB, writeWorkspaceToDisk } from './controllers/DatasetController';
 import path from 'path';
+import { logger } from 'yatsl';
+import mongoose from 'mongoose';
+import * as dotenv from 'dotenv';
+dotenv.config();
+import * as config from "../config.json";
+import { RegisterEntry } from '@shared/api-types';
+import { insertRegisterEntry } from './controllers/DatabaseController';
+import { RegisterUpdatedMessagePayload } from './services/types/MessageTypes';
 
 async function generateDataset() {
 	let dataset = await parseCSV(
@@ -18,4 +26,10 @@ async function writeToDb() {
 }
 
 // generateDataset();
-writeToDb();
+mongoose.connect(`mongodb+srv://admin:${process.env["DBPASS"]}@diktatify.hpuzt56.mongodb.net/${config.dbName}?retryWrites=true&w=majority`, {}).catch((e) => {
+	logger.error(e);
+}).then(async () => {
+	logger.info("Connected to MongoDB!");
+	writeToDb();
+	// await registerWriteTest();
+});

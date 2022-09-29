@@ -199,7 +199,7 @@ export default class DiktifySocket {
 			// TODO: SERVER IMPLEMENTATION
 			if (this.socket) {
 				const request: MistakeUnmergeEventData = {
-					mistake,
+					mistake: targetMistake,
 					workspace
 				}
 				this.socket.emit("mistakeUnmerge", request);
@@ -234,12 +234,11 @@ export default class DiktifySocket {
 		} else {
 			// TODO: SERVER IMPLEMENTATION
 			if (this.socket) {
-				if (!data.mistakes || !data.description || !data.ignore) throw new Error("Invalid RegisterEntryData!");
 				const payloadData: RegisterEntry = {
 					id: uuidv4(),
-					mistakes: data.mistakes,
-					description: data.description,
-					ignore: data.ignore,
+					mistakes: data.mistakes!,
+					description: data.description!,
+					ignore: data.ignore!,
 					count: 0, // The Server will do the counting
 				}
 				const request: RegisterNewEventData = {
@@ -278,16 +277,15 @@ export default class DiktifySocket {
 		} else {
 			// TODO: SERVER IMPLEMENTATION
 			if (this.socket) {
-				if (!data.id || !data.mistakes || !data.description || !data.ignore) throw new Error("Invalid RegisterEntryData!");
 				const payloadData: RegisterEntry = {
-					id: data.id,
-					mistakes: data.mistakes,
-					description: data.description,
-					ignore: data.ignore,
+					id: data.id!,
+					mistakes: data.mistakes!,
+					description: data.description!,
+					ignore: data.ignore!,
 					count: 0, // The Server will do the counting
 				}
 				const request: RegisterEditEventData = {
-					id: data.id,
+					id: data.id!,
 					data: payloadData,
 					workspace
 				}
@@ -310,9 +308,8 @@ export default class DiktifySocket {
 		} else {
 			// TODO: SERVER IMPLEMENTATION
 			if (this.socket) {
-				if (!data.id) throw new Error("Invalid RegisterEntryData!");
 				const request: RegisterDeleteEventData = {
-					id: data.id,
+					id: data.id!,
 					workspace
 				}
 				this.socket.emit("registerDelete", request);
