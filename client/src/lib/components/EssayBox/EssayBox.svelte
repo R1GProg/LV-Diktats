@@ -200,7 +200,7 @@
 		const selection = window.getSelection();
 
 		if (selection === null) return;
-		if (!textContainer.contains(selection.anchorNode)) return;
+		if (!textContainer?.contains(selection.anchorNode)) return;
 
 		dispatch("selection", { selection });
 	}

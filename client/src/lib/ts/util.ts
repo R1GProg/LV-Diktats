@@ -1,6 +1,26 @@
 import type { RegisterEntry, Submission } from "@shared/api-types";
 import type { MistakeHash } from "@shared/diff-engine";
 
+export function deleteFirstMatching<T>(arr: T[], predicate: (val: T, i: number) => boolean) {
+	for (let i = 0; i < arr.length; i++) {
+		if (predicate(arr[i], i)) {
+			arr.splice(i, 1);
+			return;
+		}
+	}
+}
+
+export function deleteAllMatching<T>(arr: T[], predicate: (val: T, i: number) => boolean) {
+	let indexOffset = 0;
+
+	for (let i = 0; i < arr.length; i++) {
+		if (predicate(arr[i], i + indexOffset)) {
+			arr.splice(i, 1);
+			indexOffset++;
+		}
+	}
+}
+
 export function readTextFile(file: File) {
 	return new Promise<string | null>((res, rej) => {
 		const reader = new FileReader();

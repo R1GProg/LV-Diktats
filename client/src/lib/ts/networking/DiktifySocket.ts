@@ -1,6 +1,6 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
-import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RequestSubmissionEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
+import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RegisterUpdateEventEntryData, RegisterUpdateEventType, RequestSubmissionEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
 import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
@@ -26,6 +26,8 @@ function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
 	return text;
 }
 
+export type RegisterChangeCallback = (data: { type: RegisterUpdateEventType, entry: RegisterEntry }[]) => void;
+
 export default class DiktifySocket {
 	connectPromise: Promise<void>;
 
@@ -41,6 +43,8 @@ export default class DiktifySocket {
 	private workspace: Stores["workspace"];
 
 	private activeSubmissionID: Stores["activeSubmissionID"];
+
+	private cbs: RegisterChangeCallback[] = [];
 
 	constructor(
 		url: string,
@@ -458,6 +462,8 @@ export default class DiktifySocket {
 			const activeID = get(this.activeSubmissionID);
 			const curSub = activeID ? ws.submissions[activeID] as unknown as Submission : null;
 
+			this.execRegisterChangeCallbacks(data.data);
+
 			if (curSub === null) continue;
 
 			let reloadCurrent = false;
@@ -497,5 +503,13 @@ export default class DiktifySocket {
 		const existingData = (await this.cache.getSubmission(data.id, data.workspace))!;
 		existingData.state = data.state;
 		await this.cache.updateSubmissionInCache(existingData, data.workspace);
+	}
+
+	addRegisterChangeCallback(cb: RegisterChangeCallback) {
+		this.cbs.push(cb);
+	}
+
+	private execRegisterChangeCallbacks(newData: RegisterUpdateEventEntryData[]) {
+		for (const cb of this.cbs) { cb(newData); }
 	}
 }

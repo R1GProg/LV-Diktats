@@ -118,11 +118,13 @@ export interface SubmissionDataEventData {
 }
 
 export interface RegisterUpdateEventData {
-	data: {
-		entry: RegisterEntry,
-		type: RegisterUpdateEventType
-	}[],
+	data: RegisterUpdateEventEntryData[],
 	workspace: UUID
+}
+
+export interface RegisterUpdateEventEntryData {
+	entry: RegisterEntry,
+	type: RegisterUpdateEventType
 }
 
 export interface SubmissionRegenEventData {

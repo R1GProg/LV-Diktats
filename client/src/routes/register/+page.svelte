@@ -1,60 +1,70 @@
 <script lang="ts">
-	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
+	import RegisterEntryModal from "$lib/components/modals/RegisterEntryModal.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
-	import { space } from "svelte/internal";
+	import type { RegisterEntry, Workspace } from "@shared/api-types";
+	import { onMount } from "svelte";
 
 	const workspace = store("workspace") as Stores["workspace"];
+	const ds = store("ds") as Stores["ds"];
 
-	let modal: MistakeRegistrationModal;
+	let modal: RegisterEntryModal;
+
+	let register: RegisterEntry[] = [];
 
 	async function onEntryClick(ev: MouseEvent) {
 		const ws = await $workspace;
 		if (ws === null) return;
 
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
-
-		console.log(ws.register.find((r) => r.id === id));
-
-		// const data = await modal.open(hash, true);
-		
-		// if (data.action === "EDIT") {
-		// 	await actionRegister.updateMistakeInRegister(hash, data.data);
-		// } else if (data.action === "DELETE") {
-		// 	await actionRegister.deleteMistakeFromRegister(hash);
-		// }
-
-		// $workspace.register = $workspace.register;
+		modal.open(id);
 	}
+
+	async function onWorkspaceChange(ws: Promise<Workspace> | null) {
+		if (ws === null) return;
+
+		register = (await ws).register;
+	}
+
+	$: onWorkspaceChange($workspace);
+
+	onMount(() => {
+		$ds.addRegisterChangeCallback(() => {
+			onWorkspaceChange($workspace);
+		});
+
+		onWorkspaceChange($workspace);
+	});
 </script>
 
 <table class="container">
 	{#if $workspace !== null}
 	<tr class="head">
-		<th>Kļūdainie vārdi</th>
+		<th>Kļūdas</th>
 		<th>Apraksts</th>
 		<th>Uzskatāma par kļūdu?</th>
 		<th>Gadījumu skaits</th>
 	</tr>
-	{#await $workspace then ws}
-		{#each ws.register as entry (entry.id)}
+	{#if register.length > 0}
+		{#each register as entry (entry.id)}
 		<tr data-id={entry.id} on:click={onEntryClick}>
 			<td class="entry-words">
 				{#each Object.values(entry._mistakeWords ?? {}) as word}
-				<span>{word}</span>
+				{@const adjWord = word.replace(/\.\./g, "")}
+				<span>{adjWord.length > 30 ? `${adjWord.substring(0, 30).trim()}...` : adjWord}</span>
 				{/each}
 			</td>
 			<td class="desc"><span>{entry.description}</span></td>
-			<td><span>{entry.ignore ? "Nav kļūda" : ""}</span></td>
+			<td><span>{entry.ignore ? "Nav kļūda" : "+"}</span></td>
 			<td><span>{entry.count}</span></td>
 		</tr>
 		{/each}
-	{/await}
+	{/if}
 	{:else}
 	<h2>Nav izvēlēti dati</h2>
 	{/if}
 </table>
 
-<MistakeRegistrationModal bind:this={modal} />
+<RegisterEntryModal bind:this={modal} />
 
 <style lang="scss">
 	@import "../../lib/scss/global";
@@ -95,12 +105,6 @@
 
 			&.head {
 				border-bottom: 3px solid $COL_FG_DARK;
-			}
-
-			h3 {
-				font-weight: 400;
-				font-size: 1.15rem;
-				margin: 0;
 			}
 
 			.desc {
