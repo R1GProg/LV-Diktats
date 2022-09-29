@@ -83,19 +83,11 @@ export default class DiktifyAPI {
 		localWorkspaceDb?: Stores["localWorkspaceDatabase"]
 	): Promise<Workspace> {
 		if (workspaceId === config.debugWorkspaceId) {
-			console.log("1");
-
 			if (!localWorkspaceDb) return loadDebugWorkspace();
 
-			console.log("2");
-
 			const db = await get(localWorkspaceDb);
-			
-			console.log("3");
 
-			if (!db.hasWorkspace(config.debugWorkspaceId)) return loadDebugWorkspace();
-
-			console.log("4");
+			if (!(await db.hasWorkspace(config.debugWorkspaceId))) return loadDebugWorkspace();
 
 			return db.getWorkspace(config.debugWorkspaceId);
 		}

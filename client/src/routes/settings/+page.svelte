@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { downloadText } from "$lib/ts/util";
-	import store from "$lib/ts/stores";
+	import store, { type Stores } from "$lib/ts/stores";
 
-	function exportData() {
-		if (store("workspace") === null) return;
+	const workspace = store("workspace") as Stores["workspace"];
 
-		downloadText("dati.json", JSON.stringify(store("workspace")));
+	async function exportData() {
+		console.log(await $workspace);
+
+		if (!(await $workspace)) return;
+
+		downloadText("dati.json", JSON.stringify(await $workspace));
 	}
 </script>
 
 <div class="container">
-	<button on:click={exportData} disabled={store("workspace") === null}>Eksportēt datus</button>
+	<button on:click={exportData} disabled={$workspace === null}>Eksportēt datus</button>
 </div>
 
 <style lang="scss">
