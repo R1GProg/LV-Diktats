@@ -13,7 +13,8 @@ export interface Workspace {
 	name: string,
 	template: string,
 	submissions: Record<SubmissionID, SubmissionPreview>,
-	register: RegisterEntry[]
+	register: RegisterEntry[],
+	local: boolean,
 }
 
 export interface WorkspacePreview {

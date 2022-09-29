@@ -8,6 +8,7 @@ import { api } from "$lib/ts/networking/DiktifyAPI";
 import DiktifySocket from "./networking/DiktifySocket";
 import config from "$lib/config.json";
 import MistakeSelection from "./MistakeSelection";
+import LocalWorkspaceDatabase from "./LocalWorkspaceDatabase";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -20,7 +21,8 @@ export interface Stores {
 	workspace: Readable<Promise<Workspace> | null>,
 	activeSubmission: Readable<Promise<Submission | null> | null>,
 	ds: Readable<DiktifySocket>,
-	selectedMistakes: Readable<MistakeSelection>
+	selectedMistakes: Readable<MistakeSelection>,
+	localWorkspaceDatabase: Readable<Promise<LocalWorkspaceDatabase>>,
 }
 
 export enum SortMode {
@@ -48,12 +50,20 @@ export function initStores() {
 			if (newID === null) {
 				set(null);
 			} else {
-				set(api.getWorkspace(newID));
+				set(api.getWorkspace(newID, localWorkspaceDatabase));
 			}
 		});
 	});
 
-	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID))
+	const localWorkspaceDatabase = readable<Promise<LocalWorkspaceDatabase>>(new Promise<LocalWorkspaceDatabase>((res) => {
+		onMount(async () => {
+			const db = new LocalWorkspaceDatabase(workspace);
+			await db.databaseInit();
+			res(db);
+		});
+	}));
+
+	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID, localWorkspaceDatabase))
 
 	const cache = readable<Promise<WorkspaceCache>>(new Promise<WorkspaceCache>((res) => {
 		onMount(async () => {
@@ -94,6 +104,7 @@ export function initStores() {
 		workspace,
 		activeSubmission,
 		ds,
-		selectedMistakes
+		selectedMistakes,
+		localWorkspaceDatabase
 	} as Stores);
 }

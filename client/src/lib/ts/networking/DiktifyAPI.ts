@@ -1,5 +1,7 @@
 import config from "$lib/config.json";
 import type { RegisterEntry, Setting, Submission, SubmissionID, User, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
+import { get } from "svelte/store";
+import type { Stores } from "../stores";
 
 type HTTPMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE";
 
@@ -67,7 +69,7 @@ export default class DiktifyAPI {
 
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
 		if (config.debug) {
-			return [{ id: "debugworkspaceid", name: "Mazsālīto gurķu blūzs (DEBUG)" }];
+			return [{ id: config.debugWorkspaceId, name: "Mazsālīto gurķu blūzs (DEBUG)" }];
 		}
 		
 		// TODO: SERVER FETCH
@@ -76,14 +78,32 @@ export default class DiktifyAPI {
 		return response;
 	}
 
-	async getWorkspace(workspaceId: UUID): Promise<Workspace> {
-		if (workspaceId === "debugworkspaceid") {
-			return loadDebugWorkspace();
+	async getWorkspace(
+		workspaceId: UUID,
+		localWorkspaceDb?: Stores["localWorkspaceDatabase"]
+	): Promise<Workspace> {
+		if (workspaceId === config.debugWorkspaceId) {
+			console.log("1");
+
+			if (!localWorkspaceDb) return loadDebugWorkspace();
+
+			console.log("2");
+
+			const db = await get(localWorkspaceDb);
+			
+			console.log("3");
+
+			if (!db.hasWorkspace(config.debugWorkspaceId)) return loadDebugWorkspace();
+
+			console.log("4");
+
+			return db.getWorkspace(config.debugWorkspaceId);
 		}
 
 		// TODO: SERVER FETCH
 		const request = await fetch(`${config.endpointUrl}/api/workspace/${workspaceId}`);
-		const response: Workspace = await request.json();
+		const response: Workspace = { ...(await request.json()), local: false};
+		
 		return response;
 	}
 
@@ -131,7 +151,11 @@ export const api = new DiktifyAPI();
 
 async function loadDebugWorkspace(): Promise<Workspace> {
 	const req = await fetch("/output.json");
-	const ws = await req.json() as Workspace;
+	const ws: Workspace = {
+		...(await req.json()),
+		id: config.debugWorkspaceId,
+		local: true
+	};
 
 	for (const id of Object.keys(ws.submissions)) {
 		const sub = ws.submissions[id] as unknown as Submission;

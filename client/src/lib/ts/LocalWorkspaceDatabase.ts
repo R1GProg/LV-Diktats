@@ -1,10 +1,9 @@
-import type { Submission, SubmissionID, UUID } from "@shared/api-types";
 import config from "$lib/config.json";
-import type DiktifySocket from "$lib/ts/networking/DiktifySocket";
+import type { Workspace } from "@shared/api-types";
+import { get } from "svelte/store";
+import type { Stores } from "./stores";
 
-type CacheEntry = Record<SubmissionID, Submission>;
-
-export default class WorkspaceCache {
+export default class LocalWorkspaceDatabase {
 	private db: IDBDatabase | null = null;
 
 	private dbInitPromise: Promise<void>;
@@ -13,12 +12,12 @@ export default class WorkspaceCache {
 
 	private dbInitReject: (() => void) | null = null;
 
-	private ds: DiktifySocket;
+	private workspace: Stores["workspace"];
 
-	constructor(ds: DiktifySocket) {
-		this.ds = ds;
+	constructor(workspace: Stores["workspace"]) {
+		const openReq = window.indexedDB.open("LocalWorkspaces", 1);
 
-		const openReq = window.indexedDB.open("WorkspaceCache", 1);
+		this.workspace = workspace;
 
 		this.dbInitPromise = new Promise<void>((res, rej) => {
 			this.dbInitResolve = res;
@@ -26,16 +25,16 @@ export default class WorkspaceCache {
 		});
 
 		openReq.onerror = () => {
-			console.warn(`Error initializing the workspace cache database! (Error: ${openReq.error})`);
+			console.warn(`Error initializing local workspace database! (Error: ${openReq.error})`);
 			this.dbInitReject!();
 		};
 
 		openReq.onsuccess = async () => {
-			console.log("Workspace cache database initialized!");
+			console.log("Local workspace database initialized!");
 			this.db = openReq.result;
 
-			if (config.cacheSingleSession) {
-				await this.clearEntireCache();
+			if (config.localWorkspacesSingleSession) {
+				await this.clearStore("workspaces");
 			}
 
 			this.dbInitResolve!();
@@ -44,11 +43,11 @@ export default class WorkspaceCache {
 		openReq.onupgradeneeded = async () => {
 			this.db = openReq.result;
 
-			if (await this.ensureObjectStore("submissionCache", null) === null) {
-				console.warn("Failed to create submission cache object store!");
+			if (await this.ensureObjectStore("workspaces", "id") === null) {
+				console.warn("Failed to create local workspace object store!");
 				this.dbInitReject!();
 			} else {
-				console.log("Workspace cache database created!");
+				console.log("Local workspace database created!");
 				this.dbInitResolve!();
 			}
 		};
@@ -79,7 +78,7 @@ export default class WorkspaceCache {
 		});
 	}
 
-	private update<T>(obj: string, key: string, val: T) {
+	private update<T>(obj: string, key: string | null, val: T) {
 		return new Promise<void>((res, rej) => {
 			if (this.db === null) {
 				console.warn("Attempt to write to database before initialization!");
@@ -88,7 +87,7 @@ export default class WorkspaceCache {
 			}
 	
 			const objStore = this.db.transaction(obj, "readwrite").objectStore(obj);
-			const req = objStore.put(val, key);
+			const req = objStore.put(val, key ?? undefined);
 
 			req.onerror = (ev) => {
 				rej(req.error);
@@ -233,99 +232,22 @@ export default class WorkspaceCache {
 		});
 	}
 
-	async readSubmissionCache(workspace: UUID) {
-		return this.read<CacheEntry>("submissionCache", workspace);
+	updateWorkspace(ws: Workspace) {
+		return this.update("workspaces", null, ws);
 	}
 
-	async isSubmissionCached(id: SubmissionID, workspace: UUID): Promise<boolean | null> {
-		if (this.db === null) {
-			console.warn("Attempt to read before database initialization!");
-			return null;
-		}
+	async updateActive() {
+		const ws = await get(this.workspace);
+		if (ws === null) return;
 
-		if (!(await this.storeHasKey("submissionCache", workspace))) {
-			return false;
-		}
-
-		const wsCache = await this.readSubmissionCache(workspace);
-		return Object.keys(wsCache).includes(id);
+		return this.updateWorkspace(ws);
 	}
 
-	async addSubmissionToCache(submission: Submission, workspace: UUID) {
-		if (this.db === null) {
-			console.warn("Attempt to write before database initialization!");
-			return null;
-		}
-
-		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
-		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
-
-		data[submission.id] = submission;
-
-		await this.update<CacheEntry>("submissionCache", workspace, data);
+	async hasWorkspace(id: string) {
+		return (await this.getKeys("workspaces")).includes(id);
 	}
 
-	async removeSubmissionFromCache(id: SubmissionID, workspace: UUID) {
-		if (this.db === null) {
-			console.warn("Attempt to write before database initialization!");
-			return null;
-		}
-
-		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
-
-		if (!workspaceExists) {
-			console.warn(`Attempt to remove submission from a workspace cache (${workspace}) that doesn't exist!`);
-			return;
-		}
-
-		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
-
-		if (!(id in data)) return;
-
-		delete data[id];
-
-		await this.update<CacheEntry>("submissionCache", workspace, data);
-	}
-
-	async updateSubmissionInCache(submission: Submission, workspace: UUID) {
-		if (this.db === null) {
-			console.warn("Attempt to write before database initialization!");
-			return null;
-		}
-
-		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
-
-		if (!workspaceExists) {
-			console.warn(`Attempt to update cache for a workspace that doesnt exist (${workspace})!`)
-			return null;
-		}
-
-		const data = await this.readSubmissionCache(workspace);
-		data[submission.id] = submission;
-
-		await this.update<CacheEntry>("submissionCache", workspace, data);
-	}
-
-	async getSubmission(id: SubmissionID, workspace: UUID): Promise<Submission | null> {
-		if (this.db === null) {
-			console.warn("Attempt to read before database initialization!");
-			return null;
-		}
-
-		if (await this.isSubmissionCached(id, workspace)) {
-			return (await this.read<CacheEntry>("submissionCache", workspace))[id];
-		} else {
-			const subm = await this.ds.requestSubmission(id, workspace);
-			await this.addSubmissionToCache(subm, workspace);
-			return subm;
-		}
-	}
-
-	async clearWorkspaceCache(workspace: UUID) {
-		this.delete("submissionCache", workspace);
-	}
-
-	async clearEntireCache() {
-		this.clearStore("submissionCache");
+	async getWorkspace(id: string) {
+		return this.read<Workspace>("workspaces", id);
 	}
 }

@@ -44,12 +44,15 @@ export default class DiktifySocket {
 
 	private activeSubmissionID: Stores["activeSubmissionID"];
 
+	private localWorkspaceDb: Stores["localWorkspaceDatabase"];
+
 	private cbs: RegisterChangeCallback[] = [];
 
 	constructor(
 		url: string,
 		workspace: Stores["workspace"],
-		activeSubmissionID: Stores["activeSubmissionID"]
+		activeSubmissionID: Stores["activeSubmissionID"],
+		localWorkspaceDb: Stores["localWorkspaceDatabase"]
 	) {
 		this.connectPromise = new Promise(async (res, rej) => {
 			if (await APP_ONLINE) {
@@ -60,6 +63,7 @@ export default class DiktifySocket {
 
 		this.workspace = workspace;
 		this.activeSubmissionID = activeSubmissionID;
+		this.localWorkspaceDb = localWorkspaceDb;
 
 		// TODO: Maybe have some sort of subscribe-to-workspace feature
 		// so the server would know which clients specifically should receive
@@ -428,6 +432,11 @@ export default class DiktifySocket {
 
 		this.cache?.updateSubmissionInCache(submission, data.workspace);
 		this.submissionDataPromise.res(submission);
+
+		const ws = await get(this.workspace);
+		if (ws === null || !ws.local) return;
+
+		(await get(this.localWorkspaceDb)).updateActive();
 	}
 
 	private async onRegisterUpdate(data: RegisterUpdateEventData) {
@@ -486,6 +495,10 @@ export default class DiktifySocket {
 
 			if (reloadCurrent) this.reloadActiveSubmission();
 		}
+
+		if (ws.local) {
+			(await get(this.localWorkspaceDb)).updateActive();
+		}
 	}
 
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
@@ -512,6 +525,10 @@ export default class DiktifySocket {
 		const existingData = (await this.cache.getSubmission(data.id, data.workspace))!;
 		existingData.state = data.state;
 		await this.cache.updateSubmissionInCache(existingData, data.workspace);
+	
+		if (ws.local) {
+			(await get(this.localWorkspaceDb)).updateActive();
+		}
 	}
 
 	addRegisterChangeCallback(cb: RegisterChangeCallback) {
