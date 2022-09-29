@@ -91,8 +91,9 @@
 		if ($mode !== ToolbarMode.MERGE) return;
 		if ($selectedMistakes.size() <= 1) return;
 
-		const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)!.hash);
-		await $ds.mistakeMerge(hashes, $activeWorkspaceID!);
+		const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)?.hash);
+		// console.log(hashes);
+		await $ds.mistakeMerge(hashes.filter((h) => h !== undefined) as string[], $activeWorkspaceID!);
 
 		$selectedMistakes.clear();
 	}
@@ -151,7 +152,9 @@
 					boundsCheck: m.boundsCheck,
 					boundsCorrect: m.boundsCorrect,
 					boundsDiff: m.boundsDiff,
-					mType: m.subtype
+					mType: m.subtype,
+					hash: m.hash,
+					word: m.word
 				}, null, 2)}
 			>
 

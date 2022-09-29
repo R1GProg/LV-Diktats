@@ -116,6 +116,16 @@ export class Mistake {
 	}
 
 	static mergeMistakes(...mistakes: Mistake[]) {
+		// Unwrap all previously merged mistakes
+		mistakes.forEach((m, i) => {
+			if (m.subtype !== "MERGED") return;
+
+			mistakes.splice(i, 1);
+			mistakes.push(...Mistake.unmergeMistake(m));
+		});
+
+		mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
 		const mergedActions = mistakes.flatMap((m) => m.actions);
 		mergedActions.sort((a, b) => a.indexDiff - b.indexDiff);
 

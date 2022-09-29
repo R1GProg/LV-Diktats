@@ -97,6 +97,8 @@ export default class DiktifySocket {
 				// Cast as unknown as Submission because the debug workspace
 				// includes the submission data
 				const rawData = ws.submissions[id] as unknown as Submission;
+				console.log("before");
+				console.log(rawData.data.mistakes[0]);
 				const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
 
 				const diff = new Diff(parseIgnoreBounds(rawData.data.text, rawData.data.ignoreText), ws.template);
@@ -179,6 +181,11 @@ export default class DiktifySocket {
 			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
 			const targetSubmissions = getAllSubmissionsWithMistakes(Object.values(subData), mistakes);
 
+			console.log("---merge incoming---");
+			console.log(`firsthash: ${subData["121"].data.mistakes[0].hash}`);
+			// console.log(mistakes);
+			// console.log(targetSubmissions);
+
 			const parsePromises: Promise<void>[] = [];
 
 			for (const subId of targetSubmissions) {
@@ -189,6 +196,8 @@ export default class DiktifySocket {
 						.map((m) => Mistake.fromData(m));
 
 					const mergedMistake = Mistake.mergeMistakes(...targetSubMistakes);
+
+					console.log(`Result hash: ${await mergedMistake.genHash()}`);
 
 					for (const prevMistake of targetSubMistakes) {
 						subMistakes.splice(subMistakes.findIndex((m) => m.id === prevMistake.id), 1);
