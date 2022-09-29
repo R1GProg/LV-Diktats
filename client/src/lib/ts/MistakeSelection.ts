@@ -19,8 +19,11 @@ export default class MistakeSelection {
 		this.execUpdateCbs();
 	}
 
-	remove(id: MistakeId) {
-		this.selectedMistakes.delete(id);
+	remove(...ids: MistakeId[]) {
+		for (const id of ids) {
+			if (!this.selectedMistakes.has(id)) continue;
+			this.selectedMistakes.delete(id);
+		}
 
 		this.execUpdateCbs();
 	}

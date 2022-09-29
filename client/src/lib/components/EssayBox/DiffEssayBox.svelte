@@ -195,6 +195,38 @@
 		}
 	}
 
+	function onSelection(ev: CustomEvent) {
+		if ($mode !== ToolbarMode.MERGE) return;
+
+		const selection = ev.detail.selection as Selection;
+
+		if (selection.anchorNode === selection.focusNode) return;
+
+		// Get all the nodes in the selection
+
+		const textNodes = Array.from(essayEl.getTextContainer().childNodes);
+		
+		// If one of the boundary nodes is on a highlight, get the highlight span node
+		const startNode = selection.anchorNode!.parentElement!.classList.contains("highlight") ? selection.anchorNode!.parentNode! : selection.anchorNode!;
+		const endNode = selection.focusNode!.parentElement!.classList.contains("highlight") ? selection.focusNode!.parentNode! : selection.focusNode!;
+
+		const unselect = (startNode as Element).classList?.contains("hl-status-selected") ?? false;
+
+		const startIndex = textNodes.findIndex((n) => n === startNode);
+		const endIndex = textNodes.findIndex((n) => n === endNode);
+		const selectedHighlights = textNodes
+			.slice(Math.min(startIndex, endIndex), Math.max(startIndex, endIndex) + 1)
+			.filter((node) => node.nodeType === document.ELEMENT_NODE)
+			.filter((el) => (el as Element).classList.contains("highlight")) as HTMLElement[];
+		const mistakes = selectedHighlights.map((h) => highlightMap[h.dataset.highlightId!]);
+
+		if (unselect) {
+			$selectedMistakes.remove(...mistakes);
+		} else {
+			$selectedMistakes.add(...mistakes);
+		}
+	}
+
 	$: onSelectionChange($selectedMistakes);
 	$: onSubmissionChange($activeSubmission);
 	$: onHoveredMistakeChange($hoveredMistake);
@@ -205,4 +237,5 @@
 	on:highlight-hover={onMistakeHover}
 	on:highlight-hoverout={onMistakeHoverOut}
 	on:highlight-click={onMistakeClick}
+	on:selection={onSelection}
 />

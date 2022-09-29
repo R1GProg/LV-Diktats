@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from "svelte";
 	import type Highlighter from "web-highlighter";
+	import HighlightTooltip from "../HighlightTooltip.svelte";
 
 	export let editable = false;
 	export let text = "";
 	let textContainer: HTMLElement;
 	let highlighter: Highlighter;
+	let isDragging = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -188,6 +190,21 @@
 		highlighter.remove(id);
 	}
 
+	function onMouseDown() {
+		isDragging = true;
+	}
+
+	function onMouseUp() {
+		if (!isDragging) return;
+
+		const selection = window.getSelection();
+
+		if (selection === null) return;
+		if (!textContainer.contains(selection.anchorNode)) return;
+
+		dispatch("selection", { selection });
+	}
+
 	async function initHighlighting() {
 		const svelteClass = textContainer.className.match(/(s|svelte)-.+?( |$)/)![0].trim();
 		const Highlighter = (await import("web-highlighter")).default;
@@ -209,6 +226,9 @@
 		// actionRegister.loadActionRegister();
 
 		await initHighlighting();
+
+		document.addEventListener("mousedown", onMouseDown);
+		document.addEventListener("mouseup", onMouseUp);
 	});
 </script>
 

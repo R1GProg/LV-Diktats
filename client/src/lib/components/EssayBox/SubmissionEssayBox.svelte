@@ -16,7 +16,6 @@
 
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
-	let isSelecting = false;
 
 	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
 		if (submissionPromise === null || $workspace === null) {
@@ -53,19 +52,10 @@
 		}
 	}
 
-	function onMouseDown() {
+	function onSelection(ev: CustomEvent) {
 		if ($mode !== ToolbarMode.IGNORE) return;
 
-		isSelecting = true;
-	}
-
-	function onMouseUp() {
-		if (!isSelecting) return;
-
-		const selection = window.getSelection();
-		
-		if (selection === null) return;
-		if (!essayEl?.getTextContainer()?.contains(selection.anchorNode)) return;
+		const selection = ev.detail.selection as Selection;
 
 		if (
 			selection.anchorNode?.parentElement?.classList?.contains("highlight")
@@ -129,9 +119,6 @@
 	$: onSubmissionChange($activeSubmission);
 
 	onMount(() => {
-		document.addEventListener("mouseup", onMouseUp);
-		document.addEventListener("mousedown", onMouseDown);
-
 		subToToolbarMode(onToolbarModeChange);
 	});
 </script>
@@ -139,4 +126,5 @@
 <EssayBox
 	bind:this={essayEl}
 	editable={$mode === ToolbarMode.EDIT}
+	on:selection={onSelection}
 />
