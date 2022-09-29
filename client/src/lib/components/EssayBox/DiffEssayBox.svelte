@@ -5,11 +5,15 @@
 	import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
 	import { mistakeInRegister } from "$lib/ts/util";
+	import { ToolbarMode } from "$lib/ts/toolbar";
+	import type MistakeSelection from "$lib/ts/MistakeSelection";
 
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 	const workspace = store("workspace") as Stores["workspace"];
+	const selectedMistakes = store("selectedMistakes") as Stores["selectedMistakes"];
+	const mode = store("mode") as Stores["mode"];
 
 	// The timeout ensures that you wont get 50 essays trying to render at once
 	// if cycling through them quickly
@@ -165,6 +169,33 @@
 		}
 	}
 
+	function onMistakeClick(ev: CustomEvent) {
+		if (
+			$mode !== ToolbarMode.MERGE
+			&& $mode !== ToolbarMode.REGISTER
+		) return;
+
+		const highlightId = ev.detail.id;
+		const mistakeId = highlightMap[highlightId] ?? null;
+
+		$selectedMistakes.toggle(mistakeId);
+	}
+
+	function onSelectionChange(mistakeSelection: MistakeSelection) {
+		if (!essayEl) return;
+
+		const selection = mistakeSelection.get();
+
+		essayEl.clearAllHighlightClassInstances("hl-status-selected");
+
+		for (const id of selection) {
+			for (const highlight of mistakeMap[id]) {
+				essayEl.setHighlightClass(highlight, "hl-status-selected");
+			}
+		}
+	}
+
+	$: onSelectionChange($selectedMistakes);
 	$: onSubmissionChange($activeSubmission);
 	$: onHoveredMistakeChange($hoveredMistake);
 </script>
@@ -173,4 +204,5 @@
 	bind:this={essayEl}
 	on:highlight-hover={onMistakeHover}
 	on:highlight-hoverout={onMistakeHoverOut}
+	on:highlight-click={onMistakeClick}
 />

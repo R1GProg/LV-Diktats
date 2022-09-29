@@ -170,6 +170,10 @@
 		dispatch("highlight-hoverout", { id });
 	}
 
+	function onHighlightClick(id: string) {
+		dispatch("highlight-click", { id });
+	}
+
 	export function addHighlighterEventListener(event: string, cb: (id: string) => void) {
 		highlighter.on(event, ({ id }) => {
 			cb(id);
@@ -198,6 +202,7 @@
 
 		addHighlighterEventListener(Highlighter.event.HOVER, onHighlightHover);
 		addHighlighterEventListener(Highlighter.event.HOVER_OUT, onHighlightHoverOut);
+		addHighlighterEventListener(Highlighter.event.CLICK, onHighlightClick);
 	}
 
 	onMount(async () => {
@@ -216,7 +221,7 @@
 	>{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class="highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered hl-status-ignored active hover"></span>
+	<span class="HIGHLIGHT_CLASS_CONTAINER highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered hl-status-ignored hl-status-selected active hover"></span>
 </div>
 
 <style lang="scss">
@@ -306,11 +311,21 @@
 			filter: brightness(25%);
 		}
 
+		&.hl-status-selected {
+			outline: 1px solid yellow;
+			box-shadow: inset 0px 0px 5px 2px yellow;
+			z-index: 5;
+		}
+
 		// For debugging highlight overlaps
 		// To work, must have experimental browser features enabled
 		// &:has(.highlight) {
 		// 	background-color: blue !important;
 		// 	color: white !important;
 		// }
+	}
+
+	.HIGHLIGHT_CLASS_CONTAINER {
+		display: none;
 	}
 </style>

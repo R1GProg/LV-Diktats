@@ -7,6 +7,7 @@ import WorkspaceCache from "./WorkspaceCache";
 import { api } from "$lib/ts/networking/DiktifyAPI";
 import DiktifySocket from "./networking/DiktifySocket";
 import config from "$lib/config.json";
+import MistakeSelection from "./MistakeSelection";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -18,7 +19,8 @@ export interface Stores {
 	cache: Readable<Promise<WorkspaceCache>>,
 	workspace: Readable<Promise<Workspace> | null>,
 	activeSubmission: Readable<Promise<Submission | null> | null>,
-	ds: Readable<DiktifySocket>
+	ds: Readable<DiktifySocket>,
+	selectedMistakes: Readable<MistakeSelection>
 }
 
 export enum SortMode {
@@ -73,6 +75,14 @@ export function initStores() {
 		});
 	});
 
+	const selectedMistakes = readable<MistakeSelection>(new MistakeSelection(), (set) => {
+		const sel = new MistakeSelection(() => {
+			set(sel);
+		});
+
+		set(sel);
+	});
+
 	setContext("stores", {
 		mode,
 		hideRegistered,
@@ -83,6 +93,7 @@ export function initStores() {
 		cache,
 		workspace,
 		activeSubmission,
-		ds
+		ds,
+		selectedMistakes
 	} as Stores);
 }

@@ -5,6 +5,7 @@
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
 	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
 	import { getRegisterId, mistakeInRegister } from "$lib/ts/util";
+	import type MistakeSelection from "$lib/ts/MistakeSelection";
 
 	const mode = store("mode") as Stores["mode"];
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
@@ -13,12 +14,12 @@
 	const ds = store("ds") as Stores["ds"];
 	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
 	const workspace = store("workspace") as Stores["workspace"];
-
+	const selectedMistakes = store("selectedMistakes") as Stores["selectedMistakes"];
+	
 	let mistakes: MistakeData[] = [];
 	let register: RegisterEntry[] = [];
 
 	let listContainer: HTMLElement;
-	let activeMergeIDs: MistakeId[] = [];
 	let regModal: MistakeRegistrationModal;
 
 	async function onMistakeHover(ev: Event) {
@@ -35,45 +36,44 @@
 
 	async function onMistakeClick(ev: Event) {
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
+		$selectedMistakes.toggle(id);
+	}
 
-		switch($mode) {
-			case ToolbarMode.MERGE:
-				if (activeMergeIDs.includes(id)) {
-					activeMergeIDs.splice(activeMergeIDs.findIndex((el) => el === id), 1);
-				} else {
-					activeMergeIDs.push(id);
-				}
+	async function onMistakeSelectionChange(mistakeSelection: MistakeSelection) {
+		const selection = mistakeSelection.get();
 
-				activeMergeIDs = activeMergeIDs;
-				break;
-			case ToolbarMode.REGISTER:
-				{
-					const mHash = mistakes.find((m) => m.id === id)!.hash;
-					const regId = getRegisterId(mHash, register);
-					const data = await regModal.open(mHash, regId ? "EDIT" : "ADD", regId);
+		if ($mode !== ToolbarMode.REGISTER) return;
+		if (selection.length === 0) return;
+		
+		const id = selection[0];
+		const mHash = mistakes.find((m) => m.id === id)!.hash;
+		const regId = getRegisterId(mHash, register);
 
-					switch (data.action) {
-						case "ADD":
-							if (data.id) {
-								// Added to existing
-								$ds.registerUpdate(data, $activeWorkspaceID!);
-							} else {
-								$ds.registerNew(data, $activeWorkspaceID!);
-							}
-							break;
-						case "EDIT":
-							$ds.registerUpdate(data, $activeWorkspaceID!);
-							break;
-						case "DELETE":
-							$ds.registerDelete(data, $activeWorkspaceID!);
-							break;
+		try {
+			const data = await regModal.open(mHash, regId ? "EDIT" : "ADD", regId);
+		
+			switch (data.action) {
+				case "ADD":
+					if (data.id) {
+						// Added to existing
+						await $ds.registerUpdate(data, $activeWorkspaceID!);
+					} else {
+						await $ds.registerNew(data, $activeWorkspaceID!);
 					}
-				}
-				break;
-			default:
-				return;
+					break;
+				case "EDIT":
+					await $ds.registerUpdate(data, $activeWorkspaceID!);
+					break;
+				case "DELETE":
+					await $ds.registerDelete(data, $activeWorkspaceID!);
+					break;
+			}
+		} catch(err) {} finally {
+			$selectedMistakes.clear();
 		}
 	}
+
+	$: onMistakeSelectionChange($selectedMistakes);
 
 	async function onMistakeRightClick(ev: Event) {
 		if ($mode !== ToolbarMode.MERGE) return;
@@ -89,12 +89,12 @@
 	async function onBodyKeypress(ev: KeyboardEvent) {
 		if (ev.key !== "Enter") return;
 		if ($mode !== ToolbarMode.MERGE) return;
-		if (activeMergeIDs.length <= 1) return;
+		if ($selectedMistakes.size() <= 1) return;
 
-		const hashes = activeMergeIDs.map((id) => mistakes.find((m) => m.id === id)!.hash);
+		const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)!.hash);
 		await $ds.mistakeMerge(hashes, $activeWorkspaceID!);
 
-		activeMergeIDs = [];
+		$selectedMistakes.clear();
 	}
 
 	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
@@ -138,7 +138,7 @@
 				data-id={m.id}
 				class="mistake {m.type}"
 				class:hover={$hoveredMistake === m.id}
-				class:merging={activeMergeIDs.includes(m.id)}
+				class:merging={$selectedMistakes.has(m.id)}
 				class:registered={mInReg}
 				class:hidden={mInReg && $hideRegistered}
 				on:mouseenter={onMistakeHover}
@@ -287,8 +287,8 @@
 		}
 
 		&.merging {
-			outline: 3px solid yellow;
-			box-shadow: 0px 0px 5px 5px yellow;
+			outline: 1px solid yellow;
+			box-shadow: inset 0px 0px 5px 2px yellow;
 			z-index: 5;
 		}
 

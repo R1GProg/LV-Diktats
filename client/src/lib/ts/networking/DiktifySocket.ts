@@ -93,13 +93,56 @@ export default class DiktifySocket {
 				// Cast as unknown as Submission because the debug workspace
 				// includes the submission data
 				const rawData = ws.submissions[id] as unknown as Submission;
+				const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
 
 				const diff = new Diff(parseIgnoreBounds(rawData.data.text, rawData.data.ignoreText), ws.template);
 				diff.calc();
 
+				// Remerges all previously merged mistakes, if they are still in the diff
+				const rawMistakes = diff.getMistakes();
+				const hashMistakeMap: Record<MistakeHash, Mistake> = {};
+				const mistakeMapPromises: Promise<void>[] = [];
+
+				// Pregenerate the hashes of all mistakes
+				for (const m of rawMistakes) {
+					mistakeMapPromises.push(new Promise<void>(async (res) => {
+						hashMistakeMap[await m.genHash()] = m;
+						res();
+					}));
+				}
+
+				await Promise.all(mistakeMapPromises);
+
+				// Merge previously merged mistakes
+				for (const m of mergedMistakes) {
+					let stillMerged = true;
+
+					// Check if all of the mistakes are still in the diff
+					for (const child of m.children) {
+						if (!(child.hash in hashMistakeMap)) {
+							stillMerged = false;
+							break;
+						}
+					}
+
+					if (!stillMerged) continue;
+
+					const mistakesToMerge = m.children.map((child) => hashMistakeMap[child.hash]);
+					const mergedMistake = Mistake.mergeMistakes(...mistakesToMerge);
+
+					// Remove the mistakes that were merged, add the new merged mistake
+					for (const child of m.children) {
+						delete hashMistakeMap[child.hash];
+						hashMistakeMap[await mergedMistake.genHash()] = mergedMistake;
+					}
+				}
+
+				const mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
+				mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
 				const updatedData = {
 					...rawData.data,
-					mistakes: await Promise.all(diff.getMistakes().map((m) => m.exportData()))
+					mistakes,
 				};
 
 				let state: SubmissionState = "UNGRADED";
