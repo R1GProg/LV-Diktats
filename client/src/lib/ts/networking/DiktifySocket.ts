@@ -101,8 +101,6 @@ export default class DiktifySocket {
 				// Cast as unknown as Submission because the debug workspace
 				// includes the submission data
 				const rawData = ws.submissions[id] as unknown as Submission;
-				console.log("before");
-				console.log(rawData.data.mistakes[0]);
 				const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
 
 				const diff = new Diff(parseIgnoreBounds(rawData.data.text, rawData.data.ignoreText), ws.template);
