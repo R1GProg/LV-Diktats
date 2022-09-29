@@ -102,10 +102,16 @@ export default class DiktifySocket {
 					mistakes: await Promise.all(diff.getMistakes().map((m) => m.exportData()))
 				};
 
+				let state: SubmissionState = "UNGRADED";
+
+				if (rawData.data.text.length < ws.template.length * config.incompleteFraction) {
+					state = "REJECTED";
+				}
+
 				this.onSubmissionData({
 					id,
 					workspace: workspaceId,
-					state: "UNGRADED",
+					state,
 					data: updatedData,
 				});
 			} else {
@@ -207,9 +213,12 @@ export default class DiktifySocket {
 			if (ws === null) return;
 
 			let count = 0;
+			const _mistakeWords: Record<MistakeHash, string> = {};
 
 			for (const m of data.mistakes!) {
-				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]).length;
+				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
+				count += submArr.length;
+				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
 			}
 
 			const serverData: RegisterEntry = {
@@ -218,6 +227,7 @@ export default class DiktifySocket {
 				description: data.description!,
 				ignore: data.ignore!,
 				count,
+				_mistakeWords,
 			};
 
 			this.onRegisterUpdate({ data: [{ type: "ADD", entry: serverData }], workspace });
@@ -247,9 +257,12 @@ export default class DiktifySocket {
 			if (ws === null) return;
 
 			let count = 0;
+			const _mistakeWords: Record<MistakeHash, string> = {};
 
 			for (const m of data.mistakes!) {
-				count += getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]).length;
+				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
+				count += submArr.length;
+				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
 			}
 
 			const serverData: RegisterEntry = {
@@ -258,6 +271,7 @@ export default class DiktifySocket {
 				description: data.description!,
 				ignore: data.ignore!,
 				count,
+				_mistakeWords
 			};
 			
 			this.onRegisterUpdate({ data: [{ type: "EDIT", entry: serverData }], workspace });

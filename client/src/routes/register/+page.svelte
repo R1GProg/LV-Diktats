@@ -1,17 +1,19 @@
 <script lang="ts">
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
+	import { space } from "svelte/internal";
 
 	const workspace = store("workspace") as Stores["workspace"];
 
 	let modal: MistakeRegistrationModal;
 
 	async function onEntryClick(ev: MouseEvent) {
-		if ($workspace === null) return;
+		const ws = await $workspace;
+		if (ws === null) return;
 
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 
-		console.log(id);
+		console.log(ws.register.find((r) => r.id === id));
 
 		// const data = await modal.open(hash, true);
 		
@@ -28,7 +30,7 @@
 <table class="container">
 	{#if $workspace !== null}
 	<tr class="head">
-		<th>Kļūdainais vārds</th>
+		<th>Kļūdainie vārdi</th>
 		<th>Apraksts</th>
 		<th>Uzskatāma par kļūdu?</th>
 		<th>Gadījumu skaits</th>
@@ -36,7 +38,11 @@
 	{#await $workspace then ws}
 		{#each ws.register as entry (entry.id)}
 		<tr data-id={entry.id} on:click={onEntryClick}>
-			<td><h3>WIP (Will print all registered mistake words)</h3></td>
+			<td class="entry-words">
+				{#each Object.values(entry._mistakeWords ?? {}) as word}
+				<span>{word}</span>
+				{/each}
+			</td>
 			<td class="desc"><span>{entry.description}</span></td>
 			<td><span>{entry.ignore ? "Nav kļūda" : ""}</span></td>
 			<td><span>{entry.count}</span></td>
@@ -99,6 +105,11 @@
 
 			.desc {
 				text-align: left;
+			}
+
+			.entry-words {
+				display: grid;
+				grid-auto-flow: row;
 			}
 
 			&:not(.head) {

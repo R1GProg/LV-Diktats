@@ -11,7 +11,8 @@
 	let desc = "";
 	let ignore = false;
 	let isVariation = false;
-	let variation = "";
+	let variation: UUID = "";
+	let variationMistakes: MistakeHash[] = [];
 	
 	let edit = false;
 	let curMistake: MistakeHash;
@@ -68,10 +69,10 @@
 
 		promiseResolve({
 			id: curRegisterEntry ?? undefined,
-			mistakes: [ curMistake ],
+			mistakes: isVariation ? [ ...variationMistakes, curMistake ] : [ curMistake ],
 			description: desc,
 			ignore,
-			action: edit ? "EDIT" : "ADD"
+			action: edit ? "EDIT" : "ADD",
 		});
 	}
 
@@ -95,10 +96,14 @@
 		const ws = await $workspace;
 		if (ws === null) return;
 
-		// const entry = ws.register[variation];
+		const entry = ws.register.find((e) => e.id === variation);
 
-		// desc = entry.desc;
-		// ignore = entry.ignore;
+		if (!entry) return;
+
+		desc = entry.description;
+		ignore = entry.ignore;
+		curRegisterEntry = variation;
+		variationMistakes = entry.mistakes;
 	}
 </script>
 
@@ -115,23 +120,44 @@
 		<label for="regVariation">Variācija esošam ierakstsam</label>
 		<input type="checkbox" id="regVariation" bind:checked={isVariation}>
 
-		<!-- {#if isVariation}
+		{#if isVariation}
 		<label for="regVariationSelect">Esošais ieraksts</label>
 		<div class="regVariationSelectContainer">
-			<select id="regVariationSelect" on:change={onVariationSelect} bind:value={variation}>
+			<select
+				id="regVariationSelect"
+				on:change={onVariationSelect}
+				bind:value={variation}
+			>
 				<option value="">- Izvēlēties ierakstu -</option>
-				{#each Object.keys($workspace.register) as hash}
-				{@const entry = $workspace.register[hash]}
-				<option value={hash}>{entry.word} - {entry.desc}</option>
-				{/each}
+				{#await $workspace then ws}
+					{#if ws !== null}
+						{#each ws.register as entry}
+						<option value={entry.id}>{entry.description}</option>
+						{/each}
+					{/if}
+				{/await}
 			</select>
 		</div>
-		{/if} -->
+		{/if}
 
 		<label for="regDescription">Kļūdas apraksts</label>
-		<textarea disabled={isVariation ? true : false} type="text" id="regDescription" placeholder="Kļūdas apraksts" cols="30" rows="5" bind:value={desc}/>
+		<textarea
+			disabled={isVariation ? true : false}
+			type="text"
+			id="regDescription"
+			placeholder="Kļūdas apraksts"
+			cols="30"
+			rows="5"
+			bind:value={desc}
+		/>
+
 		<label for="regIgnore">Nav uzskatāma par kļūdu</label>
-		<input disabled={isVariation ? true : false} type="checkbox" id="regIgnore" bind:checked={ignore}>
+		<input
+			disabled={isVariation ? true : false}
+			type="checkbox"
+			id="regIgnore"
+			bind:checked={ignore}
+		/>
 	</div>
 </InputModal>
 

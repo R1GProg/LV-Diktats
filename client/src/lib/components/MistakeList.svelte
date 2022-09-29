@@ -54,7 +54,12 @@
 
 					switch (data.action) {
 						case "ADD":
-							$ds.registerNew(data, $activeWorkspaceID!);
+							if (data.id) {
+								// Added to existing
+								$ds.registerUpdate(data, $activeWorkspaceID!);
+							} else {
+								$ds.registerNew(data, $activeWorkspaceID!);
+							}
 							break;
 						case "EDIT":
 							$ds.registerUpdate(data, $activeWorkspaceID!);

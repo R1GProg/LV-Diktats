@@ -1,4 +1,4 @@
-import type { ActionSubtype, ActionType, Bounds, MistakeChild, MistakeData, MistakeHash, MistakeSubtype, MistakeType } from "@shared/diff-engine";
+import type {Bounds, MistakeData, MistakeHash } from "@shared/diff-engine";
 
 export type UUID = string;
 export type SubmissionID = string;
@@ -38,7 +38,8 @@ export interface RegisterEntry {
 	mistakes: MistakeHash[],
 	description: string,
 	ignore: boolean,
-	count: number
+	count: number,
+	_mistakeWords?: Record<MistakeHash, string>, // Temporary field for the debug dataset
 }
 
 // The uninitialized data (Not yet processed to DB), sent from client
