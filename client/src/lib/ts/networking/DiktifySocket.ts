@@ -185,8 +185,9 @@ export default class DiktifySocket {
 
 			console.log("---merge incoming---");
 			console.log(`firsthash: ${subData["121"].data.mistakes[0].hash}`);
-			// console.log(mistakes);
-			// console.log(targetSubmissions);
+			console.log(mistakes);
+			console.log(targetSubmissions);
+			console.log(Object.values(subData));
 
 			const parsePromises: Promise<void>[] = [];
 
@@ -434,6 +435,7 @@ export default class DiktifySocket {
 		const ws = await get(this.workspace);
 		if (ws === null || !ws.local) return;
 
+		ws.submissions[data.id] = { ...submission, mistakeCount: submission.data.mistakes.length };
 		(await get(this.localWorkspaceDb)).updateActive();
 	}
 

@@ -154,7 +154,8 @@
 					boundsDiff: m.boundsDiff,
 					mType: m.subtype,
 					hash: m.hash,
-					word: m.word
+					word: m.word,
+					wordCorrect: m.wordCorrect
 				}, null, 2)}
 			>
 
