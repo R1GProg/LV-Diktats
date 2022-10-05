@@ -57,6 +57,10 @@ export default class LocalWorkspaceDatabase {
 		return this.dbInitPromise;
 	}
 
+	clear() {
+		return this.clearStore("workspaces");
+	}
+
 	private write<T>(obj: string, key: string, val: T) {
 		return new Promise<void>((res, rej) => {
 			if (this.db === null) {

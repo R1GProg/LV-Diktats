@@ -91,10 +91,7 @@
 		haveUnsavedIgnores = true;
 	}
 
-	async function onToolbarModeChange(ev: ToolbarModeEvent) {
-		if (ev.prevMode !== ToolbarMode.IGNORE) return;
-		if (!haveUnsavedIgnores) return;
-
+	function setNewIgnores() {
 		// Calculate the bounds of each highlight
 		const bounds: Bounds[] = [];
 		let curOffset = 0;
@@ -112,9 +109,53 @@
 			curOffset += textLen;
 		}
 
-		haveUnsavedIgnores = false;
-
 		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, bounds);
+	}
+
+	async function onToolbarModeChange(ev: ToolbarModeEvent) {
+		if (ev.prevMode !== ToolbarMode.IGNORE) return;
+		if (!haveUnsavedIgnores) return;
+
+		haveUnsavedIgnores = false;
+		setNewIgnores();
+	}
+
+	async function onBodyKeypress(ev: KeyboardEvent) {
+		if (ev.key !== "Enter") return;
+		if ($mode !== ToolbarMode.IGNORE) return;
+		
+		haveUnsavedIgnores = false;
+		setNewIgnores();
+	}
+
+	function adjustRangeForIgnores(bounds: Bounds) {
+		if (!essayEl) return;
+
+		const nodes = essayEl.getTextContainer().childNodes;
+		let curTextOffset = 0;
+		let targetNodeIndex = 0;
+		let ignoreTextLength = 0;
+
+		for (let i = 0; i < nodes.length; i++) {
+			const nodeLen = nodes[i].textContent!.length;
+
+			if (nodes[i].nodeType === document.ELEMENT_NODE) {
+				ignoreTextLength += nodeLen;
+			} else if (nodeLen + curTextOffset > bounds.start + ignoreTextLength) {
+				targetNodeIndex = i;
+				break;
+			}
+
+			curTextOffset += nodeLen;
+		}
+
+		const target = nodes[targetNodeIndex];
+		const range = document.createRange();
+
+		range.setStart(target, bounds.start - curTextOffset + ignoreTextLength);
+		range.setEnd(target, bounds.end - curTextOffset + ignoreTextLength);
+
+		return range;
 	}
 
 	async function onMistakeHover(id: MistakeId | null) {
@@ -130,14 +171,10 @@
 		
 		if (!mistake || mistake.type === "ADD") return;
 
-		const container = essayEl.getTextContainer();
-		container.normalize();
-		const rootNode = container.firstChild!;
+		essayEl.getTextContainer().normalize();
+		const range = adjustRangeForIgnores(mistake.boundsCheck);
 
-		const range = document.createRange();
-
-		range.setStart(rootNode, mistake.boundsCheck.start);
-		range.setEnd(rootNode, mistake.boundsCheck.end);
+		if (!range) return;
 
 		essayEl.highlightRange(
 			range,
@@ -151,6 +188,8 @@
 
 	onMount(() => {
 		subToToolbarMode(onToolbarModeChange);
+
+		document.addEventListener("keypress", onBodyKeypress);
 	});
 </script>
 
