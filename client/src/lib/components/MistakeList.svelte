@@ -6,6 +6,7 @@
 	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
 	import { getRegisterId, mistakeInRegister } from "$lib/ts/util";
 	import type MistakeSelection from "$lib/ts/MistakeSelection";
+	import ProcessingStatus from "./modals/status/ProcessingStatus.svelte";
 
 	const mode = store("mode") as Stores["mode"];
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
@@ -21,6 +22,7 @@
 
 	let listContainer: HTMLElement;
 	let regModal: MistakeRegistrationModal;
+	let processingModal: ProcessingStatus;
 
 	async function onMistakeHover(ev: Event) {
 		const target = ev.currentTarget as HTMLElement;
@@ -92,7 +94,8 @@
 
 		if (!mistake || mistake.subtype !== "MERGED") return;
 
-		$ds.mistakeUnmerge(mistake.hash, $activeWorkspaceID!);
+		const unmergePromise = $ds.mistakeUnmerge(mistake.hash, $activeWorkspaceID!);
+		processingModal.open(unmergePromise);
 	}
 
 	async function onBodyKeypress(ev: KeyboardEvent) {
@@ -104,7 +107,11 @@
 
 		if ($selectedMistakes.size() !== 1) {
 			const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)?.hash);
-			const submIds = await $ds.mistakeMerge(hashes.filter((h) => h !== undefined) as string[], $activeWorkspaceID!);
+
+			const mergePromise = $ds.mistakeMerge(hashes.filter((h) => h !== undefined) as string[], $activeWorkspaceID!);
+
+			processingModal.open(mergePromise);
+			const submIds = await mergePromise;
 
 			if (submIds === null) return;
 
@@ -216,6 +223,7 @@
 </div>
 
 <MistakeRegistrationModal bind:this={regModal} />
+<ProcessingStatus bind:this={processingModal} />
 
 <style lang="scss">
 	@import "../scss/global.scss";
