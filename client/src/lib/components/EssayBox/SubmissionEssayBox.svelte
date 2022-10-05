@@ -2,7 +2,7 @@
 	import EssayBox from "./EssayBox.svelte";
 	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 	import type { Submission } from "@shared/api-types";
-	import type { Bounds } from "@shared/diff-engine";
+	import type { Bounds, MistakeId } from "@shared/diff-engine";
 	import { onMount } from "svelte";
 	import type { Stores } from "$lib/ts/stores";
 	import store from "$lib/ts/stores";
@@ -13,6 +13,7 @@
 	const workspace = store("workspace") as Stores["workspace"];
 	const mode = store("mode") as Stores["mode"];
 	const ds = store("ds") as Stores["ds"];
+	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
@@ -116,7 +117,33 @@
 		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, bounds);
 	}
 
+	async function onMistakeHover(id: MistakeId | null) {
+		if (!essayEl) return;
+		if ($mode === ToolbarMode.IGNORE) return;
+		
+		essayEl.clearHighlights();
+
+		if (id === null) return;
+
+		const subm = await $activeSubmission;
+		const mistake = subm?.data.mistakes.find((m) => m.id === id);
+		
+		if (!mistake || mistake.type === "ADD") return;
+
+		const container = essayEl.getTextContainer();
+		container.normalize();
+		const rootNode = container.firstChild!;
+
+		const range = document.createRange();
+
+		range.setStart(rootNode, mistake.boundsCheck.start);
+		range.setEnd(rootNode, mistake.boundsCheck.end);
+
+		essayEl.highlightRange(range, mistake.type === "MIXED" ? "hl-22" : "hl-0");
+	}
+
 	$: onSubmissionChange($activeSubmission);
+	$: onMistakeHover($hoveredMistake);
 
 	onMount(() => {
 		subToToolbarMode(onToolbarModeChange);

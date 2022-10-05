@@ -117,7 +117,7 @@
 	on:custom={onCustom}
 >
 	<div class="container">
-		<label for="regVariation">Variācija esošam ierakstsam</label>
+		<label for="regVariation">Variācija esošam ierakstam</label>
 		<input type="checkbox" id="regVariation" bind:checked={isVariation}>
 
 		{#if isVariation}

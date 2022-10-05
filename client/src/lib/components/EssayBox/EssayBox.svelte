@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from "svelte";
 	import type Highlighter from "web-highlighter";
-	import HighlightTooltip from "../HighlightTooltip.svelte";
 
 	export let editable = false;
 	export let text = "";
 	let textContainer: HTMLElement;
+	let mainContainer: HTMLElement;
 	let highlighter: Highlighter;
 	let isDragging = false;
 
@@ -162,6 +162,10 @@
 		}
 	}
 
+	export function clearHighlights() {
+		highlighter.removeAll();
+	}
+
 	function onHighlightHover(id: string) {
 		highlighter.addClass("hover", id);
 		dispatch("highlight-hover", { id });
@@ -188,6 +192,14 @@
 
 	export function removeHighlight(id: string) {
 		highlighter.remove(id);
+	}
+
+	export function unattachTextFromDOM() {
+		textContainer.remove();
+	}
+
+	export function reattachTextToDOM() {
+		mainContainer.appendChild(textContainer);
 	}
 
 	function onMouseDown() {
@@ -232,7 +244,7 @@
 	});
 </script>
 
-<div class="textbox">
+<div class="textbox" bind:this={mainContainer}>
 	<span
 		class="container"
 		bind:this={textContainer}
@@ -328,7 +340,24 @@
 		}
 
 		&.hl-status-registered {
-			filter: brightness(25%);
+			&.hl-0 {
+				background-color: $COL_MISTAKE_DEL_DARK;
+				color: #444;
+			}
+
+			&.hl-1 {
+				background-color: $COL_MISTAKE_ADD_DARK;
+				color: #444;
+			}
+
+			&.hl-2 {
+				background-color: rgba($COL_MISTAKE_MIXED_DARK, 0.25);
+			}
+
+			&.hl-20, &.hl-21, &.hl-22 {
+				background-color: $COL_MISTAKE_MIXED_DARK;
+				filter: brightness(50%);
+			}
 		}
 
 		&.hl-status-selected {

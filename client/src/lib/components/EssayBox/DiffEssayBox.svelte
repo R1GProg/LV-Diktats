@@ -100,6 +100,8 @@
 	}
 
 	function renderMistakes(rawText: string, mistakes: MistakeData[]) {
+		// essayEl.unattachTextFromDOM();
+
 		// TODO: Render new line characters
 
 		// Parse MERGED mistakes
@@ -142,6 +144,8 @@
 				}
 			}
 		}
+
+		// essayEl.reattachTextToDOM();
 	}
 
 	function addHighlightToMap(highlightId: string, mistakeId: MistakeId) {
