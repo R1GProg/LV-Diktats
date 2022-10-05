@@ -97,7 +97,7 @@ export default class DiktifySocket {
 	async requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission> {
 		if (config.debug) {
 			const ws = (await (get(this.workspace)))!;
-			
+
 			// Cast as unknown as Submission because the debug workspace
 			// includes the submission data
 			const rawData = ws.submissions[id] as unknown as Submission;
@@ -513,7 +513,7 @@ export default class DiktifySocket {
 
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
 		// Clears the submissions from the cache
-		await Promise.all(data.ids.map((id) => this.cache!.removeSubmissionFromCache(id, data.workspace)))
+		await this.cache!.removeSubmissionsFromCache(data.ids, data.workspace);
 
 		const activeID = get(this.activeSubmissionID);
 

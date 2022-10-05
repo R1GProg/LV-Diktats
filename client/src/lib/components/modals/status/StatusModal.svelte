@@ -25,5 +25,6 @@
 		justify-content: center;
 		padding-top: 1vh;
 		padding-bottom: 1vh;
+		min-width: 15vw;
 	}
 </style>

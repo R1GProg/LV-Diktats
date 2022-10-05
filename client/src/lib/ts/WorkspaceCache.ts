@@ -265,7 +265,7 @@ export default class WorkspaceCache {
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
 
-	async removeSubmissionFromCache(id: SubmissionID, workspace: UUID) {
+	async removeSubmissionsFromCache(ids: SubmissionID[], workspace: UUID) {
 		if (this.db === null) {
 			console.warn("Attempt to write before database initialization!");
 			return null;
@@ -280,9 +280,11 @@ export default class WorkspaceCache {
 
 		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
 
-		if (!(id in data)) return;
+		for (const id of ids) {
+			if (!(id in data)) continue;
 
-		delete data[id];
+			delete data[id];
+		}
 
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
