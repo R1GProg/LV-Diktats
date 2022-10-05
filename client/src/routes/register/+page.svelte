@@ -39,10 +39,10 @@
 <table class="container">
 	{#if $workspace !== null}
 	<tr class="head">
-		<th>Kļūdas</th>
-		<th>Apraksts</th>
-		<th>Uzskatāma par kļūdu?</th>
-		<th>Gadījumu skaits</th>
+		<th class="head-word">Kļūdas</th>
+		<th class="head-desc">Apraksts</th>
+		<th class="head-iserror">Kļūda/Nekļūda</th>
+		<th class="head-count">Gadījumu skaits</th>
 	</tr>
 	{#if register.length > 0}
 		{#each register as entry (entry.id)}
@@ -54,7 +54,7 @@
 				{/each}
 			</td>
 			<td class="desc"><span>{entry.description}</span></td>
-			<td><span>{entry.ignore ? "Nav kļūda" : "+"}</span></td>
+			<td><span>{entry.ignore ? "X" : "+"}</span></td>
 			<td><span>{entry.count}</span></td>
 		</tr>
 		{/each}
@@ -88,7 +88,7 @@
 		th {
 			font-family: $FONT_HEADING;
 			font-size: 1.5rem;
-			width: 15vw;
+			width: 100%;
 			margin: 0.5em 0;
 			display: inline-block;
 		}
@@ -101,7 +101,7 @@
 			transition: background-color 0.3s;
 
 			display: grid;
-			grid-template-columns: repeat(4, 15vw);	
+			grid-template-columns: 15vw 30vw 15vw 10vw;
 
 			&.head {
 				border-bottom: 3px solid $COL_FG_DARK;
