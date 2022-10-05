@@ -110,7 +110,7 @@
 		}
 
 		span {
-			color: $COL_BG_LIGHT;
+			color: $COL_BGFG_REG;
 			font-family: $FONT_HEADING;
 			white-space: nowrap;
 			font-weight: 400;
@@ -122,7 +122,7 @@
 			transition: color 0.3s;
 
 			&.active {
-				color: $COL_FG_DARK;
+				color: $COL_FG_REG;
 			}
 		}
 

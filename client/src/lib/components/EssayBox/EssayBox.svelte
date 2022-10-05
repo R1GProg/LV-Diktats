@@ -350,12 +350,12 @@
 		&.hl-status-registered {
 			&.hl-0 {
 				background-color: $COL_MISTAKE_DEL_DARK;
-				color: #444;
+				color: #AAA;
 			}
 
 			&.hl-1 {
 				background-color: $COL_MISTAKE_ADD_DARK;
-				color: #444;
+				color: #AAA;
 			}
 
 			&.hl-2 {
@@ -364,7 +364,15 @@
 
 			&.hl-20, &.hl-21, &.hl-22 {
 				background-color: $COL_MISTAKE_MIXED_DARK;
-				filter: brightness(50%);
+				filter: brightness(75%);
+			}
+
+			&.hl-20 {
+				color: $COL_MISTAKE_DEL;
+			}
+
+			&.hl-21 {
+				color: $COL_MISTAKE_ADD;
 			}
 		}
 
