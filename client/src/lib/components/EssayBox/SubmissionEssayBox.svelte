@@ -121,7 +121,7 @@
 		if (!essayEl) return;
 		if ($mode === ToolbarMode.IGNORE) return;
 		
-		essayEl.clearHighlights();
+		essayEl.clearHighlightsByClass("highlight-extmistake");
 
 		if (id === null) return;
 
@@ -139,7 +139,11 @@
 		range.setStart(rootNode, mistake.boundsCheck.start);
 		range.setEnd(rootNode, mistake.boundsCheck.end);
 
-		essayEl.highlightRange(range, mistake.type === "MIXED" ? "hl-22" : "hl-0");
+		essayEl.highlightRange(
+			range,
+			mistake.type === "MIXED" ? "hl-22" : "hl-0",
+			"highlight-extmistake"
+		);
 	}
 
 	$: onSubmissionChange($activeSubmission);

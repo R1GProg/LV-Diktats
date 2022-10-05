@@ -1,7 +1,7 @@
-import type { Submission, SubmissionID, UUID, Workspace } from "@shared/api-types";
+import type { Submission, SubmissionID, SubmissionPreview, UUID, Workspace } from "@shared/api-types";
 import { getContext, onMount, setContext } from "svelte";
 import type { MistakeId } from "@shared/diff-engine";
-import { get, readable, writable, type Readable, type Writable } from "svelte/store";
+import { get, readable, writable, derived, type Readable, type Writable } from "svelte/store";
 import { ToolbarMode } from "./toolbar";
 import WorkspaceCache from "./WorkspaceCache";
 import { api } from "$lib/ts/networking/DiktifyAPI";
@@ -23,6 +23,7 @@ export interface Stores {
 	ds: Readable<DiktifySocket>,
 	selectedMistakes: Readable<MistakeSelection>,
 	localWorkspaceDatabase: Readable<Promise<LocalWorkspaceDatabase>>,
+	sortedSubmissions: Readable<SubmissionPreview[] | null>
 }
 
 export enum SortMode {
@@ -93,6 +94,36 @@ export function initStores() {
 		set(sel);
 	});
 
+	const sortedSubmissions = derived<[Readable<Promise<Workspace> | null>, Readable<SortMode>], SubmissionPreview[] | null>(
+		[workspace, sort],
+		([$workspace, $sort], set) => {
+			if ($workspace === null) {
+				set(null);
+				return;
+			}
+
+			$workspace.then((ws) => {
+				const submArr = Object.values(ws.submissions);
+				
+				if (ws.id === "debugworkspaceid") {
+					for (const subm of submArr) {
+						subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
+					}
+				}
+
+				switch ($sort) {
+					case SortMode.ID:
+						submArr.sort((a, b) => Number(a.id.substring(2)) - Number(b.id.substring(2)));
+						break;
+					case SortMode.MISTAKE:
+						submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
+						break;
+				}
+
+				set(submArr);
+			});
+	});
+
 	setContext("stores", {
 		mode,
 		hideRegistered,
@@ -105,6 +136,7 @@ export function initStores() {
 		activeSubmission,
 		ds,
 		selectedMistakes,
-		localWorkspaceDatabase
+		localWorkspaceDatabase,
+		sortedSubmissions
 	} as Stores);
 }

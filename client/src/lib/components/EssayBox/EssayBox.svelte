@@ -166,6 +166,13 @@
 		highlighter.removeAll();
 	}
 
+	export function clearHighlightsByClass(className: string) {
+		for (const hl of textContainer.querySelectorAll<HTMLElement>(`.highlight.${className}`)) {
+			const id = hl.dataset.highlightId as string;
+			highlighter.remove(id);
+		}
+	}
+
 	function onHighlightHover(id: string) {
 		highlighter.addClass("hover", id);
 		dispatch("highlight-hover", { id });
@@ -279,6 +286,7 @@
 	.container {
 		width: 100%;
 		white-space: pre-line;
+		display: inline-block;
 	}
 
 	.container:focus {

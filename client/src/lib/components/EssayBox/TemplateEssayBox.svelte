@@ -21,7 +21,7 @@
 	async function onMistakeHover(id: MistakeId | null) {
 		if (!essay) return;
 		
-		essay.clearHighlights();
+		essay.clearHighlightsByClass("highlight-extmistake");
 
 		if (id === null) return;
 
@@ -39,7 +39,11 @@
 		range.setStart(rootNode, mistake.boundsCorrect.start);
 		range.setEnd(rootNode, mistake.boundsCorrect.end);
 
-		essay.highlightRange(range, mistake.type === "MIXED" ? "hl-22" : "hl-1");
+		essay.highlightRange(
+			range,
+			mistake.type === "MIXED" ? "hl-22" : "hl-1",
+			"highlight-extmistake"
+		);
 	}
 
 	$: onMistakeHover($activeHighlight);

@@ -7,17 +7,14 @@
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
+	const sortedSubmissions = store("sortedSubmissions") as Stores["sortedSubmissions"];
 
 	const dispatch = createEventDispatcher();
 
 	let modal: Modal;
-	let openSortMode: SortMode;
-	let submArray: SubmissionPreview[] = [];
 
 	export function open() {
 		modal.open();
-		openSortMode = $sort;
-		onResort($workspace, $sort);
 	}
 
 	function onEntryClick(ev: MouseEvent) {
@@ -25,35 +22,9 @@
 		dispatch("open", { id });
 		modal.close();
 	}
-
-	function onClose() {
-		if ($sort !== openSortMode) {
-			dispatch("sortchange");
-		}
-	}
-
-	async function onResort(workspace: Promise<Workspace> | null, sort: SortMode) {
-		if (workspace === null) {
-			submArray = [];
-			return;
-		}
-
-		const ws = await workspace;
-		const vals = Object.values(ws.submissions);
-
-		if (sort === SortMode.ID) {
-			vals.sort((a, b) => Number(a.id) - Number(b.id));
-		} else {
-			vals.sort((a, b) => (b.mistakeCount ?? b.data.mistakes.length) - (a.mistakeCount ?? a.data.mistakes.length));
-		}
-		
-		submArray = vals;
-	}
-
-	$: onResort($workspace, $sort);
 </script>
 
-<Modal title="Visi iesūtījumi" userClose={true} bind:this={modal} on:close={onClose}>
+<Modal title="Visi iesūtījumi" userClose={true} bind:this={modal}>
 	<div class="sortSelect">
 		<select bind:value={$sort}>
 			<option value={SortMode.MISTAKE}>Kārtot pēc kļūdu skaita</option>
@@ -62,8 +33,8 @@
 	</div>
 
 	<div class="listContainer">
-		{#if $workspace !== null}
-		{#each submArray as entry (entry.id)}
+		{#if $sortedSubmissions !== null}
+		{#each $sortedSubmissions as entry (entry.id)}
 			<div
 				data-id={entry.id}
 				data-state={entry.state}

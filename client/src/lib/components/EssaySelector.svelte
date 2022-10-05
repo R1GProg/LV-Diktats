@@ -2,6 +2,7 @@
 	import store, { SortMode, type Stores } from "$lib/ts/stores";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
 	import type { Submission, SubmissionID, SubmissionState } from "@shared/api-types";
+	import type { MistakeId } from "@shared/diff-engine";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
@@ -9,67 +10,52 @@
 	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const ds = store("ds") as Stores["ds"];
+	const sortedSubmissions = store("sortedSubmissions") as Stores["sortedSubmissions"];
 
 	let activeIndex = 0;
-	let totalEntries = 0;
 	let noData = true;
 	let submissionModal: SubmissionModal;
-	let mistakeOrderMap: string[];
-	let activeWorkspaceKey: string;
 
 	let submissionState: SubmissionState | null = null;
 	$: (async () => {
 		submissionState = (await $activeSubmission)?.state ?? null;
 	})();
 
-	async function onSelect(index: number | SubmissionID) {
-		if ($workspace === null) return;
+	function selectID(id: MistakeId) {
+		if ($sortedSubmissions === null) return;
 
-		const ws = await $workspace;
-		let id: string;
-		let setIndex: number;
-
-		if (typeof index === "number") {
-			if ($sort === SortMode.ID) {
-				const keys = Object.keys(ws.submissions);
-				id = keys[index];
-			} else {
-				id = mistakeOrderMap[index];
-			}
-
-			setIndex = index;
-		} else {
-			id = index;
-			setIndex = Object.keys(ws.submissions).findIndex((el) => el === id);
-		}
-
-		if (!ws.submissions[id]) return;
-
-		activeIndex = setIndex;
-		$activeSubmissionID = id;
+		selectIndex($sortedSubmissions.findIndex((s) => s.id === id));
 	}
 
-	export async function getNextUngradedIndex(direction: number, minDelta: number = 0) {
-		const ws = await $workspace;
-		if (ws === null) return;
+	async function selectIndex(index: number) {
+		if ($sortedSubmissions === null) return;
 
-		const searchArr = $sort === SortMode.ID ? Object.keys(ws.submissions) : mistakeOrderMap;
+		activeIndex = index;
+		$activeSubmissionID = $sortedSubmissions[index].id;
+	}
+
+	export async function getNextUngradedIndex(direction: number, minDelta: number = 0): Promise<number | null> {
+		if ($sortedSubmissions === null) return null;
+
+		const searchArr = $sortedSubmissions.map((s) => s.id);
 
 		if (direction < 0) {
 			const revArr = [...searchArr].reverse();
 			const revActiveIndex = searchArr.length - activeIndex - 1;
 			const index = revArr.findIndex((id, i) => (
-				ws!.submissions[id].state === "UNGRADED"
+				$sortedSubmissions![i].state === "UNGRADED"
 				&& i >= revActiveIndex - minDelta
 				&& id !== $activeSubmissionID
 			));
 
-			return searchArr.length - index - 1;
+			return index === -1 ? null : searchArr.length - index - 1;
 		} else {
-			return searchArr.findIndex((id, i) => (
+			const index = searchArr.findIndex((id, i) => (
 				i >= activeIndex + minDelta
-				&& ws!.submissions[id].state === "UNGRADED"
+				&& $sortedSubmissions![i].state === "UNGRADED"
 			));
+
+			return index ?? -1;
 		}
 	}
 
@@ -77,42 +63,37 @@
 		const ws = await $workspace;
 		if (ws === null) return;
 
-		onSelect((await getNextUngradedIndex(Math.sign(delta), delta))!);
+		selectIndex((await getNextUngradedIndex(Math.sign(delta), delta))!);
 	}
 
 	function onEntryOpen(ev: CustomEvent) {
 		const id = ev.detail.id as string;
-		onSelect(id);
+		selectID(id);
 	}
 
 	async function initWorkspace() {
-		if ($workspace === null) return;
-
-		const ws = await $workspace;
-		const submissions = ws.submissions;
-
 		noData = false;
-		const keys = Object.keys(submissions);
 
-		mistakeOrderMap = keys;
-		mistakeOrderMap.sort((a, b) => (submissions[b].mistakeCount ?? submissions[b].data.mistakes.length) - (submissions[a].mistakeCount ?? submissions[a].data.mistakes.length));
+		activeIndex = 0;
+		const nextIndex = await getNextUngradedIndex(0);
 
-		totalEntries = keys.length;
-		activeIndex = (await getNextUngradedIndex(1))!;
-		onSelect(activeIndex);
+		if (nextIndex === null) return;
 
-		activeWorkspaceKey = ws.id;
+		activeIndex = nextIndex;
+		selectIndex(activeIndex);
 	}
 
-	$: if ($activeWorkspaceID !== activeWorkspaceKey) {
+	$: if ($activeWorkspaceID !== null) {
 		initWorkspace();
-	} else if ($workspace === null) {
+	} else {
 		noData = true;
 	}
 
 	function onSortChange() {
 		initWorkspace();
 	}
+
+	$: if ($sortedSubmissions !== null) onSortChange();
 
 	function onSubmissionStateClick(newState: SubmissionState) {
 		if ($activeSubmissionID === null || $activeWorkspaceID === null) return;
@@ -142,14 +123,14 @@
 	{#if !noData}
 	<div class="selector">
 		<button class="prev" on:click={() => { changeSelectionBy(-1) }}></button>
-		<span>{activeIndex + 1}/{totalEntries}</span>
+		<span>{activeIndex + 1}/{$sortedSubmissions?.length}</span>
 		<button class="next" on:click={() => { changeSelectionBy(1) }}></button>
 	</div>
 	<button class="openall" on:click={() => { submissionModal.open(); }}>Apskatīt visus</button>
 	{/if}
 </div>
 
-<SubmissionModal bind:this={submissionModal} on:open={onEntryOpen} on:sortchange={onSortChange}/>
+<SubmissionModal bind:this={submissionModal} on:open={onEntryOpen}/>
 
 <style lang="scss">
 	@import "../scss/global.scss";
