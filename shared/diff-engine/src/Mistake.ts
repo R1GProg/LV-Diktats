@@ -133,14 +133,18 @@ export class Mistake {
 
 		const type: MistakeType = isAdd ? "ADD" : (isDel ? "DEL" : "MIXED");
 		
+		// Both include MIXED mistakes
+		const delMistakes = mistakes.filter((m) => m.type !== "ADD");
+		const addMistakes = mistakes.filter((m) => m.type !== "DEL");
+
 		const boundsCheck = {
-			start: Math.min(...mistakes.map((m) => m.boundsCheck.start)),
-			end: Math.max(...mistakes.map((m) => m.boundsCheck.end))
+			start: Math.min(...((delMistakes ?? mistakes).map((m) => m.boundsCheck.start))),
+			end: Math.max(...((delMistakes ?? mistakes).map((m) => m.boundsCheck.end)))
 		};
 
 		const boundsCorrect = {
-			start: Math.min(...mistakes.map((m) => m.boundsCorrect.start)),
-			end: Math.max(...mistakes.map((m) => m.boundsCorrect.end))
+			start: Math.min(...((addMistakes ?? mistakes).map((m) => m.boundsCorrect.start))),
+			end: Math.max(...((addMistakes ?? mistakes).map((m) => m.boundsCorrect.end)))
 		};
 
 		const boundsDiff = {
