@@ -43,12 +43,6 @@
 		></button>
 		<span class:active={$mode === ToolbarMode.IGNORE}>Izņemt tekstu</span>
 		<button
-			class="btn-resub"
-			class:active={$mode === ToolbarMode.RESUB}
-			on:click={() => { onBtnClick(ToolbarMode.RESUB) }}
-		></button>
-		<span class:active={$mode === ToolbarMode.RESUB}>Modificēt kļūdas</span>
-		<button
 			class="btn-merge"
 			class:active={$mode === ToolbarMode.MERGE}
 			on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
@@ -178,13 +172,13 @@
 				mask-size: 95%;
 			}
 
-			&.btn-resub {
-				-webkit-mask-image: url(/icons/icon-resub.svg);
-				mask-image: url(/icons/icon-resub.svg);
+			// &.btn-resub {
+			// 	-webkit-mask-image: url(/icons/icon-resub.svg);
+			// 	mask-image: url(/icons/icon-resub.svg);
 
-				-webkit-mask-size: 105%;
-				mask-size: 105%;
-			}
+			// 	-webkit-mask-size: 105%;
+			// 	mask-size: 105%;
+			// }
 		}
 	}
 </style>

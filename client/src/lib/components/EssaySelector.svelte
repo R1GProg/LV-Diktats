@@ -1,8 +1,9 @@
 <script lang="ts">
-	import store, { SortMode, type Stores } from "$lib/ts/stores";
+	import store, { type Stores } from "$lib/ts/stores";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
-	import type { Submission, SubmissionID, SubmissionState } from "@shared/api-types";
+	import type { SubmissionID, SubmissionState } from "@shared/api-types";
 	import type { MistakeId } from "@shared/diff-engine";
+	import config from "$lib/config.json";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
@@ -13,7 +14,6 @@
 	const sortedSubmissions = store("sortedSubmissions") as Stores["sortedSubmissions"];
 
 	let activeIndex = 0;
-	let noData = true;
 	let submissionModal: SubmissionModal;
 
 	let submissionState: SubmissionState | null = null;
@@ -72,28 +72,31 @@
 	}
 
 	async function initWorkspace() {
-		noData = false;
+		let nextIndex: number | null;
+		const savedID = localStorage.getItem("activeSubmissionID");
 
-		activeIndex = 0;
-		const nextIndex = await getNextUngradedIndex(0);
+		if (config.persistentActiveSubmission && savedID) {
+			$sort = Number(localStorage.getItem("sortMode"));
+			activeIndex = $sortedSubmissions!.findIndex((s) => s.id === savedID);
+			nextIndex = activeIndex;
+		} else {
+			activeIndex = 0;
+			nextIndex = await getNextUngradedIndex(0);
+		}
 
 		if (nextIndex === null) return;
 
 		activeIndex = nextIndex;
 		selectIndex(activeIndex);
 	}
-
-	$: if ($activeWorkspaceID !== null) {
-		initWorkspace();
-	} else {
-		noData = true;
-	}
-
+	
 	function onSortChange() {
+		if (config.persistentActiveSubmission) {
+			localStorage.setItem("sortMode", $sort.toString());
+		}
+
 		initWorkspace();
 	}
-
-	$: if ($sortedSubmissions !== null) onSortChange();
 
 	function onSubmissionStateClick(newState: SubmissionState) {
 		if ($activeSubmissionID === null || $activeWorkspaceID === null) return;
@@ -102,25 +105,39 @@
 
 		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
 	}
+
+	function onActiveSubmissionChange(id: SubmissionID | null) {
+		if (!config.persistentActiveSubmission) return;
+		
+		if (id === null) {
+			localStorage.removeItem("activeSubmissionID");
+		} else {
+			localStorage.setItem("activeSubmissionID", id);
+		}
+	}
+
+	$: if ($activeWorkspaceID !== null) initWorkspace();
+	$: if ($sortedSubmissions !== null) onSortChange();
+	$: if ($workspace) onActiveSubmissionChange($activeSubmissionID);
 </script>
 
 <div class="container">
-	<h2 class="mainid">{noData ? "Nav datu" : `ID${$activeSubmissionID}`}</h2>
+	<h2 class="mainid">{$activeWorkspaceID ? `ID${$activeSubmissionID}` : `Nav datu`}</h2>
 	<div class="status-container">
 		<button
 			class="status-rejected"
 			class:active={submissionState === "REJECTED"}
-			disabled={noData}
+			disabled={$activeWorkspaceID === null}
 			on:click={() => { onSubmissionStateClick("REJECTED") }}
 		>Nelabos</button>
 		<button
 			class="status-done"
 			class:active={submissionState === "DONE"}
-			disabled={noData}
+			disabled={$activeWorkspaceID === null}
 			on:click={() => { onSubmissionStateClick("DONE") }}
 		>Izlabots</button>
 	</div>
-	{#if !noData}
+	{#if $activeWorkspaceID !== null}
 	<div class="selector">
 		<button class="prev" on:click={() => { changeSelectionBy(-1) }}></button>
 		<span>{activeIndex + 1}/{$sortedSubmissions?.length}</span>

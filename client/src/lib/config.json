@@ -7,5 +7,6 @@
 	"localWorkspacesSingleSession": false,
 	"highlightDelay": 200,
 	"debug": true,
-	"debugWorkspaceId": "debugworkspaceid"
+	"debugWorkspaceId": "debugworkspaceid",
+	"persistentActiveSubmission": true
 }
