@@ -173,11 +173,8 @@
 		}
 	}
 
-	function onMistakeClick(ev: CustomEvent) {
-		if (
-			$mode !== ToolbarMode.MERGE
-			&& $mode !== ToolbarMode.REGISTER
-		) return;
+	async function onMistakeClick(ev: CustomEvent) {
+		if ($mode !== ToolbarMode.REGISTER) return;
 
 		const highlightId = ev.detail.id;
 		const mistakeId = highlightMap[highlightId] ?? null;
@@ -200,7 +197,7 @@
 	}
 
 	function onSelection(ev: CustomEvent) {
-		if ($mode !== ToolbarMode.MERGE) return;
+		if ($mode !== ToolbarMode.REGISTER) return;
 
 		const selection = ev.detail.selection as Selection;
 

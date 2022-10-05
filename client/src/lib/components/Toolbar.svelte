@@ -42,12 +42,12 @@
 			on:click={() => { onBtnClick(ToolbarMode.IGNORE) }}
 		></button>
 		<span class:active={$mode === ToolbarMode.IGNORE}>Izņemt tekstu</span>
-		<button
+		<!-- <button
 			class="btn-merge"
 			class:active={$mode === ToolbarMode.MERGE}
 			on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
 		></button>
-		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span>
+		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span> -->
 		<button
 			class="btn-register"
 			class:active={$mode === ToolbarMode.REGISTER}
@@ -156,13 +156,13 @@
 				mask-size: 100%;
 			}
 
-			&.btn-merge {
-				-webkit-mask-image: url(/icons/icon-merge.svg);
-				mask-image: url(/icons/icon-merge.svg);
+			// &.btn-merge {
+			// 	-webkit-mask-image: url(/icons/icon-merge.svg);
+			// 	mask-image: url(/icons/icon-merge.svg);
 
-				-webkit-mask-size: 90%;
-				mask-size: 90%;
-			}
+			// 	-webkit-mask-size: 90%;
+			// 	mask-size: 90%;
+			// }
 
 			&.btn-register {
 				-webkit-mask-image: url(/icons/icon-register.svg);

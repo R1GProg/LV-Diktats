@@ -116,7 +116,7 @@
 		}
 	}
 
-	$: if ($activeWorkspaceID !== null) initWorkspace();
+	$: if ($activeWorkspaceID !== null && $sortedSubmissions !== null) initWorkspace();
 	$: if ($sortedSubmissions !== null) onSortChange();
 	$: if ($workspace) onActiveSubmissionChange($activeSubmissionID);
 </script>

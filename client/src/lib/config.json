@@ -4,7 +4,7 @@
 	"pilotMode": true,
 	"incompleteFraction": 0.75,
 	"cacheSingleSession": true,
-	"localWorkspacesSingleSession": false,
+	"localWorkspacesSingleSession": true,
 	"highlightDelay": 200,
 	"debug": true,
 	"debugWorkspaceId": "debugworkspaceid",

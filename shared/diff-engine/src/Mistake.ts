@@ -1,7 +1,6 @@
 import { Action, ActionData } from "./Action";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
-import { getMaxElement, getMinElement } from "./util";
 
 export type Bounds = { start: number, end: number };
 export type MistakeType = "ADD" | "DEL" | "MIXED";

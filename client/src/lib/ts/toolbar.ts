@@ -4,9 +4,9 @@ export enum ToolbarMode {
 	READ,
 	EDIT,
 	IGNORE,
-	MERGE,
+	// MERGE,
 	REGISTER,
-	RESUB
+	// RESUB
 }
 
 export interface ToolbarModeEvent {

@@ -111,12 +111,12 @@ export default class Diff {
 				subtype: a.item.type === "PUNCT" ? "OTHER" : "WORD",
 				boundsDiff: { start: indexStart, end: indexStart + len },
 				boundsCheck: {
-					start: a.indexCheck,
-					end: a.indexCheck + (a.type === "DEL" ? len : 0)
+					start: a.type === "DEL" ? a.item.index : a.indexCheck,
+					end: a.type === "DEL" ? a.item.index + len : a.indexCheck
 				},
 				boundsCorrect: {
-					start: a.indexCorrect,
-					end: a.indexCorrect + (a.type === "ADD" ? len : 0)
+					start: a.type === "ADD" ? a.item.index : a.indexCorrect,
+					end: a.type === "ADD" ? (a.item.index + len) : a.indexCorrect
 				},
 				word: a.item.content
 			}));
