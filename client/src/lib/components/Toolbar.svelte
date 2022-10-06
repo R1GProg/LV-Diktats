@@ -123,6 +123,9 @@
 
 			&.active {
 				color: $COL_FG_REG;
+				text-decoration: underline;
+				text-decoration-thickness: 2px;
+				text-underline-offset: 3px;
 			}
 		}
 
