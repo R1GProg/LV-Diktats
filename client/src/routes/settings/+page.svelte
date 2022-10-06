@@ -14,6 +14,8 @@
 	async function clearWorkspaceData() {
 		const db = await $localWorkspaceDatabase;
 		db.clear();
+
+		location.replace("/");
 	}
 </script>
 

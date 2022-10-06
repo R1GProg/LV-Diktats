@@ -41,6 +41,8 @@
 				desc = "";
 				ignore = false;
 				edit = false;
+				isVariation = false;
+				variation = "";
 			} else {
 				const existingEntry = register.find((e) => e.id === registerId);
 
