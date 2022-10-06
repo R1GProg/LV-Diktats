@@ -36,38 +36,51 @@
 	});
 </script>
 
-<table class="container">
-	{#if $workspace !== null}
-	<tr class="head">
-		<th class="head-word">Kļūdas</th>
-		<th class="head-desc">Apraksts</th>
-		<th class="head-iserror">Kļūda/Nekļūda</th>
-		<th class="head-count">Gadījumu skaits</th>
-	</tr>
-	{#if register.length > 0}
-		{#each register as entry (entry.id)}
-		<tr data-id={entry.id} on:click={onEntryClick}>
-			<td class="entry-words">
-				{#each Object.values(entry._mistakeWords ?? {}) as word}
-				{@const adjWord = word.replace(/\.\./g, "")}
-				<span>{adjWord.length > 30 ? `${adjWord.substring(0, 30).trim()}...` : adjWord}</span>
-				{/each}
-			</td>
-			<td class="desc"><span>{entry.description}</span></td>
-			<td><span>{entry.ignore ? "X" : "+"}</span></td>
-			<td><span>{entry.count}</span></td>
+<div class="outer-container">
+	<table class="container">
+		{#if $workspace !== null}
+		<tr class="head">
+			<th class="head-word">Kļūdas</th>
+			<th class="head-desc">Apraksts</th>
+			<th class="head-iserror">Kļūda/Nekļūda</th>
+			<th class="head-count">Gadījumu skaits</th>
 		</tr>
-		{/each}
-	{/if}
-	{:else}
-	<h2>Nav izvēlēti dati</h2>
-	{/if}
-</table>
+		{#if register.length > 0}
+			{#each register as entry}
+			<tr data-id={entry.id} on:click={onEntryClick}>
+				<td class="entry-words">
+					{#each Object.values(entry._mistakeWords ?? {}) as word}
+					{@const adjWord = word.replace(/\.\./g, "")}
+					<span>{adjWord.length > 30 ? `${adjWord.substring(0, 30).trim()}...` : adjWord}</span>
+					{/each}
+				</td>
+				<td class="desc"><span>{entry.description}</span></td>
+				<td><span>{entry.ignore ? "X" : "+"}</span></td>
+				<td><span>{entry.count}</span></td>
+			</tr>
+			{/each}
+		{/if}
+		{:else}
+		<h2>Nav izvēlēti dati</h2>
+		{/if}
+	</table>
+</div>
 
 <RegisterEntryModal bind:this={modal} />
 
 <style lang="scss">
 	@import "../../lib/scss/global";
+
+	.outer-container {
+		@include scrollbar;
+
+		overflow-y: auto;
+		max-height: 85vh;
+		margin-top: 5vh;
+		width: 75vw;
+		margin-left: auto;
+		margin-right: auto;
+	}
 
 	.container {
 		// display: grid;
@@ -75,7 +88,6 @@
 		color: $COL_FG_REG;
 		// justify-content: center;
 		text-align: center;
-		margin: 5vh auto;
 		border-collapse: collapse;
 		border-spacing: 0;
 
