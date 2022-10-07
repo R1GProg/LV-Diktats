@@ -137,14 +137,17 @@ export class Mistake {
 		const delMistakes = mistakes.filter((m) => m.type !== "ADD");
 		const addMistakes = mistakes.filter((m) => m.type !== "DEL");
 
+		const checkMistakeArr = delMistakes.length === 0 ? mistakes : delMistakes;
+		const correctMistakeArr = addMistakes.length === 0 ? mistakes : addMistakes;
+
 		const boundsCheck = {
-			start: Math.min(...((delMistakes ?? mistakes).map((m) => m.boundsCheck.start))),
-			end: Math.max(...((delMistakes ?? mistakes).map((m) => m.boundsCheck.end)))
+			start: Math.min(...(checkMistakeArr.map((m) => m.boundsCheck.start))),
+			end: Math.max(...(checkMistakeArr.map((m) => m.boundsCheck.end)))
 		};
 
 		const boundsCorrect = {
-			start: Math.min(...((addMistakes ?? mistakes).map((m) => m.boundsCorrect.start))),
-			end: Math.max(...((addMistakes ?? mistakes).map((m) => m.boundsCorrect.end)))
+			start: Math.min(...(correctMistakeArr.map((m) => m.boundsCorrect.start))),
+			end: Math.max(...(correctMistakeArr.map((m) => m.boundsCorrect.end)))
 		};
 
 		const boundsDiff = {
