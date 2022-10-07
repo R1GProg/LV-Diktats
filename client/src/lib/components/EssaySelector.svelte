@@ -4,6 +4,7 @@
 	import type { SubmissionID, SubmissionState } from "@shared/api-types";
 	import type { MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
+	import { exportSubmission } from "$lib/ts/SubmissionExport";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
@@ -87,6 +88,9 @@
 
 		activeIndex = nextIndex;
 		selectIndex(activeIndex);
+
+		const subm = await $activeSubmission;
+		if (subm !== null) console.log(exportSubmission(subm, (await $workspace)!));
 	}
 	
 	function onSortChange() {
@@ -105,7 +109,7 @@
 		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
 	}
 
-	function onActiveSubmissionChange(id: SubmissionID | null) {
+	async function onActiveSubmissionChange(id: SubmissionID | null) {
 		if (!config.persistentActiveSubmission) return;
 		
 		if (id !== null) {
