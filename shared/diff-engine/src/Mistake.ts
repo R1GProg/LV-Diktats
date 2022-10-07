@@ -1,7 +1,6 @@
 import { Action, ActionData } from "./Action";
 import { hash } from "./xxhash";
 import { v4 as uuidv4 } from "uuid";
-import { getMaxElement, getMinElement } from "./util";
 
 export type Bounds = { start: number, end: number };
 export type MistakeType = "ADD" | "DEL" | "MIXED";
@@ -116,6 +115,16 @@ export class Mistake {
 	}
 
 	static mergeMistakes(...mistakes: Mistake[]) {
+		// Unwrap all previously merged mistakes
+		mistakes.forEach((m, i) => {
+			if (m.subtype !== "MERGED") return;
+
+			mistakes.splice(i, 1);
+			mistakes.push(...Mistake.unmergeMistake(m));
+		});
+
+		mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
 		const mergedActions = mistakes.flatMap((m) => m.actions);
 		mergedActions.sort((a, b) => a.indexDiff - b.indexDiff);
 
@@ -124,14 +133,21 @@ export class Mistake {
 
 		const type: MistakeType = isAdd ? "ADD" : (isDel ? "DEL" : "MIXED");
 		
+		// Both include MIXED mistakes
+		const delMistakes = mistakes.filter((m) => m.type !== "ADD");
+		const addMistakes = mistakes.filter((m) => m.type !== "DEL");
+
+		const checkMistakeArr = delMistakes.length === 0 ? mistakes : delMistakes;
+		const correctMistakeArr = addMistakes.length === 0 ? mistakes : addMistakes;
+
 		const boundsCheck = {
-			start: Math.min(...mistakes.map((m) => m.boundsCheck.start)),
-			end: Math.max(...mistakes.map((m) => m.boundsCheck.end))
+			start: Math.min(...(checkMistakeArr.map((m) => m.boundsCheck.start))),
+			end: Math.max(...(checkMistakeArr.map((m) => m.boundsCheck.end)))
 		};
 
 		const boundsCorrect = {
-			start: Math.min(...mistakes.map((m) => m.boundsCorrect.start)),
-			end: Math.max(...mistakes.map((m) => m.boundsCorrect.end))
+			start: Math.min(...(correctMistakeArr.map((m) => m.boundsCorrect.start))),
+			end: Math.max(...(correctMistakeArr.map((m) => m.boundsCorrect.end)))
 		};
 
 		const boundsDiff = {

@@ -49,6 +49,10 @@ export default class DiffONP<Item> {
 		this.n = this.b.length;
 
 		this.stringsReversed = this.a !== check;
+		this.sequence = [];
+		this.dist = null;
+		this.pathposi = [];
+		this.path = [];
 	}
 
 	calc() {

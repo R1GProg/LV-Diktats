@@ -1,6 +1,6 @@
-let hashFunc: any | null = null;
+export let hashFunc: any | null = null;
 
-async function initXXHash() {
+export async function initXXHash() {
 	if (hashFunc !== null) return;
 
 	// TODO: Use the Native implementation when running in Node

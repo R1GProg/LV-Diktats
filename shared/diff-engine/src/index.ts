@@ -2,7 +2,6 @@ import { charIsWordDelimeter } from "./langUtil";
 import { Action } from "./Action";
 import { Mistake } from "./Mistake";
 import DiffONP, { DiffAction } from "./DiffONP";
-import { logger } from "yatsl";
 
 export interface WordItem {
 	content: string,
@@ -21,6 +20,8 @@ export default class Diff {
 	private correctSequence: WordItem[] | null = null;
 	private printSubAddCharacters = true;
 
+	private rawSequence: DiffAction<WordItem>[] | null = null;
+
 	constructor(check: string, correct: string, printSubAddCharacters = true) {
 		this.printSubAddCharacters = printSubAddCharacters;
 		this.setData(check, correct);
@@ -38,6 +39,10 @@ export default class Diff {
 
 		this.checkSequence = Diff.splitText(check);
 		this.correctSequence = Diff.splitText(correct);
+	}
+
+	setRawMistakes(mistakes: Mistake[]) {
+		this.mistakes = mistakes;
 	}
 
 	private static splitText(text: string): WordItem[] {
@@ -74,14 +79,16 @@ export default class Diff {
 		return output;
 	}
 
-	calc() {
+	calc(postprocess = true) {
 		this.diffAlg.calc();
 		const diffData = this.diffAlg.getSequence();
-		this.postprocess(diffData);
+		this.rawSequence = diffData;
+
+		if (postprocess) this.postprocess(diffData);
 	}
 
-	private postprocess(diffData: DiffAction<WordItem>[]) {
-		this.mistakes = Diff.parseMistakes(this.checkText, diffData);
+	postprocess(diffData: DiffAction<WordItem>[]) {
+		this.mistakes = Diff.parseMistakes(diffData);
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 		this.consolidatePunctWhitespace();
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
@@ -89,7 +96,7 @@ export default class Diff {
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 	}
 
-	private static parseMistakes(text: string, diffData: DiffAction<WordItem>[]) {
+	static parseMistakes(diffData: DiffAction<WordItem>[]) {
 		// const sortedDiff = diffData.sort((a, b) => a.indexCheck - b.indexCheck);
 		let delOffset = 0;
 		let addOffset = 0;
@@ -111,12 +118,12 @@ export default class Diff {
 				subtype: a.item.type === "PUNCT" ? "OTHER" : "WORD",
 				boundsDiff: { start: indexStart, end: indexStart + len },
 				boundsCheck: {
-					start: a.indexCheck,
-					end: a.indexCheck + (a.type === "DEL" ? len : 0)
+					start: a.type === "DEL" ? a.item.index : a.indexCheck,
+					end: a.type === "DEL" ? a.item.index + len : a.indexCheck
 				},
 				boundsCorrect: {
-					start: a.indexCorrect,
-					end: a.indexCorrect + (a.type === "ADD" ? len : 0)
+					start: a.type === "ADD" ? a.item.index : a.indexCorrect,
+					end: a.type === "ADD" ? (a.item.index + len) : a.indexCorrect
 				},
 				word: a.item.content
 			}));
@@ -125,7 +132,7 @@ export default class Diff {
 		return mistakes;
 	}
 
-	private consolidatePunctWhitespace() {
+	consolidatePunctWhitespace() {
 		const punctMistakes = this.mistakes.filter((mistake) => mistake.subtype === "OTHER");
 
 		for (let i = 0; i < punctMistakes.length - 1; i++) {
@@ -153,7 +160,7 @@ export default class Diff {
 		}
 	}
 
-	private parseWordSubstitutions() {
+	parseWordSubstitutions() {
 		for (let i = 0; i < this.mistakes.length; i++) {
 			const m = this.mistakes[i];
 
@@ -276,20 +283,14 @@ export default class Diff {
 		return this.mistakes;
 	}
 
-	getDistance(){
+	getDistance() {
 		return this.mistakes.length;
+	}
+
+	getRawSequence() {
+		return this.rawSequence;
 	}
 }
 
 export * from "./Mistake";
 export * from "./Action";
-
-// (async () => {
-// 	const check = "Test Hellw, test world!";
-// 	const correct = "Test Hello test worldw!";
-
-// 	const d = new Diff(check, correct);
-// 	d.calc();
-
-// 	logger.info(d.getMistakes());
-// })();

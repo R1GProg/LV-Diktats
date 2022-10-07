@@ -5,6 +5,9 @@ client/node_modules
 .env
 
 build
+build.tar.gz
+diktify-client*.tar.gz
+coverage
 
 .DS_Store
 .obsidian

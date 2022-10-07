@@ -13,7 +13,8 @@ export interface Workspace {
 	name: string,
 	template: string,
 	submissions: Record<SubmissionID, SubmissionPreview>,
-	register: RegisterEntry[]
+	register: RegisterEntry[],
+	local: boolean,
 }
 
 export interface WorkspacePreview {
@@ -118,11 +119,13 @@ export interface SubmissionDataEventData {
 }
 
 export interface RegisterUpdateEventData {
-	data: {
-		entry: RegisterEntry,
-		type: RegisterUpdateEventType
-	}[],
+	data: RegisterUpdateEventEntryData[],
 	workspace: UUID
+}
+
+export interface RegisterUpdateEventEntryData {
+	entry: RegisterEntry,
+	type: RegisterUpdateEventType
 }
 
 export interface SubmissionRegenEventData {

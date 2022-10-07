@@ -2,7 +2,7 @@
 	import EssayBox from "./EssayBox.svelte";
 	import { subToToolbarMode, ToolbarMode, type ToolbarModeEvent } from "$lib/ts/toolbar";
 	import type { Submission } from "@shared/api-types";
-	import type { Bounds } from "@shared/diff-engine";
+	import type { Bounds, MistakeId } from "@shared/diff-engine";
 	import { onMount } from "svelte";
 	import type { Stores } from "$lib/ts/stores";
 	import store from "$lib/ts/stores";
@@ -13,6 +13,7 @@
 	const workspace = store("workspace") as Stores["workspace"];
 	const mode = store("mode") as Stores["mode"];
 	const ds = store("ds") as Stores["ds"];
+	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 
 	let essayEl: EssayBox;
 	let haveUnsavedIgnores = false;
@@ -90,10 +91,7 @@
 		haveUnsavedIgnores = true;
 	}
 
-	async function onToolbarModeChange(ev: ToolbarModeEvent) {
-		if (ev.prevMode !== ToolbarMode.IGNORE) return;
-		if (!haveUnsavedIgnores) return;
-
+	function setNewIgnores() {
 		// Calculate the bounds of each highlight
 		const bounds: Bounds[] = [];
 		let curOffset = 0;
@@ -111,15 +109,87 @@
 			curOffset += textLen;
 		}
 
-		haveUnsavedIgnores = false;
-
 		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, bounds);
 	}
 
+	async function onToolbarModeChange(ev: ToolbarModeEvent) {
+		if (ev.prevMode !== ToolbarMode.IGNORE) return;
+		if (!haveUnsavedIgnores) return;
+
+		haveUnsavedIgnores = false;
+		setNewIgnores();
+	}
+
+	async function onBodyKeypress(ev: KeyboardEvent) {
+		if (ev.key !== "Enter") return;
+		if ($mode !== ToolbarMode.IGNORE) return;
+		
+		haveUnsavedIgnores = false;
+		setNewIgnores();
+	}
+
+	function adjustRangeForIgnores(bounds: Bounds) {
+		if (!essayEl) return;
+
+		const nodes = essayEl.getTextContainer().childNodes;
+		let curTextOffset = 0;
+		let targetNodeIndex = 0;
+		let ignoreTextLength = 0;
+
+		for (let i = 0; i < nodes.length; i++) {
+			const nodeLen = nodes[i].textContent!.length;
+
+			if (nodes[i].nodeType === document.ELEMENT_NODE) {
+				ignoreTextLength += nodeLen;
+			} else if (nodeLen + curTextOffset > bounds.start + ignoreTextLength) {
+				targetNodeIndex = i;
+				break;
+			}
+
+			curTextOffset += nodeLen;
+		}
+
+		const target = nodes[targetNodeIndex];
+		const range = document.createRange();
+
+		range.setStart(target, bounds.start - curTextOffset + ignoreTextLength);
+		range.setEnd(target, bounds.end - curTextOffset + ignoreTextLength);
+
+		return range;
+	}
+
+	async function onMistakeHover(id: MistakeId | null) {
+		if (!essayEl) return;
+		if ($mode === ToolbarMode.IGNORE) return;
+		
+		essayEl.clearHighlightsByClass("highlight-extmistake");
+
+		if (id === null) return;
+
+		const subm = await $activeSubmission;
+		const mistake = subm?.data.mistakes.find((m) => m.id === id);
+		
+		if (!mistake || mistake.type === "ADD") return;
+
+		essayEl.getTextContainer().normalize();
+		const range = adjustRangeForIgnores(mistake.boundsCheck);
+
+		if (!range) return;
+
+		essayEl.highlightRange(
+			range,
+			mistake.type === "MIXED" ? "hl-22" : "hl-0",
+			"highlight-extmistake"
+		);
+	}
+
 	$: onSubmissionChange($activeSubmission);
+	$: onMistakeHover($hoveredMistake);
 
 	onMount(() => {
 		subToToolbarMode(onToolbarModeChange);
+
+		document.addEventListener("keypress", onBodyKeypress);
 	});
 </script>
 

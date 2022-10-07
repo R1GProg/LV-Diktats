@@ -41,10 +41,10 @@
 		// 	}
 		// }
 	} @else {
-		background-color: $COL_BG_LIGHT;
+		background-color: $COL_BGFG_REG;
 
 		&:hover {
-			background-color: $COL_BG_REG;
+			background-color: $COL_BG_LIGHT;
 		}
 	
 		&.active {

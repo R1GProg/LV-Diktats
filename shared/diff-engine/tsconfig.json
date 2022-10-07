@@ -1,4 +1,10 @@
 {
+  "exclude": [
+    "node_modules",
+    "build",
+    "__tests__",
+    "**/*.config.ts"
+  ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 

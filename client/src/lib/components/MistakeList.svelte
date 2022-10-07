@@ -6,6 +6,7 @@
 	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
 	import { getRegisterId, mistakeInRegister } from "$lib/ts/util";
 	import type MistakeSelection from "$lib/ts/MistakeSelection";
+	import ProcessingStatus from "./modals/status/ProcessingStatus.svelte";
 
 	const mode = store("mode") as Stores["mode"];
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
@@ -21,6 +22,7 @@
 
 	let listContainer: HTMLElement;
 	let regModal: MistakeRegistrationModal;
+	let processingModal: ProcessingStatus;
 
 	async function onMistakeHover(ev: Event) {
 		const target = ev.currentTarget as HTMLElement;
@@ -29,24 +31,35 @@
 	}
 
 	function onMistakeHoverOut(ev: Event) {
-		const target = ev.currentTarget as HTMLElement;
-		const id = target.dataset.id!;
 		$hoveredMistake = null;
 	}
 
 	async function onMistakeClick(ev: Event) {
+		if ($mode !== ToolbarMode.REGISTER) return;
+
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		$selectedMistakes.toggle(id);
 	}
 
-	async function onMistakeSelectionChange(mistakeSelection: MistakeSelection) {
-		const selection = mistakeSelection.get();
-
-		if ($mode !== ToolbarMode.REGISTER) return;
-		if (selection.length === 0) return;
+	function onMistakeSelectionChange(selection: MistakeSelection) {
+		if (selection.size() !== 1) return;
 		
-		const id = selection[0];
-		const mHash = mistakes.find((m) => m.id === id)!.hash;
+		const selID = selection.get()[0];
+		const selMistake = mistakes.find((m) => m.id === selID)!;
+
+		if (!mistakeInRegister(selMistake.hash, register)) return;
+
+		mistakeRegisterHandler(selID);
+	}
+
+	async function mistakeRegisterHandler(id: MistakeId) {
+		if ($mode !== ToolbarMode.REGISTER) return;
+
+		const activeSubm = await $activeSubmission;
+
+		if (activeSubm === null) return;
+
+		const mHash = activeSubm.data.mistakes.find((m) => m.id === id)!.hash;
 		const regId = getRegisterId(mHash, register);
 
 		try {
@@ -73,27 +86,58 @@
 		}
 	}
 
-	$: onMistakeSelectionChange($selectedMistakes);
-
 	async function onMistakeRightClick(ev: Event) {
-		if ($mode !== ToolbarMode.MERGE) return;
+		if ($mode !== ToolbarMode.REGISTER) return;
 
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		const mistake = mistakes.find((m) => m.id === id);
 
 		if (!mistake || mistake.subtype !== "MERGED") return;
 
-		$ds.mistakeUnmerge(mistake.hash, $activeWorkspaceID!);
+		const unmergePromise = $ds.mistakeUnmerge(mistake.hash, $activeWorkspaceID!);
+		processingModal.open(unmergePromise);
 	}
 
 	async function onBodyKeypress(ev: KeyboardEvent) {
 		if (ev.key !== "Enter") return;
-		if ($mode !== ToolbarMode.MERGE) return;
-		if ($selectedMistakes.size() <= 1) return;
+		if ($mode !== ToolbarMode.REGISTER) return;
+		if ($selectedMistakes.size() === 0) return;
 
-		const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)!.hash);
-		await $ds.mistakeMerge(hashes, $activeWorkspaceID!);
+		let id: string = $selectedMistakes.get()[0];
 
+		if ($selectedMistakes.size() !== 1) {
+			const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)?.hash);
+
+			const mergePromise = $ds.mistakeMerge(hashes.filter((h) => h !== undefined) as string[], $activeWorkspaceID!);
+
+			processingModal.open(mergePromise);
+			const submIds = await mergePromise;
+
+			if (submIds === null) return;
+
+			const subm = await $activeSubmission;
+			
+			if (subm === null) return;
+
+			const mergedMistake = subm.data.mistakes.find((m) => {
+				if (m.subtype !== "MERGED") return false;
+
+				const childHashes = m.children.map((c) => c.hash);
+				
+				if (childHashes.length !== hashes.length) return false;
+
+				return childHashes.every((h) => hashes.includes(h));
+			});
+
+			if (!mergedMistake) {
+				console.warn(`Unable to find merged mistake to register (${hashes.join(", ")})`);
+				return;
+			}
+
+			id = mergedMistake.id;
+		}
+
+		mistakeRegisterHandler(id);
 		$selectedMistakes.clear();
 	}
 
@@ -124,8 +168,10 @@
 		register = ws.register;
 	}
 
+	$: onMistakeSelectionChange($selectedMistakes);
 	$: onSubmissionChange($activeSubmission);
 	$: onWorkspaceChange($workspace);
+	$: if ($mode !== ToolbarMode.REGISTER) $selectedMistakes.clear();
 </script>
 
 <svelte:body on:keypress={onBodyKeypress}/>
@@ -151,7 +197,10 @@
 					boundsCheck: m.boundsCheck,
 					boundsCorrect: m.boundsCorrect,
 					boundsDiff: m.boundsDiff,
-					mType: m.subtype
+					mType: m.subtype,
+					hash: m.hash,
+					word: m.word,
+					wordCorrect: m.wordCorrect
 				}, null, 2)}
 			>
 
@@ -174,6 +223,7 @@
 </div>
 
 <MistakeRegistrationModal bind:this={regModal} />
+<ProcessingStatus bind:this={processingModal} />
 
 <style lang="scss">
 	@import "../scss/global.scss";

@@ -17,7 +17,7 @@ const config = {
 	}),
 	kit: {
 		adapter: adapter({ out: "build" }),
-		prerender: { enabled: false }
+		// prerender: { enabled: false }
 	},
 };
 

@@ -1,10 +1,12 @@
 {
 	"endpointUrl": "http://localhost:3001",
 	"socketUrl": "ws://localhost:3001",
-	"pilotMode": false,
+	"pilotMode": true,
 	"incompleteFraction": 0.75,
-	"autosaveTime": 15,
 	"cacheSingleSession": true,
+	"localWorkspacesSingleSession": false,
 	"highlightDelay": 200,
-	"debug": false
+	"debug": true,
+	"debugWorkspaceId": "debugworkspaceid",
+	"persistentActiveSubmission": true
 }

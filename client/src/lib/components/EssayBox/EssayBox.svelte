@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from "svelte";
 	import type Highlighter from "web-highlighter";
-	import HighlightTooltip from "../HighlightTooltip.svelte";
 
 	export let editable = false;
 	export let text = "";
 	let textContainer: HTMLElement;
+	let mainContainer: HTMLElement;
 	let highlighter: Highlighter;
 	let isDragging = false;
 
@@ -162,6 +162,17 @@
 		}
 	}
 
+	export function clearHighlights() {
+		highlighter.removeAll();
+	}
+
+	export function clearHighlightsByClass(className: string) {
+		for (const hl of textContainer.querySelectorAll<HTMLElement>(`.highlight.${className}`)) {
+			const id = hl.dataset.highlightId as string;
+			highlighter.remove(id);
+		}
+	}
+
 	function onHighlightHover(id: string) {
 		highlighter.addClass("hover", id);
 		dispatch("highlight-hover", { id });
@@ -190,6 +201,14 @@
 		highlighter.remove(id);
 	}
 
+	export function unattachTextFromDOM() {
+		textContainer.remove();
+	}
+
+	export function reattachTextToDOM() {
+		mainContainer.appendChild(textContainer);
+	}
+
 	function onMouseDown() {
 		isDragging = true;
 	}
@@ -200,7 +219,7 @@
 		const selection = window.getSelection();
 
 		if (selection === null) return;
-		if (!textContainer.contains(selection.anchorNode)) return;
+		if (!textContainer?.contains(selection.anchorNode)) return;
 
 		dispatch("selection", { selection });
 	}
@@ -232,7 +251,7 @@
 	});
 </script>
 
-<div class="textbox">
+<div class="textbox" bind:this={mainContainer}>
 	<span
 		class="container"
 		bind:this={textContainer}
@@ -267,6 +286,7 @@
 	.container {
 		width: 100%;
 		white-space: pre-line;
+		display: inline-block;
 	}
 
 	.container:focus {
@@ -328,7 +348,32 @@
 		}
 
 		&.hl-status-registered {
-			filter: brightness(25%);
+			&.hl-0 {
+				background-color: $COL_MISTAKE_DEL_DARK;
+				color: #AAA;
+			}
+
+			&.hl-1 {
+				background-color: $COL_MISTAKE_ADD_DARK;
+				color: #AAA;
+			}
+
+			&.hl-2 {
+				background-color: rgba($COL_MISTAKE_MIXED_DARK, 0.25);
+			}
+
+			&.hl-20, &.hl-21, &.hl-22 {
+				background-color: $COL_MISTAKE_MIXED_DARK;
+				filter: brightness(75%);
+			}
+
+			&.hl-20 {
+				color: $COL_MISTAKE_DEL;
+			}
+
+			&.hl-21 {
+				color: $COL_MISTAKE_ADD;
+			}
 		}
 
 		&.hl-status-selected {

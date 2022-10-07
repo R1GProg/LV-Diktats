@@ -42,18 +42,12 @@
 			on:click={() => { onBtnClick(ToolbarMode.IGNORE) }}
 		></button>
 		<span class:active={$mode === ToolbarMode.IGNORE}>Izņemt tekstu</span>
-		<button
-			class="btn-resub"
-			class:active={$mode === ToolbarMode.RESUB}
-			on:click={() => { onBtnClick(ToolbarMode.RESUB) }}
-		></button>
-		<span class:active={$mode === ToolbarMode.RESUB}>Modificēt kļūdas</span>
-		<button
+		<!-- <button
 			class="btn-merge"
 			class:active={$mode === ToolbarMode.MERGE}
 			on:click={() => { onBtnClick(ToolbarMode.MERGE); }}
 		></button>
-		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span>
+		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span> -->
 		<button
 			class="btn-register"
 			class:active={$mode === ToolbarMode.REGISTER}
@@ -116,7 +110,7 @@
 		}
 
 		span {
-			color: $COL_BG_LIGHT;
+			color: $COL_BGFG_REG;
 			font-family: $FONT_HEADING;
 			white-space: nowrap;
 			font-weight: 400;
@@ -128,7 +122,10 @@
 			transition: color 0.3s;
 
 			&.active {
-				color: $COL_FG_DARK;
+				color: $COL_FG_REG;
+				text-decoration: underline;
+				text-decoration-thickness: 2px;
+				text-underline-offset: 3px;
 			}
 		}
 
@@ -162,13 +159,13 @@
 				mask-size: 100%;
 			}
 
-			&.btn-merge {
-				-webkit-mask-image: url(/icons/icon-merge.svg);
-				mask-image: url(/icons/icon-merge.svg);
+			// &.btn-merge {
+			// 	-webkit-mask-image: url(/icons/icon-merge.svg);
+			// 	mask-image: url(/icons/icon-merge.svg);
 
-				-webkit-mask-size: 90%;
-				mask-size: 90%;
-			}
+			// 	-webkit-mask-size: 90%;
+			// 	mask-size: 90%;
+			// }
 
 			&.btn-register {
 				-webkit-mask-image: url(/icons/icon-register.svg);
@@ -178,13 +175,13 @@
 				mask-size: 95%;
 			}
 
-			&.btn-resub {
-				-webkit-mask-image: url(/icons/icon-resub.svg);
-				mask-image: url(/icons/icon-resub.svg);
+			// &.btn-resub {
+			// 	-webkit-mask-image: url(/icons/icon-resub.svg);
+			// 	mask-image: url(/icons/icon-resub.svg);
 
-				-webkit-mask-size: 105%;
-				mask-size: 105%;
-			}
+			// 	-webkit-mask-size: 105%;
+			// 	mask-size: 105%;
+			// }
 		}
 	}
 </style>

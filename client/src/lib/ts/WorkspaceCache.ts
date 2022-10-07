@@ -26,12 +26,12 @@ export default class WorkspaceCache {
 		});
 
 		openReq.onerror = () => {
-			console.warn(`Error initializing the workspace database! (Error: ${openReq.error})`);
+			console.warn(`Error initializing the workspace cache database! (Error: ${openReq.error})`);
 			this.dbInitReject!();
 		};
 
 		openReq.onsuccess = async () => {
-			console.log("Workspace database initialized!");
+			console.log("Workspace cache database initialized!");
 			this.db = openReq.result;
 
 			if (config.cacheSingleSession) {
@@ -48,7 +48,7 @@ export default class WorkspaceCache {
 				console.warn("Failed to create submission cache object store!");
 				this.dbInitReject!();
 			} else {
-				console.log("Workspace database created!");
+				console.log("Workspace cache database created!");
 				this.dbInitResolve!();
 			}
 		};
@@ -265,7 +265,7 @@ export default class WorkspaceCache {
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
 
-	async removeSubmissionFromCache(id: SubmissionID, workspace: UUID) {
+	async removeSubmissionsFromCache(ids: SubmissionID[], workspace: UUID) {
 		if (this.db === null) {
 			console.warn("Attempt to write before database initialization!");
 			return null;
@@ -280,9 +280,11 @@ export default class WorkspaceCache {
 
 		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
 
-		if (!(id in data)) return;
+		for (const id of ids) {
+			if (!(id in data)) continue;
 
-		delete data[id];
+			delete data[id];
+		}
 
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
