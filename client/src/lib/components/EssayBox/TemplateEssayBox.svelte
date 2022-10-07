@@ -20,8 +20,15 @@
 
 	async function onMistakeHover(id: MistakeId | null) {
 		if (!essay) return;
-		
-		essay.clearHighlightsByClass("highlight-extmistake");
+
+		const container = essay.getTextContainer();
+		const parentContainer = container.parentElement!;
+		const curScroll = parentContainer.scrollTop;
+
+		essay.clearHighlightsByClass("hl-extmistake");
+
+		// Fixes the scroll resetting to the top when deleting the highlight
+		parentContainer.scrollTo({ top: curScroll + 1 });
 
 		if (id === null) return;
 
@@ -30,7 +37,6 @@
 		
 		if (!mistake || mistake.type === "DEL") return;
 
-		const container = essay.getTextContainer();
 		container.normalize();
 		const rootNode = container.firstChild!;
 
@@ -39,11 +45,14 @@
 		range.setStart(rootNode, mistake.boundsCorrect.start);
 		range.setEnd(rootNode, mistake.boundsCorrect.end);
 
-		essay.highlightRange(
+		const hId = essay.highlightRange(
 			range,
 			mistake.type === "MIXED" ? "hl-22" : "hl-1",
-			"highlight-extmistake"
+			"hl-extmistake"
 		);
+
+		const targetEl = essay.getHighlightEls(hId)[0];
+		targetEl.scrollIntoView({ block: "start", behavior: "smooth" });
 	}
 
 	$: onMistakeHover($activeHighlight);
