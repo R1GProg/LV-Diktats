@@ -92,7 +92,6 @@ export default class DiktifyAPI {
 			return db.getWorkspace(config.debugWorkspaceId);
 		}
 
-		// TODO: SERVER FETCH
 		const request = await fetch(`${config.endpointUrl}/api/workspace/${workspaceId}`);
 		const response: Workspace = { ...(await request.json()), local: false};
 		
