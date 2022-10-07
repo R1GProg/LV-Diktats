@@ -180,6 +180,7 @@
 	<div class="list" bind:this={listContainer}>
 		{#each mistakes as m}
 			{@const mInReg = mistakeInRegister(m.hash, register)}
+			{@const word = m.word === " " ? `< >` : (m.word === "\n" ? "\\n" : m.word)}
 			<div
 				data-id={m.id}
 				class="mistake {m.type}"
@@ -204,11 +205,9 @@
 				}, null, 2)}
 			>
 
-				<!-- <span>konservējis</span> -->
 				<span class="mistake-target">
-					{m.word === " " ? `< >` : (m.word === "\n" ? "\\n" : m.word)}
+					{word.length > 30 ? word.substring(0, 30) : word}
 				</span>
-				<!-- <span>ne dārzeņus</span> -->
 			</div>
 		{/each}
 	</div>

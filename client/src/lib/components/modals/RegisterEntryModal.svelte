@@ -111,34 +111,36 @@
 	bind:this={modal}
 >
 	<h3 style="margin-top: -1.5rem;">Reģistrētās kļūdas</h3>
-	<table class="mistake-container">
-		<tr>
-			<th><span>Kļūda</span></th>
-			<th><span>Kļūdu skaits</span></th>
-			<th><span>Iesūtījumu ID</span></th>
-		</tr>
-		{#each mistakes as m (m.hash)}
-		<tr>
-			<td class="mistake-word" title={m.word}>
-				{m.word.length > 50 ? `${m.word.substring(0, 50)}...` : m.word}
-			</td>
-			<td>{m.submissions.length}</td>
-			<td class="mistake-subm" title={m.submissions.join(", ")}>
-				{m.submissions.length > 15
-					? `${m.submissions.slice(0, 15).join(", ")}...`
-					: m.submissions.join(", ")
-				}
-			</td>
-			<td>
-				<button
-					class="delete-btn"
-					title="Atreģistrēt"
-					on:click={() => { onDeleteEntryClick(m.hash) }}
-				></button>
-			</td>
-		</tr>
-		{/each}
-	</table>
+	<div class="mistake-outer-container">
+		<table class="mistake-container">
+			<tr>
+				<th><span>Kļūda</span></th>
+				<th><span>Kļūdu skaits</span></th>
+				<th><span>Iesūtījumu ID</span></th>
+			</tr>
+			{#each mistakes as m (m.hash)}
+			<tr>
+				<td class="mistake-word" title={m.word}>
+					{m.word.length > 50 ? `${m.word.substring(0, 50)}...` : m.word}
+				</td>
+				<td>{m.submissions.length}</td>
+				<td class="mistake-subm" title={m.submissions.join(", ")}>
+					{m.submissions.length > 15
+						? `${m.submissions.slice(0, 15).join(", ")}...`
+						: m.submissions.join(", ")
+					}
+				</td>
+				<td>
+					<button
+						class="delete-btn"
+						title="Atreģistrēt"
+						on:click={() => { onDeleteEntryClick(m.hash) }}
+					></button>
+				</td>
+			</tr>
+			{/each}
+		</table>
+	</div>
 
 	<h3>Ieraksta info</h3>
 	<div class="container">
@@ -177,6 +179,13 @@
 		margin-bottom: 0.5em;
 		margin-top: 1em;
 		font-size: 1.5rem;
+	}
+	
+	.mistake-outer-container {
+		@include scrollbar;
+
+		max-height: 45vh;
+		overflow-y: auto;
 	}
 
 	.mistake-container {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Modal from "./Modal.svelte";
 	import store, { SortMode, type Stores } from "$lib/ts/stores";
-	import { createEventDispatcher } from "svelte";
+	import { createEventDispatcher, onMount } from "svelte";
 	import type { Submission, SubmissionPreview, Workspace } from "@shared/api-types";
 
 	const workspace = store("workspace") as Stores["workspace"];
@@ -12,6 +12,9 @@
 	const dispatch = createEventDispatcher();
 
 	let modal: Modal;
+	let searchQuery: string = "";
+	let filteredSubmissions: SubmissionPreview[] | null = null;
+	let noSearchResults = false;
 
 	export function open() {
 		modal.open();
@@ -22,9 +25,31 @@
 		dispatch("open", { id });
 		modal.close();
 	}
+
+	$: if (searchQuery === "") {
+		noSearchResults = false;
+		filteredSubmissions = $sortedSubmissions;
+	} else if ($sortedSubmissions !== null) {
+		const minimizedQuery = searchQuery.toLowerCase().replace("id", "");
+		const filtered = $sortedSubmissions.filter((subm) => subm.id.toString().startsWith(minimizedQuery));
+
+		if (filtered.length === 0) {
+			noSearchResults = true;
+		} else {
+			noSearchResults = false;
+			filteredSubmissions = filtered;
+		}
+	}
+
+	onMount(() => {
+		$sort = Number(localStorage.getItem("sortMode"));
+	});
 </script>
 
 <Modal title="Visi iesūtījumi" userClose={true} bind:this={modal}>
+	<input type="text" placeholder="Meklēt" bind:value={searchQuery} class="subm-search">
+	<span class="no-search-res" class:enabled={noSearchResults}>ID netika atrasts</span>
+
 	<div class="sortSelect">
 		<select bind:value={$sort}>
 			<option value={SortMode.MISTAKE}>Kārtot pēc kļūdu skaita</option>
@@ -33,8 +58,8 @@
 	</div>
 
 	<div class="listContainer">
-		{#if $sortedSubmissions !== null}
-		{#each $sortedSubmissions as entry (entry.id)}
+		{#if filteredSubmissions !== null}
+		{#each filteredSubmissions as entry (entry.id)}
 			<div
 				data-id={entry.id}
 				data-state={entry.state}
@@ -58,6 +83,32 @@
 
 		margin-bottom: 1rem;
 		width: 100%;
+	}
+
+	.subm-search {
+		$PADDING: 0.1em;
+
+		font-size: 1.25rem;
+		margin-bottom: 0.5em;
+		padding: calc(2 * #{$PADDING}) $PADDING $PADDING $PADDING;
+		width: calc(100% - 3 * $PADDING);
+
+		background-color: $COL_BG_LIGHT;
+		color: $COL_FG_REG;
+		border: 1px solid $COL_BG_DARK;
+	}
+
+	.no-search-res {
+		display: none;	
+		color: $COL_FG_REG;
+		font-family: $FONT_HEADING;
+		width: 100%;
+		text-align: center;
+		margin-bottom: 10px;
+
+		&.enabled {
+			display: block;
+		}
 	}
 
 	.listContainer {

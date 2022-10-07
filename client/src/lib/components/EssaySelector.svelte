@@ -76,7 +76,6 @@
 		const savedID = localStorage.getItem("activeSubmissionID");
 
 		if (config.persistentActiveSubmission && savedID) {
-			$sort = Number(localStorage.getItem("sortMode"));
 			activeIndex = $sortedSubmissions!.findIndex((s) => s.id === savedID);
 			nextIndex = activeIndex;
 		} else {
@@ -109,9 +108,7 @@
 	function onActiveSubmissionChange(id: SubmissionID | null) {
 		if (!config.persistentActiveSubmission) return;
 		
-		if (id === null) {
-			localStorage.removeItem("activeSubmissionID");
-		} else {
+		if (id !== null) {
 			localStorage.setItem("activeSubmissionID", id);
 		}
 	}
