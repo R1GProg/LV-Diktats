@@ -322,6 +322,21 @@ async function fetchMistakeObjectIDByHash(mistakeID: string, workspaceID: string
 	if (!mistake) return null;
 	else return mistake._id;
 }
+// - Get a Mistake Objects by Hash
+async function fetchMistakesByHash(hashes: string, workspaceID: string): Promise<MistakeData[]> {
+	const mistakes = await MistakeDoc.find({ workspace: workspaceID, hash: { $in: hashes } }, { _id: 1, hash: 1 }).lean();
+	if (!mistakes) return [];
+	const processedHashes: string[] = [];
+	const mistakePromises = [];
+	for (const mistake of mistakes) {
+		if (mistake.hash in processedHashes) continue;
+		mistakePromises.push(fetchMistakeByObjectID(mistake._id));
+		processedHashes.push(mistake.hash);
+	}
+	const mistakeDatas = await Promise.all(mistakePromises);
+	const mistakeDataClean = mistakeDatas.filter(x => x) as MistakeData[]; // clear out any nulls
+	return mistakeDataClean;
+}
 // - Get a Submission with a certain ID that's within a Workspace
 export async function fetchSubmissionByID(submissionID: string, workspaceID: string): Promise<Submission | null> {
 	const submissionStore = await SubmissionDoc.findOne({ id: submissionID, workspace: workspaceID }).lean();
