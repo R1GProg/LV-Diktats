@@ -153,8 +153,8 @@
 		display: grid;
 		grid-template-areas: "id" "status" "selector" "openall";
 		justify-content: center;
-		row-gap: 1.5vh;
-		margin-bottom: 3vh;
+		row-gap: 1vh;
+		margin-bottom: 1.5vh;
 	}
 
 	.mainid {

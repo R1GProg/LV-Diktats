@@ -24,6 +24,10 @@
 	let regModal: MistakeRegistrationModal;
 	let processingModal: ProcessingStatus;
 
+	function countRegisteredMistakes(mArr: MistakeData[]) {
+		return mArr.filter((m) => mistakeInRegister(m.hash, register)).length;
+	}
+
 	async function onMistakeHover(ev: Event) {
 		const target = ev.currentTarget as HTMLElement;
 		const id = target.dataset.id!;
@@ -42,6 +46,13 @@
 	}
 
 	function onMistakeSelectionChange(selection: MistakeSelection) {
+		if (selection.size() > 0) {
+			const selEls = selection.get();
+			const firstID = selEls[selEls.length - 1];
+			const targetScrollEl = listContainer.querySelector(`[data-id="${firstID}"]`)!;
+			targetScrollEl.scrollIntoView({ behavior: "smooth" });
+		}
+
 		if (selection.size() !== 1) return;
 		
 		const selID = selection.get()[0];
@@ -99,9 +110,22 @@
 	}
 
 	async function onBodyKeypress(ev: KeyboardEvent) {
-		if (ev.key !== "Enter") return;
 		if ($mode !== ToolbarMode.REGISTER) return;
 		if ($selectedMistakes.size() === 0) return;
+
+		if (ev.key === "Escape") {
+			$selectedMistakes.clear();
+
+			const textSelection = document.getSelection();
+
+			if (textSelection !== null) {
+				textSelection.removeAllRanges();
+			}
+
+			return;
+		}
+
+		if (ev.key !== "Enter") return;
 
 		let id: string = $selectedMistakes.get()[0];
 
@@ -174,7 +198,7 @@
 	$: if ($mode !== ToolbarMode.REGISTER) $selectedMistakes.clear();
 </script>
 
-<svelte:body on:keypress={onBodyKeypress}/>
+<svelte:body on:keydown={onBodyKeypress}/>
 
 <div class="container">
 	<div class="list" bind:this={listContainer}>
@@ -183,7 +207,7 @@
 			{@const word = m.word === " " ? `< >` : (m.word === "\n" ? "\\n" : m.word)}
 			<div
 				data-id={m.id}
-				class="mistake {m.type}"
+				class="mistake {m.type} {m.subtype}"
 				class:hover={$hoveredMistake === m.id}
 				class:merging={$selectedMistakes.has(m.id)}
 				class:registered={mInReg}
@@ -204,10 +228,14 @@
 					wordCorrect: m.wordCorrect
 				}, null, 2)}
 			>
-
+				
 				<span class="mistake-target">
 					{word.length > 30 ? word.substring(0, 30) : word}
 				</span>
+
+				{#if m.subtype === "MERGED"}
+					<div class="mistake-merged-icon"></div>
+				{/if}
 			</div>
 		{/each}
 	</div>
@@ -216,8 +244,7 @@
 			<input type="checkbox" id="listHideRegistered" title="Slēpt atpazītās kļūdas" bind:checked={$hideRegistered}>
 			<label for="listHideRegistered" title="Slēpt atpazītās kļūdas">slēpt atpazītās</label>
 		</div>
-		<!-- TODO: <NumLength> (<NumRecognized>) kļūdas -->
-		<span class="footer-mistakes">{mistakes.length} kļūdas</span>
+		<span class="footer-mistakes">{mistakes.length} ({countRegisteredMistakes(mistakes)}) kļūdas</span>
 	</div>
 </div>
 
@@ -234,6 +261,27 @@
 		display: grid;
 		grid-template-rows: 1fr auto;
 		position: relative;
+	}
+
+	.mistake-merged-icon {
+		-webkit-mask-repeat: no-repeat;
+		-webkit-mask-size: cover;
+		mask-repeat: no-repeat;
+		mask-size: cover;
+
+		mask-position: 50% 50%;
+		-webkit-mask-position: 50% 50%;
+
+		-webkit-mask-image: url(/icons/icon-merge.svg);
+		mask-image: url(/icons/icon-merge.svg);
+
+		-webkit-mask-size: 75%;
+		mask-size: 75%;
+
+		background-color: $COL_BG_LIGHT;
+		opacity: 0.35;
+		width: 100%;
+		height: 100%;
 	}
 
 	.list-footer {
@@ -342,7 +390,13 @@
 		}
 
 		&.hidden {
-			display: none;
+			display: none !important;
+		}
+
+		&.MERGED {
+			display: grid;
+			grid-template-columns: 80% 20%;
+			text-align: center;
 		}
 	}
 </style>

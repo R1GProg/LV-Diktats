@@ -38,15 +38,16 @@
 <style lang="scss">
 	@import "../lib/scss/global.scss";
 
-	$CONTENT_HEIGHT: calc(92vh - #{$HEADER-HEIGHT} - 1vw);
+	$CONTENT_HEIGHT: calc(95vh - #{$HEADER-HEIGHT} - 1vw);
 
 	.container {
 		display: grid;
 		grid-template-areas: "toolbar essay1 essay2 essay3 info";
 		grid-template-columns: auto 1fr 1fr 1fr $INFO_WIDTH;
 		column-gap: 1vw;
-		padding-top: 8vh;
+		padding-top: 7vh;
 		height: $CONTENT_HEIGHT;
+		overflow: hidden;
 	}
 
 	.essay-container {
@@ -90,7 +91,7 @@
 		background-color: $COL_BG_DARK;
 		// position: absolute;
 		margin-right: 0;
-		margin-top: -8.1vh; // TODO: Temporary?
+		margin-top: -7.1vh; // TODO: Temporary?
 		// top: $HEADER_HEIGHT;
 		// right: 0;
 		border-top: 1px solid $COL_ACCENT;
