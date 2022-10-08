@@ -169,7 +169,7 @@
 		essayEl.clearHighlightsByClass("hl-extmistake");
 
 		// Fixes the scroll resetting to the top when deleting the highlight
-		parentContainer.scrollTo({ top: curScroll + 1 });
+		parentContainer.scrollTo({ top: curScroll });
 
 		if (id === null) return;
 
