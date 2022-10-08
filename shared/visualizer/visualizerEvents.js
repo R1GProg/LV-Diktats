@@ -17,9 +17,11 @@ function onEnterMistake(parent, description, count, percentage) {
   if (timeout !== null) clearTimeout(timeout);
   setTooltipText(description, count, percentage);
   let tooltip = document.getElementById("tooltip");
-  let rect = parent.getBoundingClientRect();
-  tooltip.style.top = rect.y - 124 + yOffset + window.scrollY + "px";
-  tooltip.style.left = rect.x + window.scrollX + "px";
+  const rect = parent.getBoundingClientRect();
+  const rootRect = tooltip.parentNode.parentNode;
+  tooltip.style.top =
+    rect.y - rootRect.offsetTop - 124 + yOffset + window.scrollY + "px";
+  tooltip.style.left = rect.x - rootRect.offsetLeft + window.scrollX + "px";
   tooltip.classList.remove("hiddenTooltip");
 }
 
