@@ -67,11 +67,11 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
     <div class="footer">Kļūda fiksēta 0 (0%) darbos</div>
 </div>
 	<div class="left">
-		<b>Rakstīja</b><br/>${jsonData.author}
+		<span class="fieldName">Rakstīja</span><br/>${jsonData.author}
 	</div>
 	<div class="right">
-		<b>Ortogrāfijas kļūdas</b><br/>${jsonData.mistakes.filter(x => x.mistakeType === "ORTHO" || x.mistakeType === "MERGED").length}<br/>
-		<b>Interpunkcijas kļūdas</b><br/>${jsonData.mistakes.filter(x => x.mistakeType === "PUNCT" || x.mistakeType === "MERGED").length}
+		<span class="fieldName">Ortogrāfijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "ORTHO" || x.mistakeType === "MERGED").length}<br/>
+		<span class="fieldName">Interpunkcijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "PUNCT" || x.mistakeType === "MERGED").length}
 	</div>
 	<div class="submission">
 		<div class="text">
