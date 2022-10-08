@@ -118,9 +118,6 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 			if (child.type === "MIXED") {
 				const addChars = child.actions.filter((a) => a.type === "ADD").length;
 				offset += addChars;
-				childBounds.end -= addChars;
-
-				adjBounds[child.id].end -= addChars;
 			}
 
 			bounds.push(childBounds);
