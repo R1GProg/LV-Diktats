@@ -43,9 +43,15 @@ function onLeaveMistake(id) {
   }, 250);
 }
 
-function onClickMistake(elem) {
+function onClickMistake(elem, id, ev) {
   hold = !hold;
-  if (hold) elem.style.background = "#FFB74D";
+  if (hold) {
+    // elem.style.background = "#FFB74D";
+    Array.prototype.forEach.call(
+      document.getElementsByClassName(id),
+      (element) => (element.style.background = "#FFB74D")
+    );
+  }
   if (!hold) {
     let tooltip = document.getElementById("tooltip");
     tooltip.classList.add("hiddenTooltip");
@@ -55,5 +61,9 @@ function onClickMistake(elem) {
         el.style.background = "#F86060";
       }
     );
+    const evt = new Event("mouseenter");
+    evt.clientX = ev.clientX;
+    evt.clientY = ev.clientY;
+    elem.dispatchEvent(evt);
   }
 }
