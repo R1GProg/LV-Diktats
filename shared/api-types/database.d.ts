@@ -1,5 +1,5 @@
 import { ActionData, ActionSubtype, ActionType, Bounds, MistakeHash, MistakeId, MistakeSubtype, MistakeType } from "@shared/diff-engine";
-import { SubmissionID, SubmissionState, UUID } from "./";
+import { SubmissionID, SubmissionState, UUID, type RegisterEntryMistake } from "./";
 
 export interface ActionStore<Type_ID> {
 	id: string,
@@ -31,10 +31,9 @@ export interface MistakeStore<Type_ID> {
 
 export interface RegisterStore<Type_ID>  {
 	id: UUID,
-	mistakes: MistakeHash[],
+	mistakes: RegisterEntryMistake[],
 	description: string,
 	ignore: boolean,
-	count: number,
 	workspace: UUID
 }
 
@@ -61,10 +60,9 @@ export interface SubmissionStore<Type_ID> {
 
 // A variation of Workspace that stores only IDs, as Submissions will be stored in their own document.
 export interface WorkspaceStore<Type_ID> {
-	id: UUID;
-	name: string;
-	template: string;
-	submissions: Type_ID[];
-	register: Type_ID[];
-	mergedMistakes: MistakeHash[][]; // Hashes of mistakes that have been merged.
+	id: UUID,
+	name: string,
+	template: string,
+	submissions: Type_ID[],
+	register: Type_ID[],
 }

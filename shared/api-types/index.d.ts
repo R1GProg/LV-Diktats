@@ -14,7 +14,15 @@ export interface Workspace {
 	template: string,
 	submissions: Record<SubmissionID, SubmissionPreview>,
 	register: RegisterEntry[],
-	local: boolean,
+	local: boolean
+}
+
+export interface ExportedWorkspace {
+	id: UUID,
+	name: string,
+	template: string,
+	submissions: Record<SubmissionID, Submission>,
+	register: RegisterEntry[]
 }
 
 export interface WorkspacePreview {
@@ -36,11 +44,15 @@ export interface SubmissionPreview {
 
 export interface RegisterEntry {
 	id: UUID,
-	mistakes: MistakeHash[],
+	mistakes: RegisterEntryMistake[],
 	description: string,
 	ignore: boolean,
+}
+
+export interface RegisterEntryMistake {
+	hash: MistakeHash,
 	count: number,
-	_mistakeWords?: Record<MistakeHash, string>, // Temporary field for the debug dataset
+	ids: SubmissionID[]
 }
 
 // The uninitialized data (Not yet processed to DB), sent from client

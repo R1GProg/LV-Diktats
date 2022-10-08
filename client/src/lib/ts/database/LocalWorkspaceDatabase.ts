@@ -1,10 +1,10 @@
 import config from "$lib/config.json";
-import type { RegisterEntry, RegisterEntryData, Submission, SubmissionData, SubmissionID, SubmissionPreview, UUID, Workspace } from "@shared/api-types";
+import type { ExportedWorkspace, RegisterEntry, RegisterEntryData, Submission, SubmissionData, SubmissionID, SubmissionPreview, UUID, Workspace } from "@shared/api-types";
 import type { MistakeData } from "@shared/diff-engine";
 import type { MistakeStore, RegisterStore, SubmissionStore, WorkspaceStore } from "@shared/api-types/database";
 import BrowserDatabase from "./BrowserDatabase";
 
-export type ExportedWorkspace = Workspace & { submissions: Record<SubmissionID, Submission> }
+// export type ExportedWorkspace = Workspace & { submissions: Record<SubmissionID, Submission> }
 
 export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	constructor() {
@@ -66,8 +66,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 			name: workspace.name,
 			template: workspace.template,
 			submissions: Object.keys(workspace.submissions),
-			register: workspace.register.map((r) => r.id),
-			mergedMistakes: []
+			register: workspace.register.map((r) => r.id)
 		};
 
 		return this.write("workspaces", null, data);
