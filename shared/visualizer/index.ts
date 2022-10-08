@@ -10,7 +10,7 @@ export type MistakeType = "ORTHO" | "PUNCT" | "MERGED";
 export interface SubmissionMistake {
 	id: string,
 	mistakeType: MistakeType,
-	bounds: Bounds,
+	bounds: Bounds[],
 	description: string,
 	submissionStatistic: number,
 	percentage: number
@@ -22,20 +22,36 @@ export interface GradedSubmission {
 	mistakes: SubmissionMistake[]
 }
 
+interface BoundsMistakeSet {
+	bounds: Bounds,
+	mistake: SubmissionMistake
+}
+
 export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	injectCSS();
 
 	let resultingText = jsonData.text;
-	let tooltipText = "";
 	let offset = 0;
-
+	const boundMistakeList = [];
 	for (const mistake of jsonData.mistakes) {
-		const start = mistake.bounds.start;
-		const end = mistake.bounds.end;
+		for (const bounds of mistake.bounds) {
+			boundMistakeList.push({ bounds, mistake });
+		}
+	}
+
+	boundMistakeList.sort((x, y) => x.bounds.start - y.bounds.start);
+
+	console.table(boundMistakeList);
+
+	for (const boundsMistakeSet of boundMistakeList) {
+		const start = boundsMistakeSet.bounds.start;
+		const end = boundsMistakeSet.bounds.end;
+		const mistake = boundsMistakeSet.mistake;
 		const original = jsonData.text.substring(start, end);
+		console.log(original);
 		const modified = `<span class="mistake" onclick="onClickMistake(this)" onmouseenter="onEnterMistake(this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage})" onmouseleave="onLeaveMistake()">${original}</span>`;
-		tooltipText += ``
 		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
+		console.log(boundsMistakeSet.bounds);
 		// console.log(original);
 		// console.log(mistake.description);
 		// console.log("<br/>");
