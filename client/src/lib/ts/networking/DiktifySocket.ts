@@ -413,7 +413,6 @@ export default class DiktifySocket {
 				workspace,
 			});
 		} else {
-			// TODO: SERVER IMPLEMENTATION
 			if (this.socket) {
 				const request: SubmissionStateChangeEventData = {
 					id: subId,

@@ -1,3 +1,5 @@
+import type { UUID } from "@shared/api-types";
+
 export interface DatabaseOpts {
 	name: string;
 	version?: number;
@@ -141,7 +143,7 @@ export default class BrowserDatabase {
 		return true;
 	}
 
-	protected write<T>(obj: string, key: string, val: T) {
+	protected write<T>(obj: string, key: string | null, val: T) {
 		return new Promise<void>((res, rej) => {
 			if (this.db === null) {
 				this.warn("Attempt to write to database before initialization!", { store: obj });
@@ -150,7 +152,7 @@ export default class BrowserDatabase {
 			}
 	
 			const objStore = this.db.transaction(obj, "readwrite").objectStore(obj);
-			const req = objStore.add(val, key);
+			const req = objStore.add(val, key ?? undefined);
 
 			req.onerror = (ev) => {
 				rej(req.error);
@@ -275,5 +277,10 @@ export default class BrowserDatabase {
 				res();
 			};
 		});
+	}
+
+	// Returns an array with all entries specified by the "keys" arg
+	protected async fillKeyArray(obj: string, keys: string[]) {
+		return Promise.all(keys.map((k) => this.read(obj, k)));
 	}
 }

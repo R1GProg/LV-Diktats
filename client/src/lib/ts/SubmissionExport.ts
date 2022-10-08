@@ -7,7 +7,7 @@ function addMissingWordsToText(rawText: string, mistakes: MistakeData[]) {
 	const addContentArr = mistakes
 		.filter((m) => m.type === "ADD")
 		.map((m) => ({ content: m.word, index: m.boundsDiff.start }));
-
+	
 	addContentArr.sort((a, b) => a.index - b.index);
 
 	for (const entry of addContentArr) {

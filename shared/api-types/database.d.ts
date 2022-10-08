@@ -1,15 +1,15 @@
-import { Bounds, MistakeHash, MistakeId, MistakeSubtype, MistakeType } from "@shared/diff-engine";
+import { ActionData, ActionSubtype, ActionType, Bounds, MistakeHash, MistakeId, MistakeSubtype, MistakeType } from "@shared/diff-engine";
 import { SubmissionID, SubmissionState, UUID } from "./";
 
 export interface ActionStore<Type_ID> {
 	id: string,
-	type: string,
-	subtype: string,
+	type: ActionType,
+	subtype: ActionSubtype,
 	indexCheck: number,
 	indexCorrect: number,
 	indexDiff: number,
 	char: string,
-	workspace: string
+	workspace: UUID
 }
 
 // A variation of Mistake that stores only IDs of Actions, as Actions will be stored in their own document.
@@ -18,16 +18,15 @@ export interface MistakeStore<Type_ID> {
 	hash: MistakeHash,
 	type: MistakeType,
 	subtype: MistakeSubtype,
-	actions: Type_ID[],
+	actions: ActionData[],
 	boundsCheck: Bounds,
 	boundsCorrect: Bounds,
 	boundsDiff: Bounds,
 	word: string,
 	wordCorrect?: string,
-	registerId: UUID | null,
 	children: Type_ID[],
-	workspace: UUID,
 	mergedId: MistakeId | null
+	workspace: UUID,
 }
 
 export interface RegisterStore<Type_ID>  {
