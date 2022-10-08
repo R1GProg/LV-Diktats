@@ -6,7 +6,7 @@ import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
-import type WorkspaceCache from "../WorkspaceCache";
+import type WorkspaceCacheDatabase from "$lib/ts/database/WorkspaceCacheDatabase";
 import { getAllSubmissionsWithMistakes, submissionContainsMistake } from "../util";
 import { v4 as uuidv4 } from "uuid";
 
@@ -43,7 +43,7 @@ export default class DiktifySocket {
 		rej: (reason?: string) => void
 	} | null = null;
 
-	cache: WorkspaceCache | null = null;
+	cache: WorkspaceCacheDatabase | null = null;
 
 	private workspace: Stores["workspace"];
 

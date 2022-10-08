@@ -3,12 +3,12 @@ import { getContext, onMount, setContext } from "svelte";
 import type { MistakeId } from "@shared/diff-engine";
 import { get, readable, writable, derived, type Readable, type Writable } from "svelte/store";
 import { ToolbarMode } from "./toolbar";
-import WorkspaceCache from "./WorkspaceCache";
+import WorkspaceCacheDatabase from "$lib/ts/database/WorkspaceCacheDatabase";
 import { api } from "$lib/ts/networking/DiktifyAPI";
 import DiktifySocket from "./networking/DiktifySocket";
 import config from "$lib/config.json";
 import MistakeSelection from "./MistakeSelection";
-import LocalWorkspaceDatabase from "./LocalWorkspaceDatabase";
+import LocalWorkspaceDatabase from "$lib/ts/database/LocalWorkspaceDatabase";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -17,7 +17,7 @@ export interface Stores {
 	hoveredMistake: Writable<MistakeId | null>,
 	activeSubmissionID: Writable<SubmissionID | null>,
 	activeWorkspaceID: Writable<UUID | null>,
-	cache: Readable<Promise<WorkspaceCache>>,
+	cache: Readable<Promise<WorkspaceCacheDatabase>>,
 	workspace: Readable<Promise<Workspace> | null>,
 	activeSubmission: Readable<Promise<Submission | null> | null>,
 	ds: Readable<DiktifySocket>,
@@ -70,9 +70,9 @@ export function initStores() {
 
 	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID, localWorkspaceDatabase))
 
-	const cache = readable<Promise<WorkspaceCache>>(new Promise<WorkspaceCache>((res) => {
+	const cache = readable<Promise<WorkspaceCacheDatabase>>(new Promise<WorkspaceCacheDatabase>((res) => {
 		onMount(async () => {
-			const wsCache = new WorkspaceCache(get(ds));
+			const wsCache = new WorkspaceCacheDatabase(get(ds));
 			get(ds).cache = wsCache;
 			await wsCache.databaseInit();
 			res(wsCache);
