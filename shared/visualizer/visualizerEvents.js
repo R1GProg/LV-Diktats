@@ -1,14 +1,15 @@
 let hold = false;
-const yOffset = -10;
+const yOffset = -2.5;
 let timeout = null;
 
 function setTooltipText(description, count, percentage) {
   const tooltip = document.getElementById("tooltip");
+  const percent = Math.floor(percentage * 1000) / 10;
   tooltip.getElementsByClassName("desc")[0].innerHTML = description;
   tooltip.getElementsByClassName(
     "footer"
   )[0].innerHTML = `Kļūda fiksēta ${count} (${
-    Math.floor(percentage * 1000) / 10
+    percent >= 0.1 ? percent : "<0.1"
   }%) darbos`;
 }
 
@@ -17,9 +18,11 @@ function onEnterMistake(parent, description, count, percentage) {
   if (timeout !== null) clearTimeout(timeout);
   setTooltipText(description, count, percentage);
   let tooltip = document.getElementById("tooltip");
-  let rect = parent.getBoundingClientRect();
-  tooltip.style.top = rect.y - 124 + yOffset + window.scrollY + "px";
-  tooltip.style.left = rect.x + window.scrollX + "px";
+  const rect = parent.getBoundingClientRect();
+  const rootRect = tooltip.parentNode.parentNode;
+  tooltip.style.top =
+    rect.y - rootRect.offsetTop - 124 + yOffset + window.scrollY + "px";
+  tooltip.style.left = rect.x - rootRect.offsetLeft + window.scrollX + "px";
   tooltip.classList.remove("hiddenTooltip");
 }
 
