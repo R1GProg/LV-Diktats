@@ -71,7 +71,7 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 		mistakes.push({
 			id: m.id,
-			bound: { start: -1, end: -1 },
+			bounds: { start: -1, end: -1 },
 			description: registerEntry.description,
 			submissionStatistic: registerEntry.count,
 			percentage: Math.round(registerEntry.count / totalSubmCount * 10000) / 10000,
@@ -117,7 +117,7 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 			}
 		}
 
-		mistakes.find((checkM) => checkM.id === m.id)!.bound = bounds;
+		mistakes.find((checkM) => checkM.id === m.id)!.bounds = bounds;
 	}
 
 	return {
