@@ -5,12 +5,13 @@
   "main": "index.ts",
   "scripts": {
     "prebuild": "rimraf build && mkdir build",
-    "build": "((browserify index.ts -p [ tsify --noImplicitAny] --s visualizer && cat visualizerEvents.js) > build/visualizer.js) && cp visualizer.css build/visualizer.css",
+    "build": "node browserify.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "brfs": "^2.0.2",
     "rimraf": "^3.0.2",
     "tsify": "^5.0.4"
   }

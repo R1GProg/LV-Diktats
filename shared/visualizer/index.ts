@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 export type Bounds = {
 	start: number;
 	end: number;
@@ -21,9 +23,12 @@ export interface GradedSubmission {
 }
 
 export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
+	injectCSS();
+
 	let resultingText = jsonData.text;
 	let tooltipText = "";
 	let offset = 0;
+
 	for (const mistake of jsonData.mistakes) {
 		const start = mistake.bounds.start;
 		const end = mistake.bounds.end;
@@ -89,3 +94,11 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	<div class="footer">Kļūda fiksēta 1234 (69%) darbos</div>
 </div>
  */
+
+function injectCSS() {
+	const css = fs.readFileSync("./visualizer.css", 'utf8');
+	const styleEl = document.createElement("style");
+	styleEl.innerHTML = css;
+
+	document.getElementsByTagName("head")[0].appendChild(styleEl);
+}
