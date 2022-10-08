@@ -4,6 +4,7 @@
 	import type { SubmissionID, SubmissionState } from "@shared/api-types";
 	import type { MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
+	import { exportSubmission } from "$lib/ts/SubmissionExport";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
@@ -76,7 +77,6 @@
 		const savedID = localStorage.getItem("activeSubmissionID");
 
 		if (config.persistentActiveSubmission && savedID) {
-			$sort = Number(localStorage.getItem("sortMode"));
 			activeIndex = $sortedSubmissions!.findIndex((s) => s.id === savedID);
 			nextIndex = activeIndex;
 		} else {
@@ -88,6 +88,9 @@
 
 		activeIndex = nextIndex;
 		selectIndex(activeIndex);
+
+		const subm = await $activeSubmission;
+		if (subm !== null) console.log(exportSubmission(subm, (await $workspace)!));
 	}
 	
 	function onSortChange() {
@@ -106,12 +109,10 @@
 		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
 	}
 
-	function onActiveSubmissionChange(id: SubmissionID | null) {
+	async function onActiveSubmissionChange(id: SubmissionID | null) {
 		if (!config.persistentActiveSubmission) return;
 		
-		if (id === null) {
-			localStorage.removeItem("activeSubmissionID");
-		} else {
+		if (id !== null) {
 			localStorage.setItem("activeSubmissionID", id);
 		}
 	}
@@ -156,8 +157,8 @@
 		display: grid;
 		grid-template-areas: "id" "status" "selector" "openall";
 		justify-content: center;
-		row-gap: 1.5vh;
-		margin-bottom: 3vh;
+		row-gap: 1vh;
+		margin-bottom: 1.5vh;
 	}
 
 	.mainid {

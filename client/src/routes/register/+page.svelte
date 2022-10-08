@@ -90,6 +90,7 @@
 		text-align: center;
 		border-collapse: collapse;
 		border-spacing: 0;
+		width: 100%;
 
 		>h2 {
 			font-family: $FONT_HEADING;

@@ -90,8 +90,13 @@ export default class Diff {
 	postprocess(diffData: DiffAction<WordItem>[]) {
 		this.mistakes = Diff.parseMistakes(diffData);
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
 		this.consolidatePunctWhitespace();
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
+		this.consolidateWordWhitespaces();
+		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
 		this.parseWordSubstitutions();
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 	}
@@ -157,6 +162,31 @@ export default class Diff {
 			}
 
 			this.mistakes.splice(this.mistakes.findIndex((sm) => sm.id === nextM.id), 1);
+		}
+	}
+
+	consolidateWordWhitespaces() {
+		for (let i = 0; i < this.mistakes.length - 1; i++) {
+			const curMistake = this.mistakes[i];
+
+			if (curMistake.subtype === "OTHER") continue;
+
+			const nextMistake = this.mistakes[i + 1];
+
+			if (nextMistake.word !== " ") continue;
+			if (curMistake.type !== nextMistake.type) continue;
+
+			curMistake.word += " ";
+			curMistake.boundsDiff.end++;
+
+			if (curMistake.type === "ADD") {
+				curMistake.boundsCorrect.end++;
+			} else if (curMistake.type === "DEL") {
+				curMistake.boundsCheck.end++;
+			}
+
+			// Changing the array you are iterating - very safe /s
+			this.mistakes.splice(i + 1, 1);
 		}
 	}
 

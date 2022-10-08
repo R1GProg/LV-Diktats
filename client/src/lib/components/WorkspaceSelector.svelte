@@ -16,7 +16,7 @@
 	let workspaceLoader: LoadingWorkspaceStatus;
 
 	async function setWorkspace(id: UUID) {
-		$activeWorkspaceID = id;
+		$activeWorkspaceID = id.length === 0 ? null : id;
 	}
 
 	$: if ($workspace !== null) workspaceLoader.open($workspace);

@@ -147,3 +147,20 @@ export interface SubmissionData {
 		city: string
 	}
 }
+
+export interface ExportedSubmission {
+	author: string,
+	text: string,
+	mistakes: ExportedSubmissionMistake[]
+}
+
+export interface ExportedSubmissionMistake {
+	id: string,
+	mistakeType: ExportedSubmissionMistakeType,
+	bounds: Bounds,
+	description: string,
+	submissionStatistic: number,
+	percentage: number
+}
+
+export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "MERGED";

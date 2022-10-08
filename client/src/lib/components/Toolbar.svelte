@@ -66,6 +66,7 @@
 		position: relative;
 		top: 20px;
 
+		height: fit-content;
 		width: 0;
 		transition-timing-function: ease-in;
 		transition: width 0.5s;

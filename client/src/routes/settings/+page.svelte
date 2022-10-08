@@ -14,6 +14,7 @@
 	async function clearWorkspaceData() {
 		const db = await $localWorkspaceDatabase;
 		db.clear();
+		localStorage.removeItem("activeSubmissionID");
 
 		location.replace("/");
 	}

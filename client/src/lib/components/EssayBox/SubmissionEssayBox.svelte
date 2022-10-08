@@ -161,8 +161,15 @@
 	async function onMistakeHover(id: MistakeId | null) {
 		if (!essayEl) return;
 		if ($mode === ToolbarMode.IGNORE) return;
+
+		const container = essayEl.getTextContainer();
+		const parentContainer = container.parentElement!;
+		const curScroll = parentContainer.scrollTop;
 		
-		essayEl.clearHighlightsByClass("highlight-extmistake");
+		essayEl.clearHighlightsByClass("hl-extmistake");
+
+		// Fixes the scroll resetting to the top when deleting the highlight
+		parentContainer.scrollTo({ top: curScroll + 1 });
 
 		if (id === null) return;
 
@@ -171,16 +178,19 @@
 		
 		if (!mistake || mistake.type === "ADD") return;
 
-		essayEl.getTextContainer().normalize();
+		container.normalize();
 		const range = adjustRangeForIgnores(mistake.boundsCheck);
 
 		if (!range) return;
 
-		essayEl.highlightRange(
+		const hId = essayEl.highlightRange(
 			range,
 			mistake.type === "MIXED" ? "hl-22" : "hl-0",
-			"highlight-extmistake"
+			"hl-extmistake"
 		);
+
+		const targetEl = essayEl.getHighlightEls(hId)[0];
+		targetEl.scrollIntoView({ block: "start", behavior: "smooth" });
 	}
 
 	$: onSubmissionChange($activeSubmission);

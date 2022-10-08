@@ -43,8 +43,12 @@ export function initStores() {
 	const sort = writable<SortMode>(SortMode.MISTAKE);
 	const hoveredMistake = writable<MistakeId | null>(null);
 
-	const activeSubmissionID = writable<SubmissionID | null>(null);
 	const activeWorkspaceID = writable<UUID | null>(null);
+	const activeSubmissionID = writable<SubmissionID | null>(null, (set) => {
+		activeWorkspaceID.subscribe((newID: UUID | null) => {
+			if (newID === null) set(null);
+		});
+	});
 
 	const workspace = readable<Promise<Workspace> | null>(null, (set) => {
 		activeWorkspaceID.subscribe((newID: UUID | null) => {

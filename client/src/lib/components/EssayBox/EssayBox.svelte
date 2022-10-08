@@ -260,7 +260,7 @@
 	>{text}</span>
 
 	<!-- A stupid workaround to avoid Svelte style purging for the dynamically added elements -->
-	<span class="HIGHLIGHT_CLASS_CONTAINER highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered hl-status-ignored hl-status-selected active hover"></span>
+	<span class="HIGHLIGHT_CLASS_CONTAINER highlight hl-0 hl-1 hl-2 hl-20 hl-21 hl-22 hl-3 hl-status-registered hl-status-ignored hl-status-selected hl-extmistake active hover"></span>
 </div>
 
 <style lang="scss">
@@ -345,6 +345,10 @@
 
 			// transform: scale(1.25);
 			// display: inline-block;
+		}
+
+		&.hl-extmistake {
+			scroll-margin-top: 6em;
 		}
 
 		&.hl-status-registered {
