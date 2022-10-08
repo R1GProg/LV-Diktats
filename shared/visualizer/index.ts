@@ -90,7 +90,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 			.insertAdjacentHTML(
 				"afterend",
 				'<div class="mistakeLine" style="top:' +
-				(el.offsetTop + 8) +
+				(el.offsetTop + el.parentNode.offsetTop) +
 				"px; height:" +
 				rect.height +
 				'px;"></div>'

@@ -1,3 +1,7 @@
+.visualisation {
+	height: 100%;
+	width: 100%;
+}
 
 .mistake {
 	transition: 0.5s;
@@ -13,8 +17,8 @@
 	position: absolute;
 	width: 263px;
 	height: 55px;
-	left: 377px;
-	top: 54px;
+	right: 5%;
+		top: 5%;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
@@ -30,10 +34,8 @@
 }
 .left {
 	position: absolute;
-	width: 308px;
-	height: 55px;
-	left: 53px;
-	top: 54px;
+	left: 5%;
+		top: 5%;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
@@ -44,32 +46,29 @@
 
 .submission {
 	position: absolute;
-	width: 643px;
-	height: 738px;
-	left: 0px;
-	top: 184px;
+	width: 90%;
+		left: 5%;
+		top: 15%;
 }
 
 .text {
 	position: absolute;
-	width: 585px;
-	height: 581px;
-	left: 58px;
+	width: 100%;
 	top: 7px;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
 	font-weight: 400;
-	font-size: 18px;
-	line-height: 21px;
+	font-size: 1.1em;
+		line-height: 1.1em;
 }
 
 .mistakeLine {
 	background-color: #F86060;
 	position: absolute;
+	left: -15px;
 	width: 8.5px;
-	height: 21px;
-	left: 40px;
+	height: 1.1em;
 }
 
 
@@ -79,8 +78,8 @@
 }
 .tooltip {
 	position: absolute;
-	width: 194px;
-	height: 104px;
+	width: 15%;
+		height: 7%;
 	background-color: white;
 	border-radius: 2px;
 	box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.25);
@@ -91,7 +90,7 @@
 
 .line {
 	position: relative;
-	height: 10px;
+	height: 10%;
 	background-color: #F86060;
 	border-radius: 2px 2px 0px 0px;
 }
@@ -99,9 +98,7 @@
 .desc {
 	position: absolute;
 	left: 9px;
-	top: 20px;
-	width: 176px;
-	height: 43px;
+	top: 12%;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
@@ -116,8 +113,8 @@
 	position: absolute;
 	width: 176px;
 	height: 11px;
-	left: 9px;
-	top: 85px;
+	right: 9px;
+		bottom: 2%;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
