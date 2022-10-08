@@ -13,7 +13,10 @@ function setTooltipText(description, count, percentage) {
   }%) darbos`;
 }
 
-function onEnterMistake(parent, description, count, percentage) {
+function onEnterMistake(ev, parent, description, count, percentage, id) {
+  Array.prototype.forEach.call(document.getElementsByClassName(id), (element) =>
+    element.classList.add("mistakeHovered")
+  );
   if (hold) return;
   if (timeout !== null) clearTimeout(timeout);
   setTooltipText(description, count, percentage);
@@ -22,11 +25,14 @@ function onEnterMistake(parent, description, count, percentage) {
   const rootRect = tooltip.parentNode.parentNode;
   tooltip.style.top =
     rect.y - rootRect.offsetTop - 124 + yOffset + window.scrollY + "px";
-  tooltip.style.left = rect.x - rootRect.offsetLeft + window.scrollX + "px";
+  tooltip.style.left = ev.clientX - rootRect.offsetLeft + window.scrollX + "px";
   tooltip.classList.remove("hiddenTooltip");
 }
 
-function onLeaveMistake() {
+function onLeaveMistake(id) {
+  Array.prototype.forEach.call(document.getElementsByClassName(id), (element) =>
+    element.classList.remove("mistakeHovered")
+  );
   if (hold) return;
   let tooltip = document.getElementById("tooltip");
   tooltip.classList.add("hiddenTooltip");

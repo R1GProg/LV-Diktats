@@ -41,17 +41,17 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 
 	boundMistakeList.sort((x, y) => x.bounds.start - y.bounds.start);
 
-	console.table(boundMistakeList);
+	// console.table(boundMistakeList);
 
 	for (const boundsMistakeSet of boundMistakeList) {
 		const start = boundsMistakeSet.bounds.start;
 		const end = boundsMistakeSet.bounds.end;
 		const mistake = boundsMistakeSet.mistake;
 		const original = jsonData.text.substring(start, end);
-		console.log(original);
-		const modified = `<span class="mistake" onclick="onClickMistake(this)" onmouseenter="onEnterMistake(this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage})" onmouseleave="onLeaveMistake()">${original}</span>`;
+		// console.log(original);
+		const modified = `<span class="mistake ${mistake.id}" onclick="onClickMistake(this)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span>`;
 		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
-		console.log(boundsMistakeSet.bounds);
+		// console.log(boundsMistakeSet.bounds);
 		// console.log(original);
 		// console.log(mistake.description);
 		// console.log("<br/>");

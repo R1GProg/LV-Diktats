@@ -1,11 +1,11 @@
+
 .mistake {
-	background-color: #F86060;
 	transition: 0.5s;
-	}
-	
-	.mistake:hover {
-		filter: brightness(0.85);
-		cursor: pointer;
+	background-color: #F86060;
+}
+.mistakeHovered {
+	filter: brightness(0.85);
+	cursor: pointer;
 }
 
 
