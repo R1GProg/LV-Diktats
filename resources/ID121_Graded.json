@@ -393,11 +393,11 @@
             "bounds": [
                 {
                     "start": 813,
-                    "end": 812
+                    "end": 814
                 },
                 {
                     "start": 815,
-                    "end": 816
+                    "end": 818
                 }
             ],
             "description": "Nesākas jauns teikums",
@@ -410,7 +410,7 @@
             "bounds": [
                 {
                     "start": 940,
-                    "end": 945
+                    "end": 947
                 }
             ],
             "description": "Pareizi rakstās \"dārzeņus\"",
@@ -449,7 +449,7 @@
             "bounds": [
                 {
                     "start": 1261,
-                    "end": 1269
+                    "end": 1273
                 }
             ],
             "description": "Pareizi rakstās \"ingredientus\"",
@@ -475,11 +475,11 @@
             "bounds": [
                 {
                     "start": 1500,
-                    "end": 1499
+                    "end": 1501
                 },
                 {
                     "start": 1502,
-                    "end": 1505
+                    "end": 1507
                 }
             ],
             "description": "Nesākas jauns teikums",
@@ -509,7 +509,7 @@
             "bounds": [
                 {
                     "start": 1663,
-                    "end": 1658
+                    "end": 1666
                 },
                 {
                     "start": 1667,
@@ -526,7 +526,7 @@
             "bounds": [
                 {
                     "start": 1835,
-                    "end": 1837
+                    "end": 1839
                 }
             ],
             "description": "Pareizi rakstās \"taču\"",
