@@ -1,18 +1,19 @@
 let hold = false;
+const yOffset = -10;
 
 function onEnterMistake(ev, parent, id) {
   if (hold) return;
   let tooltip = document.getElementById(id);
   let rect = parent.getBoundingClientRect();
-  tooltip.style.top = rect.y - 124 + window.scrollY + "px";
+  tooltip.style.top = rect.y - 124 + yOffset + window.scrollY + "px";
   tooltip.style.left = rect.x + window.scrollX + "px";
-  tooltip.hidden = false;
+  tooltip.classList.remove("hiddenTooltip");
 }
 
 function onLeaveMistake(ev, id) {
   if (hold) return;
   let tooltip = document.getElementById(id);
-  tooltip.hidden = true;
+  tooltip.classList.add("hiddenTooltip");
 }
 
 function onClickMistake(elem) {
@@ -22,7 +23,7 @@ function onClickMistake(elem) {
     Array.prototype.forEach.call(
       document.getElementsByClassName("tooltip"),
       (el) => {
-        el.hidden = true;
+        el.classList.add("hiddenTooltip");
       }
     );
     Array.prototype.forEach.call(

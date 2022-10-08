@@ -34,7 +34,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 		const end = mistake.bounds.end;
 		const original = jsonData.text.substring(start, end + 1);
 		const modified = `<span class="mistake" onclick="onClickMistake(this)" onmouseenter="onEnterMistake(event, this, '${mistake.id}')" onmouseleave="onLeaveMistake(event, '${mistake.id}')">${original}</span>`;
-		tooltipText += `<div hidden class="tooltip" id="${mistake.id}">
+		tooltipText += `<div class="tooltip hiddenTooltip" id="${mistake.id}">
     <div class="line"></div>
     <div class="desc">${mistake.description}</div>
     <div class="footer">Kļūda fiksēta ${mistake.submissionStatistic} (${Math.floor(mistake.percentage * 100)}%) darbos</div>
