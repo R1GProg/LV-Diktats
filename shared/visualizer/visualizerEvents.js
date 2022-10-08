@@ -4,11 +4,12 @@ let timeout = null;
 
 function setTooltipText(description, count, percentage) {
   const tooltip = document.getElementById("tooltip");
+  const percent = Math.floor(percentage * 1000) / 10;
   tooltip.getElementsByClassName("desc")[0].innerHTML = description;
   tooltip.getElementsByClassName(
     "footer"
   )[0].innerHTML = `Kļūda fiksēta ${count} (${
-    Math.floor(percentage * 1000) / 10
+    percent >= 0.1 ? percent : "<0.1"
   }%) darbos`;
 }
 
