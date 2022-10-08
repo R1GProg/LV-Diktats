@@ -4,8 +4,8 @@ function onEnterMistake(ev, parent, id) {
   if (hold) return;
   let tooltip = document.getElementById(id);
   let rect = parent.getBoundingClientRect();
-  tooltip.style.top = rect.y - 124 + "px";
-  tooltip.style.left = rect.x + "px";
+  tooltip.style.top = rect.y - 124 + window.scrollY + "px";
+  tooltip.style.left = rect.x + window.scrollX + "px";
   tooltip.hidden = false;
 }
 
