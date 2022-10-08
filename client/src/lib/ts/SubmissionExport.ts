@@ -126,8 +126,32 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 		mistakes.find((checkM) => checkM.id === m.id)!.bounds = bounds;
 	}
 
+	// Parse text
 	const unwrappedMistakes = exportedMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
 	const parsedText = addMissingWordsToText(subm.data.text, unwrappedMistakes, adjBounds);
+
+	// For mistakes, where a single space is inbetween bounds, add the space to the bounds
+	for (const m of mistakes) {
+		if (m.bounds.length === 1) continue;
+
+		const parsedBounds: Bounds[] = [...m.bounds];
+
+		for (let i = 0; i < parsedBounds.length - 1; i++) {
+			const b1 = m.bounds[i];
+			const b2 = m.bounds[i + 1];
+
+			if (
+				b1.end + 1 === b2.start
+				&& parsedText.substring(b1.end, b2.start) === " "
+			) {
+				b1.end = b2.end;
+				parsedBounds.splice(i + 1, 1);
+				i--;
+			}
+		}
+
+		m.bounds = parsedBounds;
+	}
 
 	return {
 		author: "Anonīms",
