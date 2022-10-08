@@ -1,5 +1,5 @@
 let hold = false;
-const yOffset = -10;
+const yOffset = -2.5;
 let timeout = null;
 
 function setTooltipText(description, count, percentage) {
