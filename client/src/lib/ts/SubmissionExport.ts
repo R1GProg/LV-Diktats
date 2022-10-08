@@ -73,7 +73,7 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 		mistakes.push({
 			id: m.id,
-			bounds: { start: -1, end: -1 },
+			bounds: [],
 			description: registerEntry.description,
 			submissionStatistic: registerEntry.count,
 			percentage: Math.round(registerEntry.count / totalSubmCount * 10000) / 10000,
@@ -105,24 +105,25 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 			continue;
 		}
 
-		const bounds: Bounds = { ...m.boundsDiff };
-
-		bounds.start -= offset;
-		bounds.end -= offset;
+		const bounds: Bounds[] = [];
 
 		for (const child of checkMistakes) {
-			adjBounds[child.id] = {
+			const childBounds: Bounds = {
 				start: child.boundsDiff.start - offset,
 				end: child.boundsDiff.end - offset
 			};
 
+			adjBounds[child.id] = childBounds;
+
 			if (child.type === "MIXED") {
 				const addChars = child.actions.filter((a) => a.type === "ADD").length;
 				offset += addChars;
-				bounds.end -= addChars;
+				childBounds.end -= addChars;
 
 				adjBounds[child.id].end -= addChars;
 			}
+
+			bounds.push(childBounds);
 		}
 
 		mistakes.find((checkM) => checkM.id === m.id)!.bounds = bounds;

@@ -3,132 +3,532 @@
     "text": "Aivars Eipurs\nMazsālīto gurķu blūzs\nNoņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.\nUz Jāņiem tirgū nopirku it kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darbavietā pastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.\nEs gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams. Bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.\nNekad nebiju neko konservējis — ne dārzeņu, ne augļus, ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču šoreiz nolēmu to izdarīt, lai tur lūst vai plīst, un pamatīgi izbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats šādu saimniekošanas formu nebijām novērojuši.\nAtcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt indigrientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu eiro. Būdams labs fiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu, tāpat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai, diemžēl, nebija, tomēr par pirkumu paprasīja četrus eiro un septiņdesmit centus. Ne tik vien samaksāju, bet arī pateicos par konsultāciju.\nKāds idiots esmu, aptvēru tikai tramvajā. Iznāk, ka par mārrutka lapu biju samaksājis trīs eiro. Tā lapa bija liela, tače ne jau tik liela kā palma vai ziloņa auss.\nNākamajā reizē visu garšaugu komplektu nopirku par vienu eiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.",
     "mistakes": [
         {
-            "id": "c952ca84-9c5e-485b-8855-84e14bd9dff2",
-            "bounds": {
-                "start": 0,
-                "end": 472
-            },
+            "id": "43e7ce5e-9da0-4b86-ba11-f8618a38cef0",
+            "bounds": [
+                {
+                    "start": 0,
+                    "end": 7
+                },
+                {
+                    "start": 7,
+                    "end": 13
+                },
+                {
+                    "start": 13,
+                    "end": 14
+                },
+                {
+                    "start": 14,
+                    "end": 24
+                },
+                {
+                    "start": 24,
+                    "end": 30
+                },
+                {
+                    "start": 30,
+                    "end": 35
+                },
+                {
+                    "start": 35,
+                    "end": 36
+                },
+                {
+                    "start": 36,
+                    "end": 43
+                },
+                {
+                    "start": 43,
+                    "end": 53
+                },
+                {
+                    "start": 53,
+                    "end": 63
+                },
+                {
+                    "start": 63,
+                    "end": 66
+                },
+                {
+                    "start": 66,
+                    "end": 71
+                },
+                {
+                    "start": 71,
+                    "end": 77
+                },
+                {
+                    "start": 77,
+                    "end": 79
+                },
+                {
+                    "start": 79,
+                    "end": 88
+                },
+                {
+                    "start": 88,
+                    "end": 91
+                },
+                {
+                    "start": 91,
+                    "end": 100
+                },
+                {
+                    "start": 100,
+                    "end": 102
+                },
+                {
+                    "start": 102,
+                    "end": 108
+                },
+                {
+                    "start": 108,
+                    "end": 110
+                },
+                {
+                    "start": 110,
+                    "end": 113
+                },
+                {
+                    "start": 113,
+                    "end": 123
+                },
+                {
+                    "start": 123,
+                    "end": 126
+                },
+                {
+                    "start": 126,
+                    "end": 131
+                },
+                {
+                    "start": 131,
+                    "end": 138
+                },
+                {
+                    "start": 138,
+                    "end": 145
+                },
+                {
+                    "start": 145,
+                    "end": 147
+                },
+                {
+                    "start": 147,
+                    "end": 154
+                },
+                {
+                    "start": 154,
+                    "end": 157
+                },
+                {
+                    "start": 157,
+                    "end": 164
+                },
+                {
+                    "start": 164,
+                    "end": 167
+                },
+                {
+                    "start": 167,
+                    "end": 175
+                },
+                {
+                    "start": 175,
+                    "end": 177
+                },
+                {
+                    "start": 177,
+                    "end": 185
+                },
+                {
+                    "start": 185,
+                    "end": 191
+                },
+                {
+                    "start": 191,
+                    "end": 195
+                },
+                {
+                    "start": 195,
+                    "end": 197
+                },
+                {
+                    "start": 197,
+                    "end": 202
+                },
+                {
+                    "start": 202,
+                    "end": 206
+                },
+                {
+                    "start": 206,
+                    "end": 211
+                },
+                {
+                    "start": 211,
+                    "end": 215
+                },
+                {
+                    "start": 215,
+                    "end": 221
+                },
+                {
+                    "start": 221,
+                    "end": 222
+                },
+                {
+                    "start": 222,
+                    "end": 223
+                },
+                {
+                    "start": 223,
+                    "end": 226
+                },
+                {
+                    "start": 226,
+                    "end": 233
+                },
+                {
+                    "start": 233,
+                    "end": 239
+                },
+                {
+                    "start": 239,
+                    "end": 247
+                },
+                {
+                    "start": 247,
+                    "end": 250
+                },
+                {
+                    "start": 250,
+                    "end": 253
+                },
+                {
+                    "start": 253,
+                    "end": 264
+                },
+                {
+                    "start": 264,
+                    "end": 270
+                },
+                {
+                    "start": 270,
+                    "end": 272
+                },
+                {
+                    "start": 272,
+                    "end": 278
+                },
+                {
+                    "start": 278,
+                    "end": 282
+                },
+                {
+                    "start": 282,
+                    "end": 287
+                },
+                {
+                    "start": 287,
+                    "end": 293
+                },
+                {
+                    "start": 293,
+                    "end": 297
+                },
+                {
+                    "start": 297,
+                    "end": 299
+                },
+                {
+                    "start": 299,
+                    "end": 303
+                },
+                {
+                    "start": 303,
+                    "end": 307
+                },
+                {
+                    "start": 307,
+                    "end": 310
+                },
+                {
+                    "start": 310,
+                    "end": 321
+                },
+                {
+                    "start": 321,
+                    "end": 332
+                },
+                {
+                    "start": 332,
+                    "end": 339
+                },
+                {
+                    "start": 339,
+                    "end": 341
+                },
+                {
+                    "start": 341,
+                    "end": 346
+                },
+                {
+                    "start": 346,
+                    "end": 351
+                },
+                {
+                    "start": 351,
+                    "end": 353
+                },
+                {
+                    "start": 353,
+                    "end": 356
+                },
+                {
+                    "start": 356,
+                    "end": 361
+                },
+                {
+                    "start": 361,
+                    "end": 368
+                },
+                {
+                    "start": 368,
+                    "end": 374
+                },
+                {
+                    "start": 374,
+                    "end": 381
+                },
+                {
+                    "start": 381,
+                    "end": 391
+                },
+                {
+                    "start": 391,
+                    "end": 397
+                },
+                {
+                    "start": 397,
+                    "end": 400
+                },
+                {
+                    "start": 400,
+                    "end": 403
+                },
+                {
+                    "start": 403,
+                    "end": 408
+                },
+                {
+                    "start": 408,
+                    "end": 413
+                },
+                {
+                    "start": 413,
+                    "end": 417
+                },
+                {
+                    "start": 417,
+                    "end": 421
+                },
+                {
+                    "start": 421,
+                    "end": 429
+                },
+                {
+                    "start": 429,
+                    "end": 432
+                },
+                {
+                    "start": 432,
+                    "end": 434
+                },
+                {
+                    "start": 434,
+                    "end": 440
+                },
+                {
+                    "start": 440,
+                    "end": 452
+                },
+                {
+                    "start": 452,
+                    "end": 462
+                },
+                {
+                    "start": 462,
+                    "end": 466
+                },
+                {
+                    "start": 466,
+                    "end": 470
+                },
+                {
+                    "start": 470,
+                    "end": 472
+                }
+            ],
             "description": "Trūkst teksts",
             "submissionStatistic": 4,
             "percentage": 0.0019,
             "mistakeType": "MERGED"
         },
         {
-            "id": "84f3cacb-86d1-45d1-95f3-917cc1a6938a",
-            "bounds": {
-                "start": 676,
-                "end": 677
-            },
+            "id": "aa207531-2d70-4505-8392-6e33eff53324",
+            "bounds": [
+                {
+                    "start": 676,
+                    "end": 677
+                }
+            ],
             "description": "Nav atpazīts gramatiskais centrs",
             "submissionStatistic": 1099,
             "percentage": 0.5228,
             "mistakeType": "PUNCT"
         },
         {
-            "id": "459b6228-2b11-4e73-b0c8-1395d5ab39db",
-            "bounds": {
-                "start": 813,
-                "end": 817
-            },
+            "id": "24c1a613-7fd6-4004-87e8-022c3bb3ee59",
+            "bounds": [
+                {
+                    "start": 813,
+                    "end": 812
+                },
+                {
+                    "start": 815,
+                    "end": 816
+                }
+            ],
             "description": "Nesākas jauns teikums",
             "submissionStatistic": 6,
             "percentage": 0.0029,
             "mistakeType": "PUNCT"
         },
         {
-            "id": "9c4ca5a7-105d-4993-addf-d8a2ea248d9c",
-            "bounds": {
-                "start": 940,
-                "end": 946
-            },
+            "id": "1b5402a1-a81c-4842-8eb0-f389b7946bec",
+            "bounds": [
+                {
+                    "start": 940,
+                    "end": 945
+                }
+            ],
             "description": "Pareizi rakstās \"dārzeņus\"",
             "submissionStatistic": 6,
             "percentage": 0.0029,
             "mistakeType": "ORTHO"
         },
         {
-            "id": "c21c9278-9253-4b62-90ab-9bb5cb80dc18",
-            "bounds": {
-                "start": 974,
-                "end": 982
-            },
+            "id": "8d5833f7-162b-4694-b0ee-9323d07e142b",
+            "bounds": [
+                {
+                    "start": 974,
+                    "end": 982
+                }
+            ],
             "description": "Izlaists vārds",
             "submissionStatistic": 36,
             "percentage": 0.0171,
             "mistakeType": "ORTHO"
         },
         {
-            "id": "2751845d-0813-4557-bfc4-548bc031d624",
-            "bounds": {
-                "start": 1065,
-                "end": 1066
-            },
+            "id": "307a9274-f59d-41bb-bed4-81af57f2ac88",
+            "bounds": [
+                {
+                    "start": 1065,
+                    "end": 1066
+                }
+            ],
             "description": "Nav atpazīts gramatiskais centrs",
             "submissionStatistic": 1099,
             "percentage": 0.5228,
             "mistakeType": "PUNCT"
         },
         {
-            "id": "bb24e383-3cf3-4e99-9de8-4947fe2d7925",
-            "bounds": {
-                "start": 1261,
-                "end": 1271
-            },
+            "id": "45d44c83-f0f3-414b-81bd-37eafbbf964d",
+            "bounds": [
+                {
+                    "start": 1261,
+                    "end": 1269
+                }
+            ],
             "description": "Pareizi rakstās \"ingredientus\"",
             "submissionStatistic": 3,
             "percentage": 0.0014,
             "mistakeType": "ORTHO"
         },
         {
-            "id": "ff67d73f-417a-4234-bf88-604a1aa8ae2a",
-            "bounds": {
-                "start": 1292,
-                "end": 1293
-            },
+            "id": "4974be8c-ffe2-4e92-ac7f-ef6c1409ffef",
+            "bounds": [
+                {
+                    "start": 1292,
+                    "end": 1293
+                }
+            ],
             "description": "Divdabja teicienu atdala ar komatu",
             "submissionStatistic": 213,
             "percentage": 0.1013,
             "mistakeType": "PUNCT"
         },
         {
-            "id": "8612a44a-e9d4-4c0b-8252-c58d53ec217b",
-            "bounds": {
-                "start": 1500,
-                "end": 1506
-            },
+            "id": "d55bb13e-1859-4332-87c3-2b32bddebdca",
+            "bounds": [
+                {
+                    "start": 1500,
+                    "end": 1499
+                },
+                {
+                    "start": 1502,
+                    "end": 1505
+                }
+            ],
             "description": "Nesākas jauns teikums",
             "submissionStatistic": 413,
             "percentage": 0.1965,
             "mistakeType": "PUNCT"
         },
         {
-            "id": "b3276e5a-54ab-4204-9d65-2c22f4a89ebd",
-            "bounds": {
-                "start": 1577,
-                "end": 1587
-            },
+            "id": "85d2a3cd-fd61-45fb-91a4-63e35a90c67c",
+            "bounds": [
+                {
+                    "start": 1577,
+                    "end": 1578
+                },
+                {
+                    "start": 1586,
+                    "end": 1587
+                }
+            ],
             "description": "Vārdu neatdala ar komatiem",
             "submissionStatistic": 478,
             "percentage": 0.2274,
             "mistakeType": "PUNCT"
         },
         {
-            "id": "2f90aa5c-e039-4079-83d5-e41ced9086b7",
-            "bounds": {
-                "start": 1663,
-                "end": 1672
-            },
+            "id": "160cb710-306c-4c07-8f5e-295056468554",
+            "bounds": [
+                {
+                    "start": 1663,
+                    "end": 1658
+                },
+                {
+                    "start": 1667,
+                    "end": 1672
+                }
+            ],
             "description": "Vārdu raksta kopā",
             "submissionStatistic": 1200,
             "percentage": 0.5709,
             "mistakeType": "ORTHO"
         },
         {
-            "id": "0a097939-0caf-4f8d-aa87-200e00a59f94",
-            "bounds": {
-                "start": 1835,
-                "end": 1838
-            },
+            "id": "a34e8b77-eba5-4fe1-a9bc-3bbfa7b9b462",
+            "bounds": [
+                {
+                    "start": 1835,
+                    "end": 1837
+                }
+            ],
             "description": "Pareizi rakstās \"taču\"",
             "submissionStatistic": 2,
             "percentage": 0.001,
