@@ -32,14 +32,10 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	for (const mistake of jsonData.mistakes) {
 		const start = mistake.bounds.start;
 		const end = mistake.bounds.end;
-		const original = jsonData.text.substring(start, end + 1);
-		const modified = `<span class="mistake" onclick="onClickMistake(this)" onmouseenter="onEnterMistake(event, this, '${mistake.id}')" onmouseleave="onLeaveMistake(event, '${mistake.id}')">${original}</span>`;
-		tooltipText += `<div class="tooltip hiddenTooltip" id="${mistake.id}">
-    <div class="line"></div>
-    <div class="desc">${mistake.description}</div>
-    <div class="footer">Kļūda fiksēta ${mistake.submissionStatistic} (${Math.floor(mistake.percentage * 100)}%) darbos</div>
-</div>`
-		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset + 1);
+		const original = jsonData.text.substring(start, end);
+		const modified = `<span class="mistake" onclick="onClickMistake(this)" onmouseenter="onEnterMistake(this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage})" onmouseleave="onLeaveMistake()">${original}</span>`;
+		tooltipText += ``
+		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
 		// console.log(original);
 		// console.log(mistake.description);
 		// console.log("<br/>");
@@ -49,7 +45,11 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	<link rel="preconnect" href="https://fonts.googleapis.com"/>
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 	<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:opsz@8..144&display=swap" rel="stylesheet"/>
-	${tooltipText}
+	<div class="tooltip hiddenTooltip" id="tooltip">
+    <div class="line"></div>
+    <div class="desc">placeholder description</div>
+    <div class="footer">Kļūda fiksēta 0 (0%) darbos</div>
+</div>
 	<div class="left">
 		<b>Rakstīja</b><br/>${jsonData.author}
 	</div>

@@ -18,7 +18,7 @@
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
-	font-weight: 700;
+	font-weight: 400;
 	font-size: 20px;
 	line-height: 23px;
 	text-align: right;
@@ -33,7 +33,7 @@
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
-	font-weight: 700;
+	font-weight: 400;
 	font-size: 20px;
 	line-height: 23px;
 }
@@ -82,6 +82,7 @@
 	box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.25);
 	z-index: 1000;
 	transition: opacity 0.25s ease-out;
+	pointer-events: none;
 }
 
 .line {
