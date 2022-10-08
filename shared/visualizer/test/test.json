@@ -3,7 +3,7 @@
     "text": "Aivars Eipurs\nMazsālīto gurķu blūzs\nNoņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.\nUz Jāņiem tirgū nopirku it kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darbavietā pastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.\nEs gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams. Bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.\nNekad nebiju neko konservējis — ne dārzeņu, ne augļus, ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču šoreiz nolēmu to izdarīt, lai tur lūst vai plīst, un pamatīgi izbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats šādu saimniekošanas formu nebijām novērojuši.\nAtcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt indigrientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu eiro. Būdams labs fiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu, tāpat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai, diemžēl, nebija, tomēr par pirkumu paprasīja četrus eiro un septiņdesmit centus. Ne tik vien samaksāju, bet arī pateicos par konsultāciju.\nKāds idiots esmu, aptvēru tikai tramvajā. Iznāk, ka par mārrutka lapu biju samaksājis trīs eiro. Tā lapa bija liela, tače ne jau tik liela kā palma vai ziloņa auss.\nNākamajā reizē visu garšaugu komplektu nopirku par vienu eiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.",
     "mistakes": [
         {
-            "id": "43e7ce5e-9da0-4b86-ba11-f8618a38cef0",
+            "id": "f7b3ec24-d946-4c33-89d6-168a26b1cd6d",
             "bounds": [
                 {
                     "start": 0,
@@ -376,7 +376,7 @@
             "mistakeType": "MERGED"
         },
         {
-            "id": "aa207531-2d70-4505-8392-6e33eff53324",
+            "id": "b423ab5f-f2eb-4cdb-986e-5601facd69b2",
             "bounds": [
                 {
                     "start": 676,
@@ -389,14 +389,10 @@
             "mistakeType": "PUNCT"
         },
         {
-            "id": "24c1a613-7fd6-4004-87e8-022c3bb3ee59",
+            "id": "2b9de197-843c-4f82-a9e2-b901858b876d",
             "bounds": [
                 {
                     "start": 813,
-                    "end": 814
-                },
-                {
-                    "start": 815,
                     "end": 818
                 }
             ],
@@ -406,7 +402,7 @@
             "mistakeType": "PUNCT"
         },
         {
-            "id": "1b5402a1-a81c-4842-8eb0-f389b7946bec",
+            "id": "204d3e0e-f836-4e3d-889d-e1896b8cb3cf",
             "bounds": [
                 {
                     "start": 940,
@@ -419,7 +415,7 @@
             "mistakeType": "ORTHO"
         },
         {
-            "id": "8d5833f7-162b-4694-b0ee-9323d07e142b",
+            "id": "02771659-d2f0-46b3-a7d7-fcf7d8c98b64",
             "bounds": [
                 {
                     "start": 974,
@@ -432,7 +428,7 @@
             "mistakeType": "ORTHO"
         },
         {
-            "id": "307a9274-f59d-41bb-bed4-81af57f2ac88",
+            "id": "4e7ec34f-d8e9-47e4-a60a-9e311e77d90b",
             "bounds": [
                 {
                     "start": 1065,
@@ -445,7 +441,7 @@
             "mistakeType": "PUNCT"
         },
         {
-            "id": "45d44c83-f0f3-414b-81bd-37eafbbf964d",
+            "id": "2da8b18a-cb02-4a2e-ab4e-e8f897977eea",
             "bounds": [
                 {
                     "start": 1261,
@@ -458,7 +454,7 @@
             "mistakeType": "ORTHO"
         },
         {
-            "id": "4974be8c-ffe2-4e92-ac7f-ef6c1409ffef",
+            "id": "adff1fea-87ef-4598-89a1-d204ce28ae7b",
             "bounds": [
                 {
                     "start": 1292,
@@ -471,14 +467,10 @@
             "mistakeType": "PUNCT"
         },
         {
-            "id": "d55bb13e-1859-4332-87c3-2b32bddebdca",
+            "id": "ff1180b1-6d6c-4a89-b2f3-a8c90e6cd084",
             "bounds": [
                 {
                     "start": 1500,
-                    "end": 1501
-                },
-                {
-                    "start": 1502,
                     "end": 1507
                 }
             ],
@@ -488,7 +480,7 @@
             "mistakeType": "PUNCT"
         },
         {
-            "id": "85d2a3cd-fd61-45fb-91a4-63e35a90c67c",
+            "id": "c4bd6051-0971-4e11-9b24-92429863cbc4",
             "bounds": [
                 {
                     "start": 1577,
@@ -505,14 +497,10 @@
             "mistakeType": "PUNCT"
         },
         {
-            "id": "160cb710-306c-4c07-8f5e-295056468554",
+            "id": "0db69e32-f435-4d68-88a5-2d22323063c9",
             "bounds": [
                 {
                     "start": 1663,
-                    "end": 1666
-                },
-                {
-                    "start": 1667,
                     "end": 1672
                 }
             ],
@@ -522,7 +510,7 @@
             "mistakeType": "ORTHO"
         },
         {
-            "id": "a34e8b77-eba5-4fe1-a9bc-3bbfa7b9b462",
+            "id": "c78e0087-6e6a-42a8-998d-d5d45b454b11",
             "bounds": [
                 {
                     "start": 1835,
