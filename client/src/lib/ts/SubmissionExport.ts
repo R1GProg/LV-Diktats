@@ -1,12 +1,14 @@
 import type { ExportedSubmission, ExportedSubmissionMistake, ExportedSubmissionMistakeType, Submission, Workspace } from "@shared/api-types";
 import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
 
-function addMissingWordsToText(rawText: string, mistakes: MistakeData[]) {
+function addMissingWordsToText(rawText: string, mistakes: MistakeData[], adjBounds: Record<MistakeId, Bounds>) {
 	let text = rawText;
+
+	console.log(adjBounds);
 
 	const addContentArr = mistakes
 		.filter((m) => m.type === "ADD")
-		.map((m) => ({ content: m.word, index: m.boundsDiff.start }));
+		.map((m) => ({ content: m.word, index: adjBounds[m.id].start }));
 
 	addContentArr.sort((a, b) => a.index - b.index);
 
@@ -82,14 +84,13 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 	// Add missing text
 	const exportedMistakeIDs = mistakes.map((m) => m.id);
 	const exportedMistakes = subm.data.mistakes.filter((m) => exportedMistakeIDs.includes(m.id));
-	const unwrappedMistakes = exportedMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
-	const parsedText = addMissingWordsToText(subm.data.text, unwrappedMistakes);
+	const adjBounds: Record<MistakeId, Bounds> = {};
 
 	// Recalculate diff indices to account for not having MIXED ADD characters
 	let offset = 0;
 
 	for (const m of subm.data.mistakes) {
-		const checkMistakes = m.subtype === "MERGED" && m.type === "MIXED" ? m.children : [ m ];
+		const checkMistakes = m.subtype === "MERGED" ? m.children : [ m ];
 
 		// Adjust offset for mistakes that aren't included
 		if (!exportedMistakeIDs.includes(m.id)) {
@@ -110,15 +111,25 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 		bounds.end -= offset;
 
 		for (const child of checkMistakes) {
+			adjBounds[child.id] = {
+				start: child.boundsDiff.start - offset,
+				end: child.boundsDiff.end - offset
+			};
+
 			if (child.type === "MIXED") {
 				const addChars = child.actions.filter((a) => a.type === "ADD").length;
 				offset += addChars;
 				bounds.end -= addChars;
+
+				adjBounds[child.id].end -= addChars;
 			}
 		}
 
 		mistakes.find((checkM) => checkM.id === m.id)!.bounds = bounds;
 	}
+
+	const unwrappedMistakes = exportedMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+	const parsedText = addMissingWordsToText(subm.data.text, unwrappedMistakes, adjBounds);
 
 	return {
 		author: "Anonīms",
