@@ -155,8 +155,9 @@ export interface ExportedSubmission {
 }
 
 export interface ExportedSubmissionMistake {
+	id: string,
 	mistakeType: ExportedSubmissionMistakeType,
-	bound: Bound,
+	bound: Bounds,
 	description: string,
 	submissionStatistic: number,
 	percentage: number

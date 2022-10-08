@@ -1,0 +1,134 @@
+[
+    {
+        "id": "24cd208d-84ea-4b21-8eed-1ddaf4ea5aa7",
+        "bound": {
+            "start": 0,
+            "end": 472
+        },
+        "description": "Trūkst teksts",
+        "submissionStatistic": 4,
+        "percentage": 0.0019,
+        "mistakeType": "MERGED"
+    },
+    {
+        "id": "9fc40169-4c22-44c3-aeb9-550d94a0c94f",
+        "bound": {
+            "start": 676,
+            "end": 677
+        },
+        "description": "Nav atpazīts gramatiskais centrs",
+        "submissionStatistic": 1099,
+        "percentage": 0.5228,
+        "mistakeType": "PUNCT"
+    },
+    {
+        "id": "e0d91738-a75a-48cd-b8bc-3830acb6d4a9",
+        "bound": {
+            "start": 813,
+            "end": 817
+        },
+        "description": "Nesākas jauns teikums",
+        "submissionStatistic": 6,
+        "percentage": 0.0029,
+        "mistakeType": "PUNCT"
+    },
+    {
+        "id": "e81bc697-c34b-4c7e-803f-d26ad24981db",
+        "bound": {
+            "start": 940,
+            "end": 946
+        },
+        "description": "Pareizi rakstās \"dārzeņus\"",
+        "submissionStatistic": 6,
+        "percentage": 0.0029,
+        "mistakeType": "ORTHO"
+    },
+    {
+        "id": "399ee79a-3072-4c29-9241-da66332d8f6d",
+        "bound": {
+            "start": 974,
+            "end": 982
+        },
+        "description": "Izlaists vārds",
+        "submissionStatistic": 36,
+        "percentage": 0.0171,
+        "mistakeType": "ORTHO"
+    },
+    {
+        "id": "206de7f5-8530-4453-9c71-b325bd7ac674",
+        "bound": {
+            "start": 1065,
+            "end": 1066
+        },
+        "description": "Nav atpazīts gramatiskais centrs",
+        "submissionStatistic": 1099,
+        "percentage": 0.5228,
+        "mistakeType": "PUNCT"
+    },
+    {
+        "id": "94d3d9dc-1cf3-4371-9f1a-7eecce2e4338",
+        "bound": {
+            "start": 1261,
+            "end": 1271
+        },
+        "description": "Pareizi rakstās \"ingredientus\"",
+        "submissionStatistic": 3,
+        "percentage": 0.0014,
+        "mistakeType": "ORTHO"
+    },
+    {
+        "id": "693bc1d4-9e2e-4ebe-ae24-c4942399485b",
+        "bound": {
+            "start": 1292,
+            "end": 1293
+        },
+        "description": "Divdabja teicienu atdala ar komatu",
+        "submissionStatistic": 213,
+        "percentage": 0.1013,
+        "mistakeType": "PUNCT"
+    },
+    {
+        "id": "2b124dfe-ffc4-45d4-9076-5ba75342aed5",
+        "bound": {
+            "start": 1500,
+            "end": 1506
+        },
+        "description": "Nesākas jauns teikums",
+        "submissionStatistic": 413,
+        "percentage": 0.1965,
+        "mistakeType": "PUNCT"
+    },
+    {
+        "id": "492f8fcb-a128-44a3-b817-67652918a1a9",
+        "bound": {
+            "start": 1577,
+            "end": 1587
+        },
+        "description": "Vārdu neatdala ar komatiem",
+        "submissionStatistic": 478,
+        "percentage": 0.2274,
+        "mistakeType": "PUNCT"
+    },
+    {
+        "id": "60e6c256-d5c2-4ff7-8856-f47564e5f3c6",
+        "bound": {
+            "start": 1663,
+            "end": 1672
+        },
+        "description": "Vārdu raksta kopā",
+        "submissionStatistic": 1200,
+        "percentage": 0.5709,
+        "mistakeType": "ORTHO"
+    },
+    {
+        "id": "0173b5c3-a551-46e3-aaac-6e06a3196e9c",
+        "bound": {
+            "start": 1835,
+            "end": 1838
+        },
+        "description": "Pareizi rakstās \"taču\"",
+        "submissionStatistic": 2,
+        "percentage": 0.001,
+        "mistakeType": "ORTHO"
+    }
+]

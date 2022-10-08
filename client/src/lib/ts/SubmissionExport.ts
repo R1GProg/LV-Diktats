@@ -1,5 +1,5 @@
 import type { ExportedSubmission, ExportedSubmissionMistake, ExportedSubmissionMistakeType, Submission, Workspace } from "@shared/api-types";
-import type { MistakeData } from "@shared/diff-engine";
+import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
 
 function addMissingWordsToText(rawText: string, mistakes: MistakeData[]) {
 	let text = rawText;
@@ -21,28 +21,6 @@ function addMissingWordsToText(rawText: string, mistakes: MistakeData[]) {
 }
 
 export function exportSubmission(subm: Submission, workspace: Workspace): ExportedSubmission {
-	// Add missing text
-	const unwrappedMistakes = subm.data.mistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
-	const parsedText = addMissingWordsToText(subm.data.text, unwrappedMistakes);
-	
-	// Recalculate diff indices to account for not having MIXED ADD characters
-	let offset = 0;
-
-	for (const m of subm.data.mistakes) {
-		m.boundsDiff.start -= offset;
-		m.boundsDiff.end -= offset;
-
-		const children = m.subtype === "MERGED" && m.type === "MIXED" ? m.children : [ m ];
-
-		for (const child of children) {
-			if (child.type === "MIXED") {
-				const addChars = child.actions.filter((a) => a.type === "ADD").length;
-				offset += addChars;
-				m.boundsDiff.end -= addChars;
-			}
-		}
-	}
-
 	// Add mistake descriptions from register
 	const mistakes: ExportedSubmissionMistake[] = [];
 	const totalSubmCount = Object.values(workspace.submissions).length;
@@ -92,12 +70,54 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 		}
 
 		mistakes.push({
-			bound: m.boundsDiff,
+			id: m.id,
+			bound: { start: -1, end: -1 },
 			description: registerEntry.description,
 			submissionStatistic: registerEntry.count,
 			percentage: Math.round(registerEntry.count / totalSubmCount * 10000) / 10000,
 			mistakeType,
 		});
+	}
+
+	// Add missing text
+	const exportedMistakeIDs = mistakes.map((m) => m.id);
+	const exportedMistakes = subm.data.mistakes.filter((m) => exportedMistakeIDs.includes(m.id));
+	const unwrappedMistakes = exportedMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+	const parsedText = addMissingWordsToText(subm.data.text, unwrappedMistakes);
+
+	// Recalculate diff indices to account for not having MIXED ADD characters
+	let offset = 0;
+
+	for (const m of subm.data.mistakes) {
+		const checkMistakes = m.subtype === "MERGED" && m.type === "MIXED" ? m.children : [ m ];
+
+		// Adjust offset for mistakes that aren't included
+		if (!exportedMistakeIDs.includes(m.id)) {
+			for (const checkM of checkMistakes) {
+				if (checkM.type === "ADD") {
+					offset += checkM.word.length;
+				} else if (checkM.type === "MIXED") {
+					offset += checkM.actions.filter((a) => a.type === "ADD").length;
+				}
+			}
+
+			continue;
+		}
+
+		const bounds: Bounds = { ...m.boundsDiff };
+
+		bounds.start -= offset;
+		bounds.end -= offset;
+
+		for (const child of checkMistakes) {
+			if (child.type === "MIXED") {
+				const addChars = child.actions.filter((a) => a.type === "ADD").length;
+				offset += addChars;
+				bounds.end -= addChars;
+			}
+		}
+
+		mistakes.find((checkM) => checkM.id === m.id)!.bound = bounds;
 	}
 
 	return {
