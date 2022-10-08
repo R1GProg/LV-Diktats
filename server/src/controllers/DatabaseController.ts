@@ -1,13 +1,14 @@
 import { Types } from "mongoose";
 import { ActionDoc } from "../models/action";
-import { MistakeDoc, MistakeStore } from "../models/mistake";
-import { RegisterDoc, RegisterStore } from "../models/register";
-import { SubmissionDoc, SubmissionStore } from "../models/submission";
-import { WorkspaceDoc, WorkspaceStore } from "../models/workspace";
+import { MistakeDoc } from "../models/mistake";
+import { RegisterDoc } from "../models/register";
+import { SubmissionDoc } from "../models/submission";
+import { WorkspaceDoc } from "../models/workspace";
 import DiffONP, { ActionData, ActionSubtype, ActionType, Bounds, Mistake, MistakeData, MistakeSubtype, MistakeType } from '@shared/diff-engine';
 import { RegisterEntry, Submission, SubmissionID, SubmissionPreview, SubmissionState, Workspace, WorkspacePreview } from '@shared/api-types';
 import { processString } from '@shared/normalization';
 import { Logger } from "yatsl";
+import { RegisterStore, SubmissionStore, WorkspaceStore } from "@shared/api-types/database";
 
 // Manages database interactions, providing an abstraction layer between DB types and shared data types.
 
@@ -129,7 +130,7 @@ async function insertSubmission(submission: Submission, workspace: string): Prom
 		mistakePromises.push(insertMistake(mistake, workspace));
 	}
 	const mistakeIDs = await Promise.all(mistakePromises);
-	const submissionStore: SubmissionStore = {
+	const submissionStore: SubmissionStore<Types.ObjectId> = {
 		...submission,
 		data: {
 			...submission.data,
@@ -165,7 +166,7 @@ export async function insertWorkspaceDataset(workspace: WorkspaceDataset) {
 	const registerIDs = await Promise.all(registerPromises);
 
 	// Generate a workspace store from the dataset.
-	const workspaceStore: WorkspaceStore = {
+	const workspaceStore: WorkspaceStore<Types.ObjectId> = {
 		...workspace,
 		submissions: submissionIDs,
 		register: registerIDs,
@@ -223,7 +224,8 @@ export async function getWorkspace(id: string): Promise<Workspace | null> {
 		name: workspace.name,
 		template: workspace.template,
 		submissions: await fetchSubmissionsInWorkspace(workspace.id),
-		register: await fetchRegistersInWorkspace(workspace.id)
+		register: await fetchRegistersInWorkspace(workspace.id),
+		local: false
 	}
 
 	return result;
@@ -261,7 +263,7 @@ export async function fetchRegistersInWorkspace(workspaceID: string): Promise<Re
 	return registerEntries;
 }
 // - Turn RegisterStore into RegisterEntry
-function convertRegisterStoreIntoRegisterEntry(register: RegisterStore): RegisterEntry {
+function convertRegisterStoreIntoRegisterEntry(register: RegisterStore<Types.ObjectId>): RegisterEntry {
 	return {
 		id: register.id,
 		mistakes: register.mistakes,

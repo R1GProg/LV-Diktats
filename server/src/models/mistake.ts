@@ -1,25 +1,7 @@
-import { Bounds } from '@shared/diff-engine';
+import { MistakeStore } from '@shared/api-types/database';
 import { model, Schema, Types } from 'mongoose';
 
-// A variation of Mistake that stores only IDs of Actions, as Actions will be stored in their own document.
-export interface MistakeStore {
-	id: string,
-	hash: string,
-	type: string,
-	subtype: string,
-	actions: Types.ObjectId[],
-	boundsCheck: Bounds,
-	boundsCorrect: Bounds,
-	boundsDiff: Bounds,
-	word: string,
-	wordCorrect?: string,
-	registerId: string | null,
-	children: Types.ObjectId[],
-	workspace: string,
-	mergedId: string | null
-}
-
-const mistakeSchema = new Schema<MistakeStore>({
+const mistakeSchema = new Schema<MistakeStore<Types.ObjectId>>({
 	id: String,
 	hash: String,
 	type: String,
@@ -54,4 +36,4 @@ const mistakeSchema = new Schema<MistakeStore>({
 	}
 });
 
-export const MistakeDoc = model<MistakeStore>('Mistake', mistakeSchema);
+export const MistakeDoc = model<MistakeStore<Types.ObjectId>>('Mistake', mistakeSchema);

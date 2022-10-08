@@ -1,15 +1,7 @@
-import { model, Schema } from 'mongoose';
+import { RegisterStore } from '@shared/api-types/database';
+import { model, Schema, Types } from 'mongoose';
 
-export interface RegisterStore {
-	id: string,
-	mistakes: string[],
-	description: string,
-	ignore: boolean,
-	count: number,
-	workspace: string
-}
-
-const registerSchema = new Schema<RegisterStore>({
+const registerSchema = new Schema<RegisterStore<Types.ObjectId>>({
 	id: String,
 	mistakes: [String],
 	description: String,
@@ -18,4 +10,4 @@ const registerSchema = new Schema<RegisterStore>({
 	workspace: String
 });
 
-export const RegisterDoc = model<RegisterStore>('Register', registerSchema);
+export const RegisterDoc = model<RegisterStore<Types.ObjectId>>('Register', registerSchema);

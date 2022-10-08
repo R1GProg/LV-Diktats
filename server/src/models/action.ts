@@ -1,18 +1,7 @@
-import { Action } from '@shared/diff-engine';
-import { model, Schema } from 'mongoose';
+import { model, Schema, Types } from 'mongoose';
+import { ActionStore } from "@shared/api-types/database";
 
-export interface ActionStore {
-	id: string,
-	type: string,
-	subtype: string,
-	indexCheck: number,
-	indexCorrect: number,
-	indexDiff: number,
-	char: string,
-	workspace: string
-}
-
-const actionSchema = new Schema<ActionStore>({
+const actionSchema = new Schema<ActionStore<Types.ObjectId>>({
 	id: String,
 	type: String,
 	subtype: String,
@@ -26,4 +15,4 @@ const actionSchema = new Schema<ActionStore>({
 	workspace: String
 });
 
-export const ActionDoc = model<ActionStore>('Action', actionSchema);
+export const ActionDoc = model<ActionStore<Types.ObjectId>>('Action', actionSchema);

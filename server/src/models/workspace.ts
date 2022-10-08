@@ -1,18 +1,7 @@
-import { SubmissionDoc } from './submission';
-import { Workspace } from '@shared/api-types';
 import { model, Schema, Types } from 'mongoose';
+import { WorkspaceStore } from '@shared/api-types/database';
 
-// A variation of Workspace that stores only IDs, as Submissions will be stored in their own document.
-export interface WorkspaceStore {
-	id: string;
-	name: string;
-	template: string;
-	submissions: Types.ObjectId[];
-	register: Types.ObjectId[];
-	mergedMistakes: string[][]; // Hashes of mistakes that have been merged.
-}
-
-const workspaceSchema = new Schema<WorkspaceStore>({
+const workspaceSchema = new Schema<WorkspaceStore<Types.ObjectId>>({
 	id: String,
 	name: String,
 	template: String,
@@ -21,4 +10,4 @@ const workspaceSchema = new Schema<WorkspaceStore>({
 	mergedMistakes: [[String]]
 });
 
-export const WorkspaceDoc = model<WorkspaceStore>('Workspace', workspaceSchema);
+export const WorkspaceDoc = model<WorkspaceStore<Types.ObjectId>>('Workspace', workspaceSchema);
