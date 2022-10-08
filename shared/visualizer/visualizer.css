@@ -1,11 +1,11 @@
-.visualisation {
-	font-family: 'Roboto Serif';
-	font-style: normal;
-	font-weight: 400;
-}
-
 .mistake {
 	background-color: #F86060;
+	transition: 0.5s;
+	}
+	
+	.mistake:hover {
+		filter: brightness(0.85);
+		cursor: pointer;
 }
 
 
@@ -70,6 +70,9 @@
 
 
 /** tooltip stuff **/
+.hiddenTooltip {
+	opacity: 0;
+}
 .tooltip {
 	position: absolute;
 	width: 194px;
@@ -78,6 +81,7 @@
 	border-radius: 2px;
 	box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.25);
 	z-index: 1000;
+	transition: opacity 0.25s ease-out;
 }
 
 .line {
