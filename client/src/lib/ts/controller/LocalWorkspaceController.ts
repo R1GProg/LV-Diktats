@@ -43,4 +43,8 @@ export default class LocalWorkspaceController {
 	getSubmissionData(ws: UUID, submId: SubmissionID) {
 		return this.db.getSubmissionData(ws, submId);
 	}
+
+	getSubmission(ws: UUID, submId: SubmissionID) {
+		return this.db.getSubmission(ws, submId);
+	}
 }

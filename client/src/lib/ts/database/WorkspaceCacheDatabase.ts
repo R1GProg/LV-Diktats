@@ -26,7 +26,7 @@ export default class WorkspaceCacheDatabase extends BrowserDatabase {
 		return Object.keys(wsCache).includes(id);
 	}
 
-	async addSubmissionToCache(submission: Submission, workspace: UUID) {
+	async addSubmissionToCache(workspace: UUID, submission: Submission) {
 		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
 		const data = workspaceExists ? await this.readSubmissionCache(workspace) : {};
 
@@ -35,7 +35,7 @@ export default class WorkspaceCacheDatabase extends BrowserDatabase {
 		await this.update<CacheEntry>("submissionCache", workspace, data);
 	}
 
-	async removeSubmissionsFromCache(ids: SubmissionID[], workspace: UUID) {
+	async removeSubmissionsFromCache(workspace: UUID, ids: SubmissionID[]) {
 		const workspaceExists = await this.storeHasKey("submissionCache", workspace);
 
 		if (!workspaceExists) {
@@ -73,10 +73,6 @@ export default class WorkspaceCacheDatabase extends BrowserDatabase {
 			return (await this.read<CacheEntry>("submissionCache", workspace))[id];
 		} else {
 			return null;
-
-			// const subm = await this.ds.requestSubmission(id, workspace);
-			// await this.addSubmissionToCache(subm, workspace);
-			// return subm;
 		}
 	}
 

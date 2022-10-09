@@ -241,6 +241,26 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		}
 	}
 
+	async getSubmission(ws: UUID, id: SubmissionID): Promise<Submission | null> {
+		const subm = await this.findOne<SubmissionStore<UUID>>("submissions", (val) => {
+			return val.id === id && val.workspace === ws;
+		});
+
+		if (subm === null) return null;
+
+		const mistakes: (MistakeData | null)[] = await Promise.all(subm.data.mistakes.map((m) => this.getMistakeById(ws, id, m.id)));
+
+		if (mistakes.includes(null)) return null;
+
+		return {
+			...subm,
+			data: {
+				...subm.data,
+				mistakes: mistakes as MistakeData[]
+			}
+		}
+	}
+
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
 		const workspaces = await this.readAll<WorkspaceStore<UUID>>("workspaces");
 

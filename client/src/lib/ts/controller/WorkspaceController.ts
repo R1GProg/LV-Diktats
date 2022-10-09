@@ -55,6 +55,22 @@ export default class WorkspaceController {
 	}
 
 	async getSubmission(ws: WorkspacePreview, submId: SubmissionID): Promise<Submission | null> {
-		throw "NYI";
+		const cachedSubmission = await this.cache.getSubmission(ws.id, submId);
+
+		if (cachedSubmission) return cachedSubmission;
+
+		let submData: Submission | null = null;
+
+		if (!ws.local && await APP_ONLINE) {
+			submData = await this.socket.requestSubmission(ws.id, submId);
+		} else if (ws.local) {
+			submData = await this.localController.getSubmission(ws.id, submId);
+		}
+
+		if (submData !== null) {
+			await this.cache.addSubmissionToCache(ws.id, submData);
+		}
+
+		return submData;
 	}
 }

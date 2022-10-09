@@ -1,13 +1,11 @@
 import io, { Socket as SocketIO } from "socket.io-client";
-import config from "$lib/config.json";
 import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RegisterUpdateEventEntryData, RegisterUpdateEventType, RequestSubmissionEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
-import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
-import Diff from "@shared/diff-engine";
+import type { Bounds, MistakeHash } from "@shared/diff-engine";
 import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCacheDatabase from "$lib/ts/database/WorkspaceCacheDatabase";
-import { getAllSubmissionsWithMistakes, submissionContainsMistake } from "../util";
+import { submissionContainsMistake } from "../util";
 import { v4 as uuidv4 } from "uuid";
 
 // Here temporarily
@@ -96,7 +94,7 @@ export default class DiktifySocket {
 		this.activeSubmissionID.set(id);
 	}
 
-	async requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission | null> {
+	async requestSubmission(workspaceId: UUID, id: SubmissionID): Promise<Submission | null> {
 		if (this.socket === null) {
 			return this.setSubmissionDataPromise();
 		}

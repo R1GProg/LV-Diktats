@@ -344,7 +344,16 @@ export default class BrowserDatabase {
 
 			if (this.transaction === null) this.initTransaction();
 
-			const objStore = this.transaction!.objectStore(obj);
+			let objStore: IDBObjectStore;
+
+			try {
+				objStore = this.transaction!.objectStore(obj);
+			} catch {
+				// For some reason, sometimes it the transaction is finished,
+				// but the oncomplete callback hasn't yet been called
+				objStore = this.db.transaction(obj, "readonly").objectStore(obj);
+			}
+			
 			const req = objStore.openCursor();
 
 			req.onerror = (ev) => {
