@@ -227,6 +227,29 @@ export default class BrowserDatabase {
 		});
 	}
 
+	protected async readAll<T>(obj: string): Promise<T[]> {
+		return new Promise<T[]>((res, rej) => {
+			if (this.db === null) {
+				this.warn("Attempt to read database before initialization!", { store: obj });
+				rej();
+				return;
+			}
+
+			if (this.transaction === null) this.initTransaction();
+	
+			const objStore = this.transaction!.objectStore(obj);
+			const req = objStore.getAll();
+
+			req.onerror = (ev) => {
+				rej(req.error);
+			};
+
+			req.onsuccess = (ev) => {
+				res(req.result as T[]);
+			};
+		});
+	}
+
 	protected delete(obj: string, key: string): Promise<boolean> {
 		return new Promise<boolean>((res, rej) => {
 			if (this.db === null) {

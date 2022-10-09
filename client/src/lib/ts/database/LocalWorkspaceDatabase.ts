@@ -213,9 +213,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	}
 
 	async getSubmissionPreview(ws: UUID, id: SubmissionID): Promise<SubmissionPreview | null> {
-		const subm = await this.findOne<SubmissionStore<UUID>>("submissions", (val) => {
-			return val.id === id && val.workspace === ws;
-		});
+		const subm = await this.read<SubmissionStore<UUID>>("submissions", id);
 
 		if (subm === null) return null;
 
@@ -243,12 +241,31 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		}
 	}
 
-	async getWorkspaces(): Promise<{ id: UUID, name: string }> {
-		throw "NYI";
+	async getWorkspaces(): Promise<{ id: UUID, name: string }[]> {
+		const workspaces = await this.readAll<WorkspaceStore<UUID>>("workspaces");
+
+		return workspaces.map((ws) => ({ id: ws.id, name: ws.name }));
 	}
 
-	async getWorkspace(ws: UUID): Promise<Workspace> {
-		throw "NYI";
+	async getWorkspace(ws: UUID): Promise<Workspace | null> {
+		const workspace = await this.read<WorkspaceStore<UUID>>("workspaces", ws);
+
+		if (!workspace) return null;
+
+		const submissions: Record<SubmissionID, SubmissionPreview> = {};
+
+		for (const subm of workspace.submissions) {
+			submissions[subm] = (await this.getSubmissionPreview(ws, subm))!;
+		}
+
+		return {
+			id: workspace.id,
+			name: workspace.name,
+			template: workspace.template,
+			register: await this.fillKeyArray("register", workspace.register),
+			submissions,
+			local: true,
+		};
 	}
 
 	async exportWorkspace(ws: UUID): Promise<ExportedWorkspace> {

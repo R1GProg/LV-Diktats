@@ -72,7 +72,7 @@ export function initStores() {
 			await controller.init();
 
 			// console.log(await controller.db.getSubmissionData("ec279a08-56c5-416f-89f4-bb739da0e2c3", "100"));
-			// console.log(await controller.db.getWorkspaces());
+			console.log(await controller.db.getWorkspace("ec279a08-56c5-416f-89f4-bb739da0e2c3"));
 
 			// const data = await fetchDebugDataset();
 

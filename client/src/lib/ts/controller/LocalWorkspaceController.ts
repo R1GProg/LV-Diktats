@@ -12,21 +12,22 @@ export default class LocalWorkspaceController {
 		return this.db.databaseInit();
 	}
 
-	async importCSV(name: string, template: string, csv: string) {
+	async importCSV(name: string, template: string, csv: string, log = false) {
 		let i = 0;
+		const logFunc = (msg: string) => { if (log) console.log(msg); }
 
-		console.log("Parsing dataset...");
+		logFunc("Parsing dataset...");
 
 		const data = await Parse.parseCSV(name, csv, template, (id: number) => {
-			if ((++i) % 100 === 0) {
-				console.log(`${i} submissions parsed!`);
+			if ((++i) % 50 === 0) {
+				logFunc(`${i} submissions parsed!`);
 			}
 		});
 
-		console.log("Dataset parsed!");
+		logFunc("Dataset parsed!");
 		
-		console.log("Writing dataset...");
+		logFunc("Writing dataset...");
 		await this.db.importWorkspace(data);
-		console.log("Dataset written!");
+		logFunc("Dataset written!");
 	}
 }
