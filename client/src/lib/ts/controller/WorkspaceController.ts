@@ -3,10 +3,12 @@ import DiktifyAPI from "$lib/ts/networking/DiktifyAPI";
 import LocalWorkspaceController from "$lib/ts/controller/LocalWorkspaceController";
 import config from "$lib/config.json";
 import type { Stores } from "$lib/ts/stores";
-import type { Submission, SubmissionID, SubmissionState, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
+import type { ExportedWorkspace, Submission, SubmissionID, SubmissionState, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 import WorkspaceCacheDatabase from "$lib/ts/database/WorkspaceCacheDatabase";
 import { APP_ONLINE } from "../networking/networking";
-import { fetchDebugDataset } from "../util";
+import { downloadBinary, fetchDebugDataset } from "../util";
+import { Parse } from "@shared/processing";
+import { v4 as uuidv4 } from "uuid";
 
 export default class WorkspaceController {
 	private socket: DiktifySocket;
@@ -16,9 +18,6 @@ export default class WorkspaceController {
 	private cache: WorkspaceCacheDatabase;
 
 	private api: DiktifyAPI;
-
-	// ID: isLocal
-	private workspaceLocations: Record<UUID, boolean> = {};
 
 	constructor(
 		workspace: Stores["workspace"],
@@ -53,9 +52,11 @@ export default class WorkspaceController {
 	async getWorkspace(wsData: WorkspacePreview): Promise<Workspace | null> {
 		if (wsData.local) {
 			return this.localController.getWorkspace(wsData.id);
-		} else {
+		} else if (await APP_ONLINE) {
 			return this.api.getWorkspace(wsData.id);
 		}
+		
+		return null;
 	}
 
 	async getSubmission(ws: WorkspacePreview, submId: SubmissionID): Promise<Submission | null> {
@@ -76,6 +77,37 @@ export default class WorkspaceController {
 		}
 
 		return submData;
+	}
+
+	async exportWorkspace(ws: WorkspacePreview): Promise<ExportedWorkspace | null> {
+		if (ws.local) {
+			return this.localController.exportWorkspace(ws.id);
+		} else if (await APP_ONLINE) {
+			throw "NYI";
+			// return this.api.getWorkspace(wsData.id);
+		}
+		
+		return null;
+	}
+
+	async exportWorkspaceToFile(ws: WorkspacePreview) {
+		const data = await this.localController.exportWorkspace(ws.id);
+		const gzipped = Parse.exportWorkspaceFile(data!);
+
+		downloadBinary(`${ws.name}.dws`, gzipped);
+	}
+
+	async importWorkspaceFromFile(fileData: File) {
+		const buf = new Uint8Array(await fileData.arrayBuffer());
+		const wsData = Parse.importWorkspaceFile(buf);
+
+		if (wsData === null) {
+			console.warn("Failed to import workspace from file!");
+			return;
+		}
+
+		wsData.id = uuidv4(); // Regen the ID to prevent duplicates
+		this.localController.importWorkspace(wsData);
 	}
 
 	async setSubmissionState(ws: WorkspacePreview, submId: SubmissionID, state: SubmissionState) {

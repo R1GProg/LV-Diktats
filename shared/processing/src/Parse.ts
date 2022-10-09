@@ -8,6 +8,7 @@ import { ExportedWorkspace, Submission, SubmissionID } from "@shared/api-types";
 import Diff, { Bounds, Mistake, MistakeData, MistakeHash } from "@shared/diff-engine";
 import { processString } from "@shared/normalization";
 import Papa from "papaparse";
+import gzip from "gzip-js";
 import { v4 as uuidv4 } from "uuid";
 
 export namespace Parse {
@@ -159,5 +160,25 @@ export namespace Parse {
 		submCopy.data.mistakes = mistakes;
 
 		return submCopy;
+	}
+
+	export function importWorkspaceFile(content: Uint8Array): ExportedWorkspace | null {
+		try {
+			const jsonData = gzip.unzip(content);
+
+			const textDec = new TextDecoder();
+			return JSON.parse(textDec.decode(new Uint8Array(jsonData)));
+		} catch (err) {
+			console.warn(err);
+			return null;
+		}
+	}
+
+	export function exportWorkspaceFile(ws: ExportedWorkspace): Uint8Array {
+		const str = JSON.stringify(ws);
+		const textEnc = new TextEncoder();
+		const data = gzip.zip(textEnc.encode(str));
+
+		return new Uint8Array(data);
 	}
 }

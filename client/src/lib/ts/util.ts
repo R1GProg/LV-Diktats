@@ -31,17 +31,33 @@ export function readTextFile(file: File) {
 	});
 }
 
+export function downloadURL (filename: string, url: string) {
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename;
+
+	document.body.appendChild(a);
+
+	a.style.display = "none";
+	a.click();
+	a.remove();
+}
+
 export function downloadText(filename: string, text: string) {
-	var element = document.createElement('a');
-	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-	element.setAttribute('download', filename);
-	
-	element.style.display = 'none';
-	document.body.appendChild(element);
-	
-	element.click();
-	
-	document.body.removeChild(element);
+	downloadURL(filename, `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`);
+}
+
+export function downloadBinary(filename: string, data: Uint8Array) {
+	const blob = new Blob([ data ], {
+		type: "application/octet-stream"
+	});
+
+	const url = URL.createObjectURL(blob);
+	downloadURL(filename, url);
+
+	setTimeout(function() {
+		return URL.revokeObjectURL(url);
+	}, 1000);
 }
 
 export function getAllSubmissionsWithMistakes(submissions: Submission[], mistakes: MistakeHash[]) {

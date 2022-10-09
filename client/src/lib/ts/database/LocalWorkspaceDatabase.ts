@@ -277,8 +277,53 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		};
 	}
 
-	async exportWorkspace(ws: UUID): Promise<ExportedWorkspace> {
-		throw "NYI";
+	async exportWorkspace(ws: UUID): Promise<ExportedWorkspace | null> {
+		const wsData = await this.getWorkspace(ws);
+		
+		if (wsData === null) return null;
+
+		const fillPromises: Promise<void>[] = [];
+		const submissions: Record<SubmissionID, Submission> = {}
+
+		for (const submID of Object.keys(wsData.submissions)) {
+			fillPromises.push(new Promise<void>(async (res, rej) => {
+				const subm = await this.getSubmission(ws, submID);
+
+				if (subm === null) rej();
+
+				submissions[submID] = subm!;
+				res();
+			}));
+		}
+
+		await Promise.all(fillPromises);
+
+		return {
+			...wsData,
+			submissions
+		};
+	}
+
+	async exportWorkspaceDatabase(ws: UUID) {
+		const workspace = await this.read<WorkspaceStore<DBWorkspaceID>>("workspaces", ws);
+
+		const submIDs = workspace.submissions.map((s) => dbID(ws, s));
+		const submissions = await this.fillKeyArray<SubmissionStore<DBSubmissionID>>("submissions", submIDs);
+
+		const mistakes = await this.findMany<MistakeStore<DBMistakeId>>("mistakes", (m) => {
+			return m.workspace === ws;
+		});
+
+		const register = await this.findMany<RegisterStore<DBMistakeId>>("register", (r) => {
+			return r.workspace === ws;
+		});
+
+		return {
+			workspace,
+			submissions,
+			mistakes,
+			register
+		}
 	}
 
 	async updateSubmission(ws: UUID, subm: Submission) {

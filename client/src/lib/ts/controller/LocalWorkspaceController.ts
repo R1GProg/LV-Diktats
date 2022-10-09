@@ -1,4 +1,4 @@
-import type { SubmissionID, UUID } from "@shared/api-types";
+import type { ExportedWorkspace, SubmissionID, UUID } from "@shared/api-types";
 import { Parse } from "@shared/processing";
 import LocalWorkspaceDatabase from "../database/LocalWorkspaceDatabase";
 
@@ -38,6 +38,18 @@ export default class LocalWorkspaceController {
 
 	getWorkspace(id: UUID) {
 		return this.db.getWorkspace(id);
+	}
+
+	exportWorkspace(id: UUID) {
+		return this.db.exportWorkspace(id);
+	}
+
+	importWorkspace(ws: ExportedWorkspace) {
+		return this.db.importWorkspace(ws);
+	}
+
+	exportWorkspaceDatabase(id: UUID) {
+		return this.db.exportWorkspaceDatabase(id);
 	}
 
 	getSubmissionData(ws: UUID, submId: SubmissionID) {

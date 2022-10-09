@@ -89,7 +89,7 @@ export default class BrowserDatabase {
 		if (this.transaction === null) this.initTransaction();
 
 		try {
-			this.transaction?.objectStore(obj);
+			this.transaction!.objectStore(obj);
 			return this.transaction!;
 		} catch {
 			return this.db!.transaction(obj, "readwrite");
