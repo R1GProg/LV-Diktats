@@ -32,6 +32,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 
 	let resultingText = jsonData.text;
 	let offset = 0;
+	// Map mistakes to their bounds so they can be sorted by bound start.
 	const boundMistakeList = [];
 	for (const mistake of jsonData.mistakes) {
 		for (const bounds of mistake.bounds) {
@@ -39,10 +40,12 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 		}
 	}
 
+	// Sort bounds in an ascending order
 	boundMistakeList.sort((x, y) => x.bounds.start - y.bounds.start);
 
 	// console.table(boundMistakeList);
 
+	// Generate the graded text by wrapping all mistakes with spans
 	for (const boundsMistakeSet of boundMistakeList) {
 		const start = boundsMistakeSet.bounds.start;
 		const end = boundsMistakeSet.bounds.end;
@@ -57,6 +60,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 		// console.log("<br/>");
 		offset += modified.length - original.length;
 	}
+	// Visualisation HTML
 	const element = `<div class="visualisation">
 	<link rel="preconnect" href="https://fonts.googleapis.com"/>
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -80,11 +84,13 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	</div>
 </div>`;
 
+	// Script that generates mistake rectangles once the entire div is generated (approx. 50ms after, which should be more than enough time for the innerHTML to set)
 	const script = `setTimeout(() => {
 		const mistakes = document.getElementsByClassName("mistake");
 		const doneYLevels = [];
 		Array.prototype.forEach.call(mistakes, (el) => {
 			const rect = el.getBoundingClientRect();
+			if(doneYLevels.includes(rect.y)) return;
 			document
 			.getElementsByClassName("text")[0]
 			.insertAdjacentHTML(
@@ -99,8 +105,8 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 		});
 		}, 50);`;
 
-	document.getElementById(containerId)!.innerHTML = element;
-	eval(script);
+	document.getElementById(containerId)!.innerHTML = element; // Set container's innerHTML to the visualisation document
+	eval(script); // Evaluate the line indicator generation code.
 }
 
 /**
