@@ -3,7 +3,7 @@ const tsify = require('tsify');
 const fs = require('fs');
 const path = require('path');
 
-const outFile = path.join(__dirname, "build", "bundle.js");
+const outFile = path.join(__dirname, "build", "visualizer.bundle.js");
 const visualizerEventsPath = path.join(__dirname, "visualizerEvents.js");
 
 browserify({ standalone: "visualizer" })
