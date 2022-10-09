@@ -1,6 +1,15 @@
 let hold = false;
-const yOffset = 15;
+const yOffset = -20; // tooltip::after height + line height
 let timeout = null;
+
+// A check to see whether the site is being accessed on a touchscreen device
+function is_touch_enabled() {
+  return (
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0
+  );
+}
 
 function setTooltipText(description, count, percentage) {
   const tooltip = document.getElementById("tooltip");
@@ -24,7 +33,12 @@ function onEnterMistake(ev, parent, description, count, percentage, id) {
   const rect = parent.getBoundingClientRect();
   const rootRect = tooltip.parentNode.parentNode;
   tooltip.style.top =
-    rect.y - rootRect.offsetTop - 124 + yOffset + window.scrollY + "px";
+    rect.y -
+    rootRect.offsetTop -
+    tooltip.offsetHeight +
+    yOffset +
+    window.scrollY +
+    "px";
   tooltip.style.left = ev.clientX - rootRect.offsetLeft + window.scrollX + "px";
   tooltip.classList.remove("hiddenTooltip");
 }
@@ -43,27 +57,64 @@ function onLeaveMistake(id) {
   }, 250);
 }
 
+let lastElem = null;
 function onClickMistake(elem, id, ev) {
-  hold = !hold;
-  if (hold) {
-    // elem.style.background = "#FFB74D";
-    Array.prototype.forEach.call(
-      document.getElementsByClassName(id),
-      (element) => (element.style.background = "#FFB74D")
-    );
-  }
-  if (!hold) {
-    let tooltip = document.getElementById("tooltip");
-    tooltip.classList.add("hiddenTooltip");
-    Array.prototype.forEach.call(
-      document.getElementsByClassName("mistake"),
-      (el) => {
-        el.style.background = "#F86060";
-      }
-    );
+  if (is_touch_enabled()) {
+    if (lastElem !== null) {
+      const evt = new Event("mouseleave");
+      evt.clientX = ev.clientX;
+      evt.clientY = ev.clientY;
+      lastElem.dispatchEvent(evt);
+    }
     const evt = new Event("mouseenter");
     evt.clientX = ev.clientX;
     evt.clientY = ev.clientY;
     elem.dispatchEvent(evt);
+    lastElem = elem;
+  } else {
+    hold = !hold;
+    if (hold) {
+      // elem.style.background = "#FFB74D";
+      Array.prototype.forEach.call(
+        document.getElementsByClassName(id),
+        (element) => (element.style.background = "#FFB74D")
+      );
+    }
+    if (!hold) {
+      let tooltip = document.getElementById("tooltip");
+      tooltip.classList.add("hiddenTooltip");
+      Array.prototype.forEach.call(
+        document.getElementsByClassName("mistake"),
+        (el) => {
+          el.style.background = "#F86060";
+        }
+      );
+      const evt = new Event("mouseenter");
+      evt.clientX = ev.clientX;
+      evt.clientY = ev.clientY;
+      elem.dispatchEvent(evt);
+    }
   }
 }
+
+function onClickAnythingElse(ev) {
+  if (!is_touch_enabled()) return;
+  if (lastElem !== null) {
+    const evt = new Event("mouseleave");
+    evt.clientX = ev.clientX;
+    evt.clientY = ev.clientY;
+    lastElem.dispatchEvent(evt);
+  }
+}
+
+document.addEventListener("click", function (evt) {
+  if (!is_touch_enabled()) return;
+  let target = evt.target;
+  do {
+    if (target.classList?.contains("mistake")) {
+      return;
+    }
+    target = target.parentNode;
+  } while (target);
+  onClickAnythingElse(evt);
+});
