@@ -76,8 +76,8 @@
 }
 .tooltip {
 	position: absolute;
-	width: 15vw;
-		height: 7.5vw;
+	width: min(230px, 15vw);
+		height: min(115px, 7.5vw);
 	background-color: white;
 	border-radius: 2px 2px 2px 0px;
 	box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.25);
