@@ -15,8 +15,6 @@
 
 .right {
 	position: absolute;
-	width: 263px;
-	height: 55px;
 	right: 5%;
 		top: 5%;
 
@@ -111,8 +109,6 @@
 
 .footer {
 	position: absolute;
-	width: 176px;
-	height: 11px;
 	right: 9px;
 		bottom: 2%;
 
