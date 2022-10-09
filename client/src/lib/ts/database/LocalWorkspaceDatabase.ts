@@ -4,15 +4,24 @@ import type { MistakeData, MistakeHash, MistakeId } from "@shared/diff-engine";
 import type { MistakeStore, RegisterStore, SubmissionStore, WorkspaceStore } from "@shared/api-types/database";
 import BrowserDatabase from "./BrowserDatabase";
 
+type DBMistakeId = string;
+type DBRegisterId = string;
+type DBSubmissionID = string;
+type DBWorkspaceID = UUID;
+
+function dbID(workspace: UUID, id: UUID) {
+	return `${workspace}-${id}`;
+}
+
 export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	constructor() {
 		super({
 			name: "LocalWorkspaces",
 			initEmpty: config.localWorkspacesSingleSession,
 			stores: [
-				{ name: "mistakes", keyPath: "id" },
-				{ name: "register", keyPath: "id" },
-				{ name: "submissions", keyPath: "id" },
+				{ name: "mistakes" },
+				{ name: "register" },
+				{ name: "submissions" },
 				{ name: "workspaces", keyPath: "id" },
 			]
 		});
@@ -23,10 +32,8 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 
 	private async addMistake(workspace: UUID, m: MistakeData): Promise<MistakeId> {
 		if (this.mistakeHashLog === null) {
-			const existingMistake = await this.findOne<MistakeStore<UUID>>("mistakes", (checkM) => {
-				return checkM.hash === m.hash && checkM.workspace === workspace;
-			});
-	
+			const existingMistake = await this.read<MistakeStore<DBMistakeId>>("mistakes", dbID(workspace, m.hash));
+
 			if (existingMistake) return existingMistake.id;
 		} else if (m.hash in this.mistakeHashLog) {
 			return this.mistakeHashLog[m.hash];
@@ -34,7 +41,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 			this.mistakeHashLog[m.hash] = m.id;
 		}
 
-		const mistakeData: MistakeStore<UUID> = {
+		const mistakeData: MistakeStore<DBMistakeId> = {
 			id: m.id,
 			hash: m.hash,
 			type: m.type,
@@ -55,30 +62,15 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		}
 
 		await Promise.all(m.children.map((m) => this.addMistake(workspace, m)));
-		await this.write("mistakes", null, mistakeData);
+		await this.write("mistakes", dbID(workspace, m.hash), mistakeData);
 
 		return mistakeData.id;
 	}
 
 	private async addSubmission(workspace: UUID, subm: Submission) {
-		// MistakeID will map to itself it a mistake with the hash doesnt exist yet
-		// If a mistake with the hash is already stored, MistakeID will map to the
-		// ID of that mistake
-		const mistakeIDMap: Record<MistakeId, UUID> = {};
-		const mistakeIDMapPromises: Promise<void>[] = [];
+		await Promise.all(subm.data.mistakes.map((m) => this.addMistake(workspace, m)));
 
-		for (const mistake of subm.data.mistakes) {
-			mistakeIDMapPromises.push(new Promise<void>(async (res, rej) => {
-				const addedID = await this.addMistake(workspace, mistake);
-
-				mistakeIDMap[mistake.id] = addedID;
-				res();
-			}));
-		}
-
-		await Promise.all(mistakeIDMapPromises);
-
-		const submData: SubmissionStore<UUID> = {
+		const submData: SubmissionStore<DBSubmissionID> = {
 			id: subm.id,
 			state: subm.state,
 			workspace,
@@ -87,7 +79,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 				ignoreText: subm.data.ignoreText,
 				metadata: subm.data.metadata,
 				mistakes: subm.data.mistakes.map((m) => ({
-					id: mistakeIDMap[m.id],
+					id: m.id,
 					hash: m.hash,
 					boundsDiff: m.boundsDiff,
 					boundsCheck: m.boundsCheck,
@@ -96,7 +88,8 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 						indexCheck: a.indexCheck
 					})),
 					children: m.children.map((child) => ({
-						id: mistakeIDMap[child.id],
+						id: child.id,
+						hash: child.hash,
 						boundsDiff: child.boundsDiff,
 						boundsCheck: child.boundsCheck,
 						actions: child.actions.map((a) => ({
@@ -108,11 +101,11 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 			}
 		}
 
-		return this.write("submissions", null, submData);
+		return this.write("submissions", dbID(workspace, subm.id), submData);
 	}
 
 	private async addWorkspace(workspace: ExportedWorkspace) {
-		const data: WorkspaceStore<UUID> = {
+		const data: WorkspaceStore<DBWorkspaceID> = {
 			id: workspace.id,
 			name: workspace.name,
 			template: workspace.template,
@@ -124,7 +117,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	}
 
 	async addRegisterEntry(workspace: UUID, entry: RegisterEntry) {
-		const data: RegisterStore<UUID> = {
+		const data: RegisterStore<DBRegisterId> = {
 			id: entry.id,
 			mistakes: entry.mistakes,
 			description: entry.description,
@@ -132,7 +125,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 			workspace
 		};
 
-		return this.write("register", null, data);
+		return this.write("register", dbID(workspace, entry.id), data);
 	}
 
 	async importWorkspace(ws: ExportedWorkspace) {
@@ -147,15 +140,13 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		this.mistakeHashLog = null;
 	}
 
-	async getMistakeById(ws: UUID, submId: SubmissionID, mistakeId: MistakeId): Promise<MistakeData | null> {
-		const subm = await this.read<SubmissionStore<UUID>>("submissions", submId);
-		const targetMistakeStore = await this.findOne<MistakeStore<UUID>>("mistakes", (m) => {
-			return m.workspace === ws && m.id === mistakeId;
-		});
-		const submMistakeData = subm?.data.mistakes.find((m) => m.id === mistakeId);
+	async getMistakeByHash(ws: UUID, submId: SubmissionID, mistakeHash: MistakeHash): Promise<MistakeData | null> {
+		const subm = await this.read<SubmissionStore<DBSubmissionID>>("submissions", dbID(ws, submId));
+		const targetMistakeStore = await this.read<MistakeStore<DBMistakeId>>("mistakes", dbID(ws, mistakeHash));
+		const submMistakeData = subm?.data.mistakes.find((m) => m.hash === mistakeHash);
 
 		if (!subm || !targetMistakeStore || !submMistakeData) {
-			this.warn("Attempt to get invalid mistake", { submission: submId, mistake: mistakeId });
+			this.warn("Attempt to get invalid mistake", { submission: submId, mistake: mistakeHash });
 			return null;
 		}
 
@@ -176,7 +167,7 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 			children: []
 		};
 
-		const childMistakes = await this.fillKeyArray<MistakeStore<UUID>>("mistakes", targetMistakeStore.children);
+		const childMistakes = await this.fillKeyArray<MistakeStore<DBMistakeId>>("mistakes", targetMistakeStore.children);
 
 		// Fill children
 		for (const child of childMistakes) {
@@ -202,18 +193,18 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		return mistakeData;
 	}
 
-	async getMistakeByHash(ws: UUID, submId: SubmissionID, mistakeHash: MistakeHash): Promise<MistakeData | null> {
-		const targetMistake = await this.findOne<MistakeStore<UUID>>("mistakes", (m) => {
-			return m.hash === mistakeHash && m.workspace === ws;
-		});
+	// async getMistakeByHash(ws: UUID, submId: SubmissionID, mistakeHash: MistakeHash): Promise<MistakeData | null> {
+	// 	const targetMistake = await this.findOne<MistakeStore<UUID>>("mistakes", (m) => {
+	// 		return m.hash === mistakeHash && m.workspace === ws;
+	// 	});
 
-		if (targetMistake === null) return null;
+	// 	if (targetMistake === null) return null;
 
-		return this.getMistakeById(ws, submId, targetMistake.id);
-	}
+	// 	return this.getMistakeById(ws, submId, targetMistake.id);
+	// }
 
 	async getSubmissionPreview(ws: UUID, id: SubmissionID): Promise<SubmissionPreview | null> {
-		const subm = await this.read<SubmissionStore<UUID>>("submissions", id);
+		const subm = await this.read<SubmissionStore<DBSubmissionID>>("submissions", dbID(ws, id));
 
 		if (subm === null) return null;
 
@@ -225,13 +216,11 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	}
 
 	async getSubmissionData(ws: UUID, id: SubmissionID): Promise<SubmissionData | null> {
-		const subm = await this.findOne<SubmissionStore<UUID>>("submissions", (val) => {
-			return val.id === id && val.workspace === ws;
-		});
+		const subm = await this.read<SubmissionStore<DBSubmissionID>>("submissions", dbID(ws, id));
 
 		if (subm === null) return null;
 
-		const mistakes: (MistakeData | null)[] = await Promise.all(subm.data.mistakes.map((m) => this.getMistakeById(ws, id, m.id)));
+		const mistakes: (MistakeData | null)[] = await Promise.all(subm.data.mistakes.map((m) => this.getMistakeByHash(ws, id, m.hash)));
 
 		if (mistakes.includes(null)) return null;
 
@@ -242,13 +231,11 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	}
 
 	async getSubmission(ws: UUID, id: SubmissionID): Promise<Submission | null> {
-		const subm = await this.findOne<SubmissionStore<UUID>>("submissions", (val) => {
-			return val.id === id && val.workspace === ws;
-		});
+		const subm = await this.read<SubmissionStore<DBSubmissionID>>("submissions", dbID(ws, id));
 
 		if (subm === null) return null;
 
-		const mistakes: (MistakeData | null)[] = await Promise.all(subm.data.mistakes.map((m) => this.getMistakeById(ws, id, m.id)));
+		const mistakes: (MistakeData | null)[] = await Promise.all(subm.data.mistakes.map((m) => this.getMistakeByHash(ws, id, m.hash)));
 
 		if (mistakes.includes(null)) return null;
 
@@ -262,13 +249,13 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 	}
 
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
-		const workspaces = await this.readAll<WorkspaceStore<UUID>>("workspaces");
+		const workspaces = await this.readAll<WorkspaceStore<DBWorkspaceID>>("workspaces");
 
 		return workspaces.map((ws) => ({ id: ws.id, name: ws.name, local: true }));
 	}
 
 	async getWorkspace(ws: UUID): Promise<Workspace | null> {
-		const workspace = await this.read<WorkspaceStore<UUID>>("workspaces", ws);
+		const workspace = await this.read<WorkspaceStore<DBWorkspaceID>>("workspaces", ws);
 
 		if (!workspace) return null;
 
@@ -278,11 +265,13 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 			submissions[subm] = (await this.getSubmissionPreview(ws, subm))!;
 		}
 
+		const register = await this.fillKeyArray<RegisterStore<DBRegisterId>>("register", workspace.register.map((r) => dbID(workspace.id, r)));
+
 		return {
 			id: workspace.id,
 			name: workspace.name,
 			template: workspace.template,
-			register: await this.fillKeyArray("register", workspace.register),
+			register,
 			submissions,
 			local: true,
 		};

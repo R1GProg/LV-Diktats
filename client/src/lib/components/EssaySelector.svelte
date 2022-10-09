@@ -9,10 +9,10 @@
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
-	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
+	const activeWorkspaceData = store("activeWorkspaceData") as Stores["activeWorkspaceData"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
-	const ds = store("ds") as Stores["ds"];
 	const sortedSubmissions = store("sortedSubmissions") as Stores["sortedSubmissions"];
+	const workspaceController = store("workspaceController") as Stores["workspaceController"];
 
 	let activeIndex = 0;
 	let submissionModal: SubmissionModal;
@@ -101,12 +101,12 @@
 		initWorkspace();
 	}
 
-	function onSubmissionStateClick(newState: SubmissionState) {
-		if ($activeSubmissionID === null || $activeWorkspaceID === null) return;
+	async function onSubmissionStateClick(newState: SubmissionState) {
+		if ($activeSubmissionID === null || $activeWorkspaceData === null) return;
 
 		submissionState = submissionState === newState ? null : newState;
 
-		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
+		(await $workspaceController).setSubmissionState($activeWorkspaceData, $activeSubmissionID, newState);
 	}
 
 	async function onActiveSubmissionChange(id: SubmissionID | null) {
@@ -117,28 +117,28 @@
 		}
 	}
 
-	$: if ($activeWorkspaceID !== null && $sortedSubmissions !== null) initWorkspace();
+	$: if ($activeWorkspaceData !== null && $sortedSubmissions !== null) initWorkspace();
 	$: if ($sortedSubmissions !== null) onSortChange();
 	$: if ($workspace) onActiveSubmissionChange($activeSubmissionID);
 </script>
 
 <div class="container">
-	<h2 class="mainid">{$activeWorkspaceID ? `ID${$activeSubmissionID}` : `Nav datu`}</h2>
+	<h2 class="mainid">{$activeWorkspaceData ? `ID${$activeSubmissionID}` : `Nav datu`}</h2>
 	<div class="status-container">
 		<button
 			class="status-rejected"
 			class:active={submissionState === "REJECTED"}
-			disabled={$activeWorkspaceID === null}
+			disabled={$activeWorkspaceData === null}
 			on:click={() => { onSubmissionStateClick("REJECTED") }}
 		>Nelabos</button>
 		<button
 			class="status-done"
 			class:active={submissionState === "DONE"}
-			disabled={$activeWorkspaceID === null}
+			disabled={$activeWorkspaceData === null}
 			on:click={() => { onSubmissionStateClick("DONE") }}
 		>Izlabots</button>
 	</div>
-	{#if $activeWorkspaceID !== null}
+	{#if $activeWorkspaceData !== null}
 	<div class="selector">
 		<button class="prev" on:click={() => { changeSelectionBy(-1) }}></button>
 		<span>{activeIndex + 1}/{$sortedSubmissions?.length}</span>

@@ -85,6 +85,17 @@ export default class BrowserDatabase {
 		}
 	}
 
+	private ensureTransaction(obj: string): IDBTransaction {
+		if (this.transaction === null) this.initTransaction();
+
+		try {
+			this.transaction?.objectStore(obj);
+			return this.transaction!;
+		} catch {
+			return this.db!.transaction(obj, "readwrite");
+		}
+	}
+
 	databaseInit() {
 		return this.dbInitPromise;
 	}
@@ -165,10 +176,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.add(val, key ?? undefined);
 
 			req.onerror = (ev) => {
@@ -188,10 +197,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.put(val, key ?? undefined);
 
 			req.onerror = (ev) => {
@@ -211,10 +218,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.get(key);
 
 			req.onerror = (ev) => {
@@ -234,10 +239,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.getAll();
 
 			req.onerror = (ev) => {
@@ -257,10 +260,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.delete(key);
 
 			req.onerror = (ev) => {
@@ -280,10 +281,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.getAllKeys();
 
 			req.onerror = (ev) => {
@@ -313,10 +312,8 @@ export default class BrowserDatabase {
 				rej();
 				return;
 			}
-
-			if (this.transaction === null) this.initTransaction();
 	
-			const objStore = this.transaction!.objectStore(obj);
+			const objStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.clear();
 
 			req.onerror = (ev) => {
@@ -342,18 +339,7 @@ export default class BrowserDatabase {
 				return;
 			}
 
-			if (this.transaction === null) this.initTransaction();
-
-			let objStore: IDBObjectStore;
-
-			try {
-				objStore = this.transaction!.objectStore(obj);
-			} catch {
-				// For some reason, sometimes it the transaction is finished,
-				// but the oncomplete callback hasn't yet been called
-				objStore = this.db.transaction(obj, "readonly").objectStore(obj);
-			}
-			
+			const objStore: IDBObjectStore = this.ensureTransaction(obj).objectStore(obj);
 			const req = objStore.openCursor();
 
 			req.onerror = (ev) => {

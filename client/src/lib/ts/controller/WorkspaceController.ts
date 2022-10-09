@@ -3,9 +3,10 @@ import DiktifyAPI from "$lib/ts/networking/DiktifyAPI";
 import LocalWorkspaceController from "$lib/ts/controller/LocalWorkspaceController";
 import config from "$lib/config.json";
 import type { Stores } from "$lib/ts/stores";
-import type { Submission, SubmissionID, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
+import type { Submission, SubmissionID, SubmissionState, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 import WorkspaceCacheDatabase from "$lib/ts/database/WorkspaceCacheDatabase";
 import { APP_ONLINE } from "../networking/networking";
+import { fetchDebugDataset } from "../util";
 
 export default class WorkspaceController {
 	private socket: DiktifySocket;
@@ -35,6 +36,9 @@ export default class WorkspaceController {
 			this.localController.init(),
 			this.cache.databaseInit()
 		]);
+
+		// const rawData = await fetchDebugDataset();
+		// await this.localController.importCSV("DebugDataset", rawData.template, rawData.csv, true);
 	}
 
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
@@ -72,5 +76,9 @@ export default class WorkspaceController {
 		}
 
 		return submData;
+	}
+
+	async setSubmissionState(ws: WorkspacePreview, submId: SubmissionID, state: SubmissionState) {
+		throw "NYI";
 	}
 }

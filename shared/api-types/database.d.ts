@@ -54,6 +54,7 @@ export interface SubmissionStoreMistake<Type_ID> {
 	actions: SubmissionStoreMistakeAction[],
 	children: {
 		id: Type_ID,
+		hash: MistakeHash,
 		boundsDiff: Bounds,
 		boundsCheck: Bounds,
 		actions: SubmissionStoreMistakeAction[]

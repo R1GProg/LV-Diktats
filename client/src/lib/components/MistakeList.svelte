@@ -12,8 +12,7 @@
 	const hideRegistered = store("hideRegistered") as Stores["hideRegistered"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
-	const ds = store("ds") as Stores["ds"];
-	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
+	const activeWorkspaceData = store("activeWorkspaceData") as Stores["activeWorkspaceData"];
 	const workspace = store("workspace") as Stores["workspace"];
 	const selectedMistakes = store("selectedMistakes") as Stores["selectedMistakes"];
 	
@@ -64,105 +63,105 @@
 	}
 
 	async function mistakeRegisterHandler(id: MistakeId) {
-		if ($mode !== ToolbarMode.REGISTER) return;
+		// if ($mode !== ToolbarMode.REGISTER) return;
 
-		const activeSubm = await $activeSubmission;
+		// const activeSubm = await $activeSubmission;
 
-		if (activeSubm === null) return;
+		// if (activeSubm === null) return;
 
-		const mHash = activeSubm.data.mistakes.find((m) => m.id === id)!.hash;
-		const regId = getRegisterId(mHash, register);
+		// const mHash = activeSubm.data.mistakes.find((m) => m.id === id)!.hash;
+		// const regId = getRegisterId(mHash, register);
 
-		try {
-			const data = await regModal.open(mHash, regId ? "EDIT" : "ADD", regId);
+		// try {
+		// 	const data = await regModal.open(mHash, regId ? "EDIT" : "ADD", regId);
 		
-			switch (data.action) {
-				case "ADD":
-					if (data.id) {
-						// Added to existing
-						await $ds.registerUpdate(data, $activeWorkspaceID!);
-					} else {
-						await $ds.registerNew(data, $activeWorkspaceID!);
-					}
-					break;
-				case "EDIT":
-					await $ds.registerUpdate(data, $activeWorkspaceID!);
-					break;
-				case "DELETE":
-					await $ds.registerDelete(data, $activeWorkspaceID!);
-					break;
-			}
-		} catch(err) {} finally {
-			$selectedMistakes.clear();
-		}
+		// 	switch (data.action) {
+		// 		case "ADD":
+		// 			if (data.id) {
+		// 				// Added to existing
+		// 				await $ds.registerUpdate(data, $activeWorkspaceData!);
+		// 			} else {
+		// 				await $ds.registerNew(data, $activeWorkspaceData!);
+		// 			}
+		// 			break;
+		// 		case "EDIT":
+		// 			await $ds.registerUpdate(data, $activeWorkspaceData!);
+		// 			break;
+		// 		case "DELETE":
+		// 			await $ds.registerDelete(data, $activeWorkspaceData!);
+		// 			break;
+		// 	}
+		// } catch(err) {} finally {
+		// 	$selectedMistakes.clear();
+		// }
 	}
 
 	async function onMistakeRightClick(ev: Event) {
-		if ($mode !== ToolbarMode.REGISTER) return;
+		// if ($mode !== ToolbarMode.REGISTER) return;
 
-		const id = (ev.currentTarget as HTMLElement).dataset.id!;
-		const mistake = mistakes.find((m) => m.id === id);
+		// const id = (ev.currentTarget as HTMLElement).dataset.id!;
+		// const mistake = mistakes.find((m) => m.id === id);
 
-		if (!mistake || mistake.subtype !== "MERGED") return;
+		// if (!mistake || mistake.subtype !== "MERGED") return;
 
-		const unmergePromise = $ds.mistakeUnmerge(mistake.hash, $activeWorkspaceID!);
-		processingModal.open(unmergePromise);
+		// const unmergePromise = $ds.mistakeUnmerge(mistake.hash, $activeWorkspaceData!);
+		// processingModal.open(unmergePromise);
 	}
 
 	async function onBodyKeypress(ev: KeyboardEvent) {
-		if ($mode !== ToolbarMode.REGISTER) return;
-		if ($selectedMistakes.size() === 0) return;
+		// if ($mode !== ToolbarMode.REGISTER) return;
+		// if ($selectedMistakes.size() === 0) return;
 
-		if (ev.key === "Escape") {
-			$selectedMistakes.clear();
+		// if (ev.key === "Escape") {
+		// 	$selectedMistakes.clear();
 
-			const textSelection = document.getSelection();
+		// 	const textSelection = document.getSelection();
 
-			if (textSelection !== null) {
-				textSelection.removeAllRanges();
-			}
+		// 	if (textSelection !== null) {
+		// 		textSelection.removeAllRanges();
+		// 	}
 
-			return;
-		}
+		// 	return;
+		// }
 
-		if (ev.key !== "Enter") return;
+		// if (ev.key !== "Enter") return;
 
-		let id: string = $selectedMistakes.get()[0];
+		// let id: string = $selectedMistakes.get()[0];
 
-		if ($selectedMistakes.size() !== 1) {
-			const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)?.hash);
+		// if ($selectedMistakes.size() !== 1) {
+		// 	const hashes = $selectedMistakes.get().map((id) => mistakes.find((m) => m.id === id)?.hash);
 
-			const mergePromise = $ds.mistakeMerge(hashes.filter((h) => h !== undefined) as string[], $activeWorkspaceID!);
+		// 	const mergePromise = $ds.mistakeMerge(hashes.filter((h) => h !== undefined) as string[], $activeWorkspaceData!);
 
-			processingModal.open(mergePromise);
-			const submIds = await mergePromise;
+		// 	processingModal.open(mergePromise);
+		// 	const submIds = await mergePromise;
 
-			if (submIds === null) return;
+		// 	if (submIds === null) return;
 
-			const subm = await $activeSubmission;
+		// 	const subm = await $activeSubmission;
 			
-			if (subm === null) return;
+		// 	if (subm === null) return;
 
-			const mergedMistake = subm.data.mistakes.find((m) => {
-				if (m.subtype !== "MERGED") return false;
+		// 	const mergedMistake = subm.data.mistakes.find((m) => {
+		// 		if (m.subtype !== "MERGED") return false;
 
-				const childHashes = m.children.map((c) => c.hash);
+		// 		const childHashes = m.children.map((c) => c.hash);
 				
-				if (childHashes.length !== hashes.length) return false;
+		// 		if (childHashes.length !== hashes.length) return false;
 
-				return childHashes.every((h) => hashes.includes(h));
-			});
+		// 		return childHashes.every((h) => hashes.includes(h));
+		// 	});
 
-			if (!mergedMistake) {
-				console.warn(`Unable to find merged mistake to register (${hashes.join(", ")})`);
-				return;
-			}
+		// 	if (!mergedMistake) {
+		// 		console.warn(`Unable to find merged mistake to register (${hashes.join(", ")})`);
+		// 		return;
+		// 	}
 
-			id = mergedMistake.id;
-		}
+		// 	id = mergedMistake.id;
+		// }
 
-		mistakeRegisterHandler(id);
-		$selectedMistakes.clear();
+		// mistakeRegisterHandler(id);
+		// $selectedMistakes.clear();
 	}
 
 	async function onSubmissionChange(submissionPromise: Promise<Submission | null> | null) {
@@ -181,7 +180,7 @@
 		mistakes = submission.data!.mistakes;
 	}
 
-	async function onWorkspaceChange(workspacePromise: Promise<Workspace> | null) {
+	async function onWorkspaceChange(workspacePromise: Promise<Workspace | null> | null) {
 		const ws = await workspacePromise;
 
 		if (ws === null) {
