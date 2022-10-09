@@ -11,6 +11,18 @@ function is_touch_enabled() {
   );
 }
 
+function getScrollXY(elem) {
+  let scrOfX = 0,
+    scrOfY = 0;
+  let el = elem;
+  do {
+    if (el.scrollLeft !== undefined) scrOfX += el.scrollLeft;
+    if (el.scrollTop !== undefined) scrOfY += el.scrollTop;
+    el = el.parentNode;
+  } while (el);
+  return [scrOfX, scrOfY];
+}
+
 function setTooltipText(description, count, percentage) {
   const tooltip = document.getElementById("tooltip");
   const percent = Math.floor(percentage * 1000) / 10;
@@ -32,14 +44,15 @@ function onEnterMistake(ev, parent, description, count, percentage, id) {
   let tooltip = document.getElementById("tooltip");
   const rect = parent.getBoundingClientRect();
   const rootRect = tooltip.parentNode.parentNode;
+  const scroll = getScrollXY(parent);
   tooltip.style.top =
     rect.y -
     rootRect.offsetTop -
     tooltip.offsetHeight +
     yOffset +
-    window.scrollY +
+    scroll[1] +
     "px";
-  tooltip.style.left = ev.clientX - rootRect.offsetLeft + window.scrollX + "px";
+  tooltip.style.left = ev.clientX - rootRect.offsetLeft + scroll[0] + "px";
   tooltip.classList.remove("hiddenTooltip");
 }
 

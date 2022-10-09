@@ -46,7 +46,7 @@
 	position: absolute;
 	width: 90%;
 		left: 5%;
-		top: 15%;
+		top: clamp(calc(10% + 6em), calc(20% + 6em), 20%);
 }
 
 .text {
