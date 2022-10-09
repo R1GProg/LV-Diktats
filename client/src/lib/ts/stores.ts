@@ -1,16 +1,10 @@
-import type { Submission, SubmissionID, SubmissionPreview, UUID, Workspace } from "@shared/api-types";
+import type { Submission, SubmissionID, SubmissionPreview, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 import { getContext, onMount, setContext } from "svelte";
 import type { MistakeId } from "@shared/diff-engine";
 import { get, readable, writable, derived, type Readable, type Writable } from "svelte/store";
 import { ToolbarMode } from "./toolbar";
-import WorkspaceCacheDatabase from "$lib/ts/database/WorkspaceCacheDatabase";
-import { api } from "$lib/ts/networking/DiktifyAPI";
-import DiktifySocket from "./networking/DiktifySocket";
-import config from "$lib/config.json";
 import MistakeSelection from "./MistakeSelection";
-import LocalWorkspaceDatabase from "$lib/ts/database/LocalWorkspaceDatabase";
-import LocalWorkspaceController from "./controller/LocalWorkspaceController";
-import { fetchDebugDataset } from "./util";
+import WorkspaceController from "./controller/WorkspaceController";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -18,14 +12,12 @@ export interface Stores {
 	sort: Writable<SortMode>,
 	hoveredMistake: Writable<MistakeId | null>,
 	activeSubmissionID: Writable<SubmissionID | null>,
-	activeWorkspaceID: Writable<UUID | null>,
-	cache: Readable<Promise<WorkspaceCacheDatabase>>,
-	workspace: Readable<Promise<Workspace> | null>,
+	activeWorkspaceData: Writable<WorkspacePreview | null>,
+	workspace: Readable<Promise<Workspace | null> | null>,
 	activeSubmission: Readable<Promise<Submission | null> | null>,
-	ds: Readable<DiktifySocket>,
 	selectedMistakes: Readable<MistakeSelection>,
-	localWorkspaceDatabase: Readable<Promise<LocalWorkspaceDatabase>>,
-	sortedSubmissions: Readable<SubmissionPreview[] | null>
+	sortedSubmissions: Readable<SubmissionPreview[] | null>,
+	workspaceController: Readable<Promise<WorkspaceController>>
 }
 
 export enum SortMode {
@@ -45,58 +37,37 @@ export function initStores() {
 	const sort = writable<SortMode>(SortMode.MISTAKE);
 	const hoveredMistake = writable<MistakeId | null>(null);
 
-	const activeWorkspaceID = writable<UUID | null>(null);
+	const activeWorkspaceData = writable<WorkspacePreview | null>(null);
 	const activeSubmissionID = writable<SubmissionID | null>(null, (set) => {
-		activeWorkspaceID.subscribe((newID: UUID | null) => {
+		activeWorkspaceData.subscribe((newID: WorkspacePreview | null) => {
 			if (newID === null) set(null);
 		});
 	});
 
-	const workspace = readable<Promise<Workspace> | null>(null, (set) => {
-		activeWorkspaceID.subscribe((newID: UUID | null) => {
+	const workspace = readable<Promise<Workspace | null> | null>(null, (set) => {
+		activeWorkspaceData.subscribe(async (newID: WorkspacePreview | null) => {
 			if (newID === null) {
 				set(null);
 			} else {
-				set(api.getWorkspace(newID, localWorkspaceDatabase));
+				set((await get(workspaceController)).getWorkspace(newID));
 			}
 		});
 	});
 
-	const localWorkspaceDatabase = readable<Promise<LocalWorkspaceDatabase>>(new Promise<LocalWorkspaceDatabase>((res) => {
+	const workspaceController = readable<Promise<WorkspaceController>>(new Promise((res) => {
 		onMount(async () => {
-			// const db = new LocalWorkspaceDatabase(workspace);
-			// await db.databaseInit();
-			// res(db);
-
-			const controller = new LocalWorkspaceController();
+			const controller = new WorkspaceController(workspace, activeSubmissionID);
 			await controller.init();
-
-			// console.log(await controller.db.getSubmissionData("ec279a08-56c5-416f-89f4-bb739da0e2c3", "100"));
-			console.log(await controller.db.getWorkspace("ec279a08-56c5-416f-89f4-bb739da0e2c3"));
-
-			// const data = await fetchDebugDataset();
-
-			// controller.importCSV("DebugWorkspace", data.template, data.csv);
-		});
-	}));
-
-	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID, localWorkspaceDatabase))
-
-	const cache = readable<Promise<WorkspaceCacheDatabase>>(new Promise<WorkspaceCacheDatabase>((res) => {
-		onMount(async () => {
-			const wsCache = new WorkspaceCacheDatabase(get(ds));
-			get(ds).cache = wsCache;
-			await wsCache.databaseInit();
-			res(wsCache);
+			res(controller);
 		});
 	}));
 
 	const activeSubmission = readable<Promise<Submission | null> | null>(null, (set) => {
 		activeSubmissionID.subscribe(async (newID: string | null) => {
-			if (newID === null || get(activeWorkspaceID) === null) {
+			if (newID === null || get(activeWorkspaceData) === null) {
 				set(null);
 			} else {
-				const submission = (await get(cache)).getSubmission(newID, get(activeWorkspaceID)!);
+				const submission = (await get(workspaceController)).getSubmission(get(activeWorkspaceData)!, newID);
 				set(submission);
 			}
 		});
@@ -110,7 +81,7 @@ export function initStores() {
 		set(sel);
 	});
 
-	const sortedSubmissions = derived<[Readable<Promise<Workspace> | null>, Readable<SortMode>], SubmissionPreview[] | null>(
+	const sortedSubmissions = derived<[Readable<Promise<Workspace | null> | null>, Readable<SortMode>], SubmissionPreview[] | null>(
 		[workspace, sort],
 		([$workspace, $sort], set) => {
 			if ($workspace === null) {
@@ -119,6 +90,11 @@ export function initStores() {
 			}
 
 			$workspace.then((ws) => {
+				if (ws === null) {
+					set(null);
+					return;
+				}
+
 				const submArr = Object.values(ws.submissions);
 				
 				if (ws.id === "debugworkspaceid") {
@@ -146,13 +122,11 @@ export function initStores() {
 		sort,
 		hoveredMistake,
 		activeSubmissionID,
-		activeWorkspaceID,
-		cache,
+		activeWorkspaceData,
 		workspace,
 		activeSubmission,
-		ds,
 		selectedMistakes,
-		localWorkspaceDatabase,
-		sortedSubmissions
+		sortedSubmissions,
+		workspaceController
 	} as Stores);
 }

@@ -68,34 +68,25 @@ export default class DiktifyAPI {
 	}
 
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
-		if (config.debug) {
-			return [{ id: config.debugWorkspaceId, name: "Mazsālīto gurķu blūzs (DEBUG)" }];
+		const res = await this.fetch("/api/workspaces", { method: "GET", output: "json" });
+
+		if (res.error) {
+			console.warn(res.error);
+			return [];
 		}
-		
-		// TODO: SERVER FETCH
-		const request = await fetch(`${config.endpointUrl}/api/workspaces`);
-		const response: WorkspacePreview[] = await request.json();
-		return response;
+
+		return res.data as WorkspacePreview[];
 	}
 
-	async getWorkspace(
-		workspaceId: UUID,
-		localWorkspaceDb?: Stores["localWorkspaceDatabase"]
-	): Promise<Workspace> {
-		if (workspaceId === config.debugWorkspaceId) {
-			if (!localWorkspaceDb) return loadDebugWorkspace();
+	async getWorkspace(workspaceId: UUID): Promise<Workspace | null> {
+		const res = await this.fetch(`/api/workspace/${workspaceId}`, { method: "GET", output: "json" });
 
-			const db = await get(localWorkspaceDb);
-
-			if (!(await db.hasWorkspace(config.debugWorkspaceId))) return loadDebugWorkspace();
-
-			return db.getWorkspace(config.debugWorkspaceId);
+		if (res.error) {
+			console.warn(res.error);
+			return null;
 		}
 
-		const request = await fetch(`${config.endpointUrl}/api/workspace/${workspaceId}`);
-		const response: Workspace = { ...(await request.json()), local: false};
-		
-		return response;
+		return res.data as Workspace;
 	}
 
 	async getSettings(): Promise<Setting[]> {
@@ -136,26 +127,4 @@ export default class DiktifyAPI {
 		// Returns true if successful, false otherwise
 		throw "NYI";
 	}
-}
-
-export const api = new DiktifyAPI();
-
-async function loadDebugWorkspace(): Promise<Workspace> {
-	const req = await fetch("/output.json");
-	const ws: Workspace = {
-		...(await req.json()),
-		id: config.debugWorkspaceId,
-		local: true
-	};
-
-	for (const id of Object.keys(ws.submissions)) {
-		const sub = ws.submissions[id] as unknown as Submission;
-
-		if (sub.data.text.length < ws.template.length * config.incompleteFraction) {
-			// delete ws.submissions[id];
-			ws.submissions[id].state = "REJECTED";
-		}
-	}
-
-	return ws;
 }

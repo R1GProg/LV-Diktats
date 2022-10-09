@@ -1,3 +1,4 @@
+import type { SubmissionID, UUID } from "@shared/api-types";
 import { Parse } from "@shared/processing";
 import LocalWorkspaceDatabase from "../database/LocalWorkspaceDatabase";
 
@@ -29,5 +30,17 @@ export default class LocalWorkspaceController {
 		logFunc("Writing dataset...");
 		await this.db.importWorkspace(data);
 		logFunc("Dataset written!");
+	}
+
+	getWorkspaces() {
+		return this.db.getWorkspaces();
+	}
+
+	getWorkspace(id: UUID) {
+		return this.db.getWorkspace(id);
+	}
+
+	getSubmissionData(ws: UUID, submId: SubmissionID) {
+		return this.db.getSubmissionData(ws, submId);
 	}
 }

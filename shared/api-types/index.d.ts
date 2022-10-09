@@ -28,6 +28,7 @@ export interface ExportedWorkspace {
 export interface WorkspacePreview {
 	id: UUID,
 	name: string,
+	local: boolean
 }
 
 export interface Submission {

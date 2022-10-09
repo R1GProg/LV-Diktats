@@ -29,7 +29,7 @@ function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
 export type RegisterChangeCallback = (data: { type: RegisterUpdateEventType, entry: RegisterEntry }[]) => void;
 
 export default class DiktifySocket {
-	connectPromise: Promise<void>;
+	private connectPromise: Promise<void>;
 
 	private socket: SocketIO | null = null;
 
@@ -49,26 +49,24 @@ export default class DiktifySocket {
 
 	private activeSubmissionID: Stores["activeSubmissionID"];
 
-	private localWorkspaceDb: Stores["localWorkspaceDatabase"];
-
 	private cbs: RegisterChangeCallback[] = [];
 
 	constructor(
 		url: string,
 		workspace: Stores["workspace"],
 		activeSubmissionID: Stores["activeSubmissionID"],
-		localWorkspaceDb: Stores["localWorkspaceDatabase"]
 	) {
 		this.connectPromise = new Promise(async (res, rej) => {
 			if (await APP_ONLINE) {
 				this.socket = io(url);
 				this.initSocketListening();
 			}
+
+			res();
 		});
 
 		this.workspace = workspace;
 		this.activeSubmissionID = activeSubmissionID;
-		this.localWorkspaceDb = localWorkspaceDb;
 
 		// TODO: Maybe have some sort of subscribe-to-workspace feature
 		// so the server would know which clients specifically should receive
@@ -87,6 +85,10 @@ export default class DiktifySocket {
 		this.socket.on("submissionStateChange", (data) => { this.onSubmissionStateChange(data); });
 	}
 
+	init() {
+		return this.connectPromise;
+	}
+
 	private reloadActiveSubmission() {
 		const id = get(this.activeSubmissionID);
 
@@ -94,334 +96,125 @@ export default class DiktifySocket {
 		this.activeSubmissionID.set(id);
 	}
 
-	async requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission> {
-		if (config.debug) {
-			const ws = (await (get(this.workspace)))!;
-
-			// Cast as unknown as Submission because the debug workspace
-			// includes the submission data
-			const rawData = ws.submissions[id] as unknown as Submission;
-			const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
-			
-			const diff = new Diff(parseIgnoreBounds(rawData.data.text, rawData.data.ignoreText), ws.template);
-			diff.calc();
-			
-			// Remerges all previously merged mistakes, if they are still in the diff
-			const rawMistakes = diff.getMistakes();
-			const hashMistakeMap: Record<MistakeHash, Mistake> = {};
-			const mistakeMapPromises: Promise<void>[] = [];
-			
-			// Pregenerate the hashes of all mistakes
-			for (const m of rawMistakes) {
-				mistakeMapPromises.push(new Promise<void>(async (res) => {
-					hashMistakeMap[await m.genHash()] = m;
-					res();
-				}));
-			}
-			
-			await Promise.all(mistakeMapPromises);
-			
-			// Merge previously merged mistakes
-			for (const m of mergedMistakes) {
-				let stillMerged = true;
-				
-				// Check if all of the mistakes are still in the diff
-				for (const child of m.children) {
-					if (!(child.hash in hashMistakeMap)) {
-						stillMerged = false;
-						break;
-					}
-				}
-				
-				if (!stillMerged) continue;
-				
-				const mistakesToMerge = m.children.map((child) => hashMistakeMap[child.hash]);
-				const mergedMistake = Mistake.mergeMistakes(...mistakesToMerge);
-				
-				// Remove the mistakes that were merged, add the new merged mistake
-				for (const child of m.children) {
-					delete hashMistakeMap[child.hash];
-					hashMistakeMap[await mergedMistake.genHash()] = mergedMistake;
-				}
-			}
-			
-			const mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
-			mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-			
-			const updatedData = {
-				...rawData.data,
-				mistakes,
-			};
-			
-			let state: SubmissionState = "UNGRADED";
-			
-			if (rawData.data.text.length < ws.template.length * config.incompleteFraction) {
-				state = "REJECTED";
-			}
-
-			return this.setSubmissionDataPromise(() => {
-				this.onSubmissionData({
-					id,
-					workspace: workspaceId,
-					state,
-					data: updatedData,
-				});
-			});
-		} else if (this.socket) {
-			const request: RequestSubmissionEventData = {
-				id,
-				workspace: workspaceId
-			}
-
-			this.socket.emit("requestSubmission", request);
-
+	async requestSubmission(id: SubmissionID, workspaceId: UUID): Promise<Submission | null> {
+		if (this.socket === null) {
 			return this.setSubmissionDataPromise();
 		}
 
-		// The execution reaches here only if not debug and socket not found
-		// TODO: Return null in this case
+		const request: RequestSubmissionEventData = {
+			id,
+			workspace: workspaceId
+		}
+
+		this.socket.emit("requestSubmission", request);
+
 		return this.setSubmissionDataPromise();
 	}
 	
 	async mistakeMerge(mistakes: MistakeHash[], workspace: UUID) {
-		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
-			const targetSubmissions = getAllSubmissionsWithMistakes(Object.values(subData), mistakes);
-
-			const parsePromises: Promise<void>[] = [];
-
-			for (const subId of targetSubmissions) {
-				parsePromises.push(new Promise<void>(async (res) => {
-					const subMistakes = subData[subId].data.mistakes;
-					const targetSubMistakes = subMistakes
-						.filter((m) => mistakes.includes(m.hash))
-						.map((m) => Mistake.fromData(m));
-
-					const mergedMistake = Mistake.mergeMistakes(...targetSubMistakes);
-
-					for (const prevMistake of targetSubMistakes) {
-						subMistakes.splice(subMistakes.findIndex((m) => m.id === prevMistake.id), 1);
-					}
-
-					subMistakes.push(await mergedMistake.exportData());
-					subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-
-					res();
-				}));
-			}
-
-			await Promise.all(parsePromises);
-
-			return this.setRegenPromise(() => {
-				this.onSubmissionRegen({ workspace, ids: targetSubmissions });
-			});
-		} else if (this.socket) {
-			const request: MistakeMergeEventData = {
-				mistakes,
-				workspace
-			}
-
-			this.socket.emit("mistakeMerge", request);
-			return this.setRegenPromise();
+		if (this.socket === null) {
+			return null;
 		}
 
-		return null;
+		const request: MistakeMergeEventData = {
+			mistakes,
+			workspace
+		}
+
+		this.socket.emit("mistakeMerge", request);
+		return this.setRegenPromise();
 	}
 	
 	async mistakeUnmerge(targetMistake: MistakeHash, workspace: UUID) {
-		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
-			const targetSubmissions = Object.values(subData)
-				.filter((s) => s.data.mistakes.map((m) => m.hash).includes(targetMistake));
-			
-			const parsePromises: Promise<void>[] = [];
-			
-			for (const sub of targetSubmissions) {
-				parsePromises.push(new Promise<void>(async (res) => {
-					const subMistakes = sub.data.mistakes;
-					const targetSubMistake = subMistakes.findIndex((m) => m.hash === targetMistake)!;
-					const unmergedMistakes = Mistake.unmergeMistake(Mistake.fromData(subMistakes[targetSubMistake]));
-					
-					subMistakes.splice(targetSubMistake, 1);
-					
-					subMistakes.push(...await Promise.all(unmergedMistakes.map((m) => m.exportData())));
-					subMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-					
-					res();
-				}));
-			}
-			
-			await Promise.all(parsePromises);
+		if (this.socket === null) return null;
 
-			this.setRegenPromise(() => {
-				this.onSubmissionRegen({ workspace, ids: targetSubmissions.map((s) => s.id) });
-			});
-		} else if (this.socket) {
-			const request: MistakeUnmergeEventData = {
-				mistake: targetMistake,
-				workspace
-			}
-
-			this.socket.emit("mistakeUnmerge", request);
-
-			return this.setRegenPromise();
+		const request: MistakeUnmergeEventData = {
+			mistake: targetMistake,
+			workspace
 		}
 
-		return null
+		this.socket.emit("mistakeUnmerge", request);
+
+		return this.setRegenPromise();
 	}
 
-	async registerNew(data: RegisterEntryData, workspace: UUID) {
-		if (config.debug) {
-			const ws = await get(this.workspace);
-			if (ws === null) return;
+	async registerNew(data: RegisterEntryData, workspace: UUID): Promise<boolean> {
+		if (this.socket === null) return false;
 
-			let count = 0;
-			const _mistakeWords: Record<MistakeHash, string> = {};
-
-			for (const m of data.mistakes!) {
-				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
-				count += submArr.length;
-				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
-			}
-
-			const serverData: RegisterEntry = {
-				id: uuidv4(),
-				mistakes: data.mistakes!,
-				description: data.description!,
-				ignore: data.ignore!,
-				count,
-				_mistakeWords,
-			};
-
-			this.onRegisterUpdate({ data: [{ type: "ADD", entry: serverData }], workspace });
-		} else {
-			if (this.socket) {
-				const payloadData: RegisterEntry = {
-					id: uuidv4(),
-					mistakes: data.mistakes!,
-					description: data.description!,
-					ignore: data.ignore!,
-					count: 0, // The Server will do the counting
-				}
-				const request: RegisterNewEventData = {
-					data: payloadData,
-					workspace
-				}
-				this.socket.emit("registerNew", request);
-			}
+		const payloadData: RegisterEntry = {
+			id: uuidv4(),
+			mistakes: data.mistakes!,
+			description: data.description!,
+			ignore: data.ignore!,
+			count: 0, // The Server will do the counting
 		}
+
+		const request: RegisterNewEventData = {
+			data: payloadData,
+			workspace
+		}
+
+		this.socket.emit("registerNew", request);
+		return true;
 	}
 
-	async registerUpdate(data: RegisterEntryData, workspace: UUID) {
-		if (config.debug) {
-			const ws = await get(this.workspace);
-			if (ws === null) return;
+	async registerUpdate(data: RegisterEntryData, workspace: UUID): Promise<boolean> {
+		if (this.socket === null) return false;
 
-			let count = 0;
-			const _mistakeWords: Record<MistakeHash, string> = {};
-
-			for (const m of data.mistakes!) {
-				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
-				count += submArr.length;
-				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
-			}
-
-			const serverData: RegisterEntry = {
-				id: data.id!,
-				mistakes: data.mistakes!,
-				description: data.description!,
-				ignore: data.ignore!,
-				count,
-				_mistakeWords
-			};
-			
-			this.onRegisterUpdate({ data: [{ type: "EDIT", entry: serverData }], workspace });
-		} else {
-			if (this.socket) {
-				const payloadData: RegisterEntry = {
-					id: data.id!,
-					mistakes: data.mistakes!,
-					description: data.description!,
-					ignore: data.ignore!,
-					count: 0, // The Server will do the counting
-				}
-				const request: RegisterEditEventData = {
-					id: data.id!,
-					data: payloadData,
-					workspace
-				}
-				this.socket.emit("registerEdit", request);
-			}
+		const payloadData: RegisterEntry = {
+			id: data.id!,
+			mistakes: data.mistakes!,
+			description: data.description!,
+			ignore: data.ignore!,
+			count: 0, // The Server will do the counting
 		}
+		
+		const request: RegisterEditEventData = {
+			id: data.id!,
+			data: payloadData,
+			workspace
+		}
+
+		this.socket.emit("registerEdit", request);
+		return true;
 	}
 
-	async registerDelete(data: RegisterEntryData, workspace: UUID) {
-		if (config.debug) {
-			const serverData: RegisterEntry = {
-				id: data.id!,
-				mistakes: data.mistakes!,
-				description: data.description!,
-				ignore: data.ignore!,
-				count: 0,
-			};
-	
-			this.onRegisterUpdate({ data: [{ type: "DELETE", entry: serverData }], workspace });
-		} else {
-			if (this.socket) {
-				const request: RegisterDeleteEventData = {
-					id: data.id!,
-					workspace
-				}
+	async registerDelete(data: RegisterEntryData, workspace: UUID): Promise<boolean> {
+		if (this.socket === null) return false;
 
-				this.socket.emit("registerDelete", request);
-			}
+		const request: RegisterDeleteEventData = {
+			id: data.id!,
+			workspace
 		}
+
+		this.socket.emit("registerDelete", request);
+		return true;
 	}
 
 	async textIgnore(submission: SubmissionID, workspace: UUID, bounds: Bounds[]) {
-		if (config.debug) {
-			const ws = (await (get(this.workspace)))!;
-			const rawData = ws.submissions[submission] as unknown as Submission;
-			rawData.data!.ignoreText = bounds;
+		if (this.socket === null) return null;
 
-			return this.setRegenPromise(() => {
-				this.onSubmissionRegen({ ids: [ submission ], workspace });
-			});
-		} else if (this.socket) {
-			const request: TextIgnoreEventData = {
-				id: submission,
-				ignoreBounds: bounds,
-				workspace
-			}
-
-			this.socket.emit("ignoreText", request);
-			return this.setRegenPromise();
+		const request: TextIgnoreEventData = {
+			id: submission,
+			ignoreBounds: bounds,
+			workspace
 		}
 
-		return null;
+		this.socket.emit("ignoreText", request);
+		return this.setRegenPromise();
 	}
 
 	async submissionStateChange(newState: SubmissionState, subId: SubmissionID, workspace: UUID) {
-		if (config.debug) {
-			const ws = (await (get(this.workspace)))!;
-			const rawData = ws.submissions[subId] as unknown as Submission;
-			rawData.state = newState;
+		if (this.socket === null) return false;
 
-			this.onSubmissionStateChange({
-				state: newState,
-				id: subId,
-				workspace,
-			});
-		} else {
-			if (this.socket) {
-				const request: SubmissionStateChangeEventData = {
-					id: subId,
-					state: newState,
-					workspace
-				}
-				this.socket.emit("submissionStateChange", request);
-			}
+		const request: SubmissionStateChangeEventData = {
+			id: subId,
+			state: newState,
+			workspace
 		}
+
+		this.socket.emit("submissionStateChange", request);
+		return true;
 	}
 
 	private async onSubmissionData(data: SubmissionDataEventData) {
@@ -438,10 +231,10 @@ export default class DiktifySocket {
 
 		const ws = await get(this.workspace);
 
-		if (ws !== null && ws.local) {
-			ws.submissions[data.id] = { ...submission, mistakeCount: submission.data.mistakes.length };
-			(await get(this.localWorkspaceDb)).updateActive();
-		}
+		// if (ws !== null && ws.local) {
+		// 	ws.submissions[data.id] = { ...submission, mistakeCount: submission.data.mistakes.length };
+		// 	(await get(this.localWorkspaceDb)).updateActive();
+		// }
 
 		if (this.submissionRegenPromise !== null) {
 			this.submissionRegenPromise.res([ data.id ]);
@@ -505,9 +298,9 @@ export default class DiktifySocket {
 			if (reloadCurrent) this.reloadActiveSubmission();
 		}
 
-		if (ws.local) {
-			(await get(this.localWorkspaceDb)).updateActive();
-		}
+		// if (ws.local) {
+		// 	(await get(this.localWorkspaceDb)).updateActive();
+		// }
 	}
 
 	private async onSubmissionRegen(data: SubmissionRegenEventData) {
@@ -535,9 +328,9 @@ export default class DiktifySocket {
 		existingData.state = data.state;
 		await this.cache.updateSubmissionInCache(existingData, data.workspace);
 	
-		if (ws.local) {
-			(await get(this.localWorkspaceDb)).updateActive();
-		}
+		// if (ws.local) {
+		// 	(await get(this.localWorkspaceDb)).updateActive();
+		// }
 	}
 
 	addRegisterChangeCallback(cb: RegisterChangeCallback) {

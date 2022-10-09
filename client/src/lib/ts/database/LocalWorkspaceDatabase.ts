@@ -1,5 +1,5 @@
 import config from "$lib/config.json";
-import type { ExportedWorkspace, RegisterEntry, RegisterEntryData, Submission, SubmissionData, SubmissionID, SubmissionPreview, UUID, Workspace } from "@shared/api-types";
+import type { ExportedWorkspace, RegisterEntry, RegisterEntryData, Submission, SubmissionData, SubmissionID, SubmissionPreview, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 import type { MistakeData, MistakeHash, MistakeId } from "@shared/diff-engine";
 import type { MistakeStore, RegisterStore, SubmissionStore, WorkspaceStore } from "@shared/api-types/database";
 import BrowserDatabase from "./BrowserDatabase";
@@ -241,10 +241,10 @@ export default class LocalWorkspaceDatabase extends BrowserDatabase {
 		}
 	}
 
-	async getWorkspaces(): Promise<{ id: UUID, name: string }[]> {
+	async getWorkspaces(): Promise<WorkspacePreview[]> {
 		const workspaces = await this.readAll<WorkspaceStore<UUID>>("workspaces");
 
-		return workspaces.map((ws) => ({ id: ws.id, name: ws.name }));
+		return workspaces.map((ws) => ({ id: ws.id, name: ws.name, local: true }));
 	}
 
 	async getWorkspace(ws: UUID): Promise<Workspace | null> {

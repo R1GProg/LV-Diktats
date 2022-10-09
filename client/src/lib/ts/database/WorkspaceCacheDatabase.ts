@@ -1,21 +1,16 @@
 import type { Submission, SubmissionID, UUID } from "@shared/api-types";
 import config from "$lib/config.json";
-import type DiktifySocket from "$lib/ts/networking/DiktifySocket";
 import BrowserDatabase from "$lib/ts/database/BrowserDatabase";
 
 type CacheEntry = Record<SubmissionID, Submission>;
 
 export default class WorkspaceCacheDatabase extends BrowserDatabase {
-	private ds: DiktifySocket;
-
-	constructor(ds: DiktifySocket) {
+	constructor() {
 		super({
 			name: "WorkspaceCache",
 			initEmpty: config.cacheSingleSession,
 			stores: [{ name: "submissionCache" }]
 		});
-
-		this.ds = ds;
 	}
 
 	async readSubmissionCache(workspace: UUID) {
@@ -77,9 +72,11 @@ export default class WorkspaceCacheDatabase extends BrowserDatabase {
 		if (await this.isSubmissionCached(id, workspace)) {
 			return (await this.read<CacheEntry>("submissionCache", workspace))[id];
 		} else {
-			const subm = await this.ds.requestSubmission(id, workspace);
-			await this.addSubmissionToCache(subm, workspace);
-			return subm;
+			return null;
+
+			// const subm = await this.ds.requestSubmission(id, workspace);
+			// await this.addSubmissionToCache(subm, workspace);
+			// return subm;
 		}
 	}
 
