@@ -1,27 +1,15 @@
-import { ActionData, ActionSubtype, ActionType, Bounds, MistakeHash, MistakeId, MistakeSubtype, MistakeType } from "@shared/diff-engine";
+import { ActionData, ActionSubtype, ActionType, Bounds, MistakeHash, MistakeId, MistakeSubtype, MistakeType, type ActionID } from "@shared/diff-engine";
 import { SubmissionID, SubmissionState, UUID, type RegisterEntryMistake } from "./";
 
-export interface ActionStore<Type_ID> {
-	id: string,
-	type: ActionType,
-	subtype: ActionSubtype,
-	indexCheck: number,
-	indexCorrect: number,
-	indexDiff: number,
-	char: string,
-	workspace: UUID
-}
-
-// A variation of Mistake that stores only IDs of Actions, as Actions will be stored in their own document.
+// A generalized mistake that can represent the same mistake across submissions
+// boundsDiff and boundsCheck are submission-specific, so are stored with the submission
 export interface MistakeStore<Type_ID> {
 	id: MistakeId,
 	hash: MistakeHash,
 	type: MistakeType,
 	subtype: MistakeSubtype,
-	actions: ActionData[],
-	boundsCheck: Bounds,
+	actions: MistakeStoreAction[],
 	boundsCorrect: Bounds,
-	boundsDiff: Bounds,
 	word: string,
 	wordCorrect?: string,
 	children: Type_ID[],
@@ -29,12 +17,12 @@ export interface MistakeStore<Type_ID> {
 	workspace: UUID,
 }
 
-export interface RegisterStore<Type_ID>  {
-	id: UUID,
-	mistakes: RegisterEntryMistake[],
-	description: string,
-	ignore: boolean,
-	workspace: UUID
+export interface MistakeStoreAction {
+	id: ActionID;
+	type: ActionType;
+	subtype: ActionSubtype;
+	indexCorrect: number;
+	char: string;
 }
 
 // A variation of Submission that stores only IDs of Mistakes, as Mistakes will be stored in their own document.
@@ -44,7 +32,7 @@ export interface SubmissionStore<Type_ID> {
 	data: {
 		text: string,
 		ignoreText: Bounds[],
-		mistakes: Type_ID[],
+		mistakes: SubmissionStoreMistake<Type_ID>[],
 		metadata: {
 			age: number,
 			language: string,
@@ -55,6 +43,33 @@ export interface SubmissionStore<Type_ID> {
 			city: string
 		}
 	},
+	workspace: UUID
+}
+
+export interface SubmissionStoreMistake<Type_ID> {
+	id: Type_ID,
+	hash: MistakeHash,
+	boundsDiff: Bounds,
+	boundsCheck: Bounds,
+	actions: SubmissionStoreMistakeAction[],
+	children: {
+		id: Type_ID,
+		boundsDiff: Bounds,
+		boundsCheck: Bounds,
+		actions: SubmissionStoreMistakeAction[]
+	}[]
+}
+
+export interface SubmissionStoreMistakeAction {
+	indexCheck: number,
+	indexDiff: number
+}
+
+export interface RegisterStore<Type_ID>  {
+	id: UUID,
+	mistakes: RegisterEntryMistake[],
+	description: string,
+	ignore: boolean,
 	workspace: UUID
 }
 

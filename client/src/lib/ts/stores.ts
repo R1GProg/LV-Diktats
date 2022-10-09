@@ -9,6 +9,8 @@ import DiktifySocket from "./networking/DiktifySocket";
 import config from "$lib/config.json";
 import MistakeSelection from "./MistakeSelection";
 import LocalWorkspaceDatabase from "$lib/ts/database/LocalWorkspaceDatabase";
+import LocalWorkspaceController from "./controller/LocalWorkspaceController";
+import { fetchDebugDataset } from "./util";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -62,9 +64,19 @@ export function initStores() {
 
 	const localWorkspaceDatabase = readable<Promise<LocalWorkspaceDatabase>>(new Promise<LocalWorkspaceDatabase>((res) => {
 		onMount(async () => {
-			const db = new LocalWorkspaceDatabase(workspace);
-			await db.databaseInit();
-			res(db);
+			// const db = new LocalWorkspaceDatabase(workspace);
+			// await db.databaseInit();
+			// res(db);
+
+			const controller = new LocalWorkspaceController();
+			await controller.init();
+
+			// console.log(await controller.db.getSubmissionData("ec279a08-56c5-416f-89f4-bb739da0e2c3", "100"));
+			// console.log(await controller.db.getWorkspaces());
+
+			// const data = await fetchDebugDataset();
+
+			// controller.importCSV("DebugWorkspace", data.template, data.csv);
 		});
 	}));
 

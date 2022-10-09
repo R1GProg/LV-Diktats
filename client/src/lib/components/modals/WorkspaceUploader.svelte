@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { parseCSVPromise } from "$lib/ts/csv";
 	import { readTextFile } from "$lib/ts/util";
 	import type { Submission, Workspace } from "@shared/api-types";
 	import { processString } from "@shared/normalization";
@@ -40,16 +39,16 @@
 			const entries: Record<string, Submission> = {};
 			const data = await Promise.all([
 				readTextFile(uploadData.template[0]),
-				parseCSVPromise(uploadData.dataset[0], (result) => {
-					const id = result.data.id as string;
+				// parseCSVPromise(uploadData.dataset[0], (result) => {
+				// 	const id = result.data.id as string;
 
-					if (!id) return;
+				// 	if (!id) return;
 
-					// entries[id] = {
-					// 	id,
-					// 	text: processString(result.data.message),
-					// };
-				}),
+				// 	// entries[id] = {
+				// 	// 	id,
+				// 	// 	text: processString(result.data.message),
+				// 	// };
+				// }),
 			]);
 
 			if (data[0] === null) {

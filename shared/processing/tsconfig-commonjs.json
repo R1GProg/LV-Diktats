@@ -2,7 +2,7 @@
   "exclude": [
     "node_modules",
     "build",
-    "tests",
+    "**/__tests__",
     "**/*.config.ts"
   ],
   "compilerOptions": {

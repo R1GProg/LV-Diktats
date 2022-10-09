@@ -40,9 +40,14 @@ export namespace Register {
 		data: RegisterEntryData,
 		prevData: RegisterEntry,
 		submissionSearchFunction: (hash: MistakeHash) => Promise<SubmissionID[]>
-	) {
+	): Promise<RegisterEntry | null> {
 		if (data.action !== "EDIT") {
 			throw "Attempt to create register with invalid data";
+		}
+
+		// Returns null if the entry should be deleted
+		if (data.mistakes!.length === 0) {
+			return null;
 		}
 
 		const prevHashes = prevData.mistakes.map((m) => m.hash);
@@ -60,7 +65,10 @@ export namespace Register {
 
 		const entry: RegisterEntry = {
 			id: uuidv4(),
-			mistakes: [ ...prevData.mistakes, ...newMistakeArr ],
+			mistakes: [
+				...prevData.mistakes.filter((m) => data.mistakes!.includes(m.hash)),
+				...newMistakeArr
+			],
 			description: data.description!,
 			ignore: data.ignore!,
 		};

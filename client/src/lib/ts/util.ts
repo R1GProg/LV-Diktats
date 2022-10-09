@@ -1,5 +1,6 @@
 import type { RegisterEntry, Submission } from "@shared/api-types";
 import type { MistakeHash } from "@shared/diff-engine";
+import { processString } from "@shared/normalization";
 
 export function deleteFirstMatching<T>(arr: T[], predicate: (val: T, i: number) => boolean) {
 	for (let i = 0; i < arr.length; i++) {
@@ -71,4 +72,14 @@ export function mistakeInRegister(hash: MistakeHash, register: RegisterEntry[]) 
 
 export function getRegisterId(hash: MistakeHash, register: RegisterEntry[]) {
 	return register.find((e) => e.mistakes.includes(hash))?.id ?? null;
+}
+
+export async function fetchDebugDataset() {
+	const csvReq = await fetch("/raw/data.csv");
+	const csv = await csvReq.text();
+
+	const tempReq = await fetch("/raw/correct.txt");
+	const template = processString(await tempReq.text());
+
+	return { csv, template };
 }

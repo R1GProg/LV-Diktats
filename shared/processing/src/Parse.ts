@@ -7,8 +7,7 @@
 import { ExportedWorkspace, Submission, SubmissionID } from "@shared/api-types";
 import Diff, { Bounds, Mistake, MistakeData, MistakeHash } from "@shared/diff-engine";
 import { processString } from "@shared/normalization";
-import { parse } from "csv-parse";
-import { logger } from "yatsl";
+import Papa from "papaparse";
 import { v4 as uuidv4 } from "uuid";
 
 export namespace Parse {
@@ -69,29 +68,32 @@ export namespace Parse {
 		return parsedSubm;
 	}
 
-	export async function parseCSV(workspaceName: string, csv: string, template: string, progressLog = false): Promise<ExportedWorkspace> {
+	export async function parseCSV(
+		workspaceName: string,
+		csv: string,
+		template: string,
+		progressCb = (id: number) => {},
+		entries = -1 // number of entries to parse, entries=-1 will parse all
+	): Promise<ExportedWorkspace> {
 		const data = await new Promise<RawSubmission[]>((res, rej) => {
-			parse(csv, {
-				delimiter: ',',
-				from_line: 2,
-				columns: ["id", "created_at", "message", "age", "language", "language_other", "level", "degree", "country", "city"]
-			}, async (err, records: RawSubmission[]) => {
-				if (err) {
-					logger.error(err);
+			Papa.parse(csv, {
+				header: true,
+				worker: true,
+				complete: (results) => {
+					res(results.data as RawSubmission[]);
+				},
+				error: (err: any) => {
 					rej(err);
-					return;
 				}
-
-				res(records);
-			})
+			});
 		});
 
 		const submissions: Record<SubmissionID, Submission> = {};
 
-		for (const val of data) {
+		for (const val of data.slice(0, entries)) {
 			submissions[val.id] = await parseRaw(val, template);
 				
-			if (progressLog) logger.info(`Processed submission #${val.id}!`);
+			progressCb(val.id);
 		}
 
 		const outputWorkspace: ExportedWorkspace = {
