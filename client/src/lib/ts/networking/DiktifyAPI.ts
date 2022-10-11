@@ -141,7 +141,7 @@ export default class DiktifyAPI {
 export const api = new DiktifyAPI();
 
 async function loadDebugWorkspace(): Promise<Workspace> {
-	const req = await fetch("/output.json");
+	const req = await fetch("/data_graded.json");
 	const ws: Workspace = {
 		...(await req.json()),
 		id: config.debugWorkspaceId,
