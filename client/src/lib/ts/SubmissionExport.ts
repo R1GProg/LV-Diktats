@@ -156,6 +156,7 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 	return {
 		author: "Anonīms",
 		text: parsedText,
+		isRejected: subm.state === "REJECTED",
 		mistakes
 	}
 }

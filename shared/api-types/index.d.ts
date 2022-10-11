@@ -151,6 +151,7 @@ export interface SubmissionData {
 export interface ExportedSubmission {
 	author: string,
 	text: string,
+	isRejected: boolean,
 	mistakes: ExportedSubmissionMistake[]
 }
 
@@ -160,7 +161,7 @@ export interface ExportedSubmissionMistake {
 	bounds: Bounds[],
 	description: string,
 	submissionStatistic: number,
-	percentage: number
+	percentage: number,
 }
 
 export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "MERGED";
