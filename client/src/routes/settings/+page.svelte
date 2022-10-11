@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { downloadText } from "$lib/ts/util";
 	import store, { type Stores } from "$lib/ts/stores";
+	import type { ExportedSubmission, Submission } from "@shared/api-types";
+	import { exportSubmission, genURLId } from "$lib/ts/SubmissionExport";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const localWorkspaceDatabase = store("localWorkspaceDatabase") as Stores["localWorkspaceDatabase"];
@@ -18,11 +20,32 @@
 
 		location.replace("/");
 	}
+
+	async function exportVis() {
+		const ws = await $workspace;
+
+		if (!ws) return;
+
+		const submissions = ws.submissions as unknown as Record<string, Submission>;
+		const output: Record<string, { urlId: string, data: ExportedSubmission }> = {};
+
+		for (const subm of Object.values(submissions)) {
+			const data = exportSubmission(subm, ws);
+			
+			output[subm.id] = {
+				urlId: genURLId(),
+				data
+			};
+		}
+
+		downloadText("vis_data.json", JSON.stringify(output));
+	}
 </script>
 
 <div class="container">
 	<button on:click={exportData} disabled={$workspace === null}>Eksportēt datus</button>
 	<button on:click={clearWorkspaceData} disabled={$workspace === null}>Dzēst datus</button>
+	<button on:click={exportVis} disabled={$workspace === null}>Eksportēt vizualizāciju</button>
 </div>
 
 <style lang="scss">

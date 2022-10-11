@@ -94,8 +94,8 @@ export default class Diff {
 		this.consolidatePunctWhitespace();
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
-		this.consolidateWordWhitespaces();
-		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+		// this.consolidateWordWhitespaces();
+		// this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
 		this.parseWordSubstitutions();
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);

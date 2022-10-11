@@ -2,6 +2,7 @@ import config from "$lib/config.json";
 import type { RegisterEntry, Setting, Submission, SubmissionID, User, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 import { get } from "svelte/store";
 import type { Stores } from "../stores";
+import { mistakeInRegister } from "../util";
 
 type HTTPMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE";
 
@@ -158,4 +159,22 @@ async function loadDebugWorkspace(): Promise<Workspace> {
 	}
 
 	return ws;
+}
+
+function calcAvgRegisteredMistakes(ws: Workspace & { submissions: Record<string, Submission> }) {
+	const submAvg: number[] = [];
+
+	for (const subm of Object.values(ws.submissions)) {
+		if (subm.data.mistakes.length > ws.template.length * config.incompleteFraction)
+			continue;
+
+		const rawMistakes = subm.data.mistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+		const registeredMistakes = subm.data.mistakes
+			.filter((m) => mistakeInRegister(m.hash, ws.register))
+			.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+
+		submAvg.push(registeredMistakes.length / rawMistakes.length);
+	}
+
+	return submAvg.reduce((acc, cur) => acc + cur) / submAvg.length;
 }

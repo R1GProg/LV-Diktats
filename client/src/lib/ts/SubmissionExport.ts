@@ -159,3 +159,28 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 		mistakes
 	}
 }
+
+function genRandInt(min: number, max: number): number {
+	return Math.round(Math.random() * (max - min)) + min;
+}
+
+function genRandLetter(includeNums = true): string {
+	const num = genRandInt(0, includeNums ? 35 : 25);
+
+	if (num > 25) {
+		return (num - 26).toString();
+	} else {
+		return String.fromCharCode("a".charCodeAt(0) + num);
+	}
+}
+
+// Generates an id with the pattern XNXNXNX
+export function genURLId(len = 7): string {
+	let output = "";
+
+	for (let i = 0; i < len; i++) {
+		output += i % 2 === 0 ? genRandLetter() : genRandInt(0, 9);
+	}
+
+	return output;
+}

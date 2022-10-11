@@ -112,6 +112,9 @@ export function initStores() {
 				if (ws.id === "debugworkspaceid") {
 					for (const subm of submArr) {
 						subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
+						// const submMistakes = (subm as unknown as Submission).data.mistakes;
+						// const rawMistakes = submMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+						// subm.mistakeCount = rawMistakes.length;
 					}
 				}
 
