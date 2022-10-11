@@ -164,4 +164,4 @@ export interface ExportedSubmissionMistake {
 	percentage: number,
 }
 
-export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "MERGED";
+export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "TEXT";

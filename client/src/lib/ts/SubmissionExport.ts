@@ -33,7 +33,7 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 		if (!registerEntry) continue;
 		if (registerEntry.ignore) continue;
 
-		let mistakeType: ExportedSubmissionMistakeType = "MERGED";
+		let mistakeType: ExportedSubmissionMistakeType = "TEXT";
 
 		switch(m.subtype) {
 			case "WORD":
