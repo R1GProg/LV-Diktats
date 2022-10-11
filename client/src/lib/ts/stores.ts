@@ -5,6 +5,7 @@ import { get, readable, writable, derived, type Readable, type Writable } from "
 import { ToolbarMode } from "./toolbar";
 import MistakeSelection from "./MistakeSelection";
 import WorkspaceController from "./controller/WorkspaceController";
+import EventSuper from "./events/EventSuper";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -17,7 +18,8 @@ export interface Stores {
 	activeSubmission: Readable<Promise<Submission | null> | null>,
 	selectedMistakes: Readable<MistakeSelection>,
 	sortedSubmissions: Readable<SubmissionPreview[] | null>,
-	workspaceController: Readable<Promise<WorkspaceController>>
+	workspaceController: Readable<Promise<WorkspaceController>>,
+	eventSuper: Readable<EventSuper>
 }
 
 export enum SortMode {
@@ -116,6 +118,8 @@ export function initStores() {
 			});
 	});
 
+	const eventSuper = readable<EventSuper>(new EventSuper());
+
 	setContext("stores", {
 		mode,
 		hideRegistered,
@@ -127,6 +131,7 @@ export function initStores() {
 		activeSubmission,
 		selectedMistakes,
 		sortedSubmissions,
-		workspaceController
+		workspaceController,
+		eventSuper
 	} as Stores);
 }

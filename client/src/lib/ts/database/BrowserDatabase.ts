@@ -80,9 +80,11 @@ export default class BrowserDatabase {
 
 		this.transaction = this.db.transaction(this.db.objectStoreNames, "readwrite");
 
-		this.transaction.oncomplete = () => {
-			this.transaction = null;
-		}
+		const finishCb = () => { this.transaction = null; };
+
+		this.transaction.oncomplete = finishCb;
+		this.transaction.onabort = finishCb;
+		this.transaction.onerror = finishCb;
 	}
 
 	private ensureTransaction(obj: string): IDBTransaction {
