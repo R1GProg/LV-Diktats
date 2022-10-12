@@ -22,6 +22,21 @@ function addMissingWordsToText(rawText: string, mistakes: MistakeData[], adjBoun
 	return text;
 }
 
+function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
+	let text = rawText;
+	let offset = 0;
+
+	for (const bounds of ignoreBounds) {
+		const sub1 = text.substring(0, bounds.start - offset);
+		const sub2 = text.substring(bounds.end - offset);
+		text = (sub1 + sub2).trim();
+
+		offset += bounds.end - bounds.start;
+	}
+
+	return text;
+}
+
 export function exportSubmission(subm: Submission, workspace: Workspace): ExportedSubmission {
 	// Add mistake descriptions from register
 	const mistakes: ExportedSubmissionMistake[] = [];
@@ -128,7 +143,11 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 	// Parse text
 	const unwrappedMistakes = exportedMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
-	const parsedText = addMissingWordsToText(subm.data.text, unwrappedMistakes, adjBounds);
+	const parsedText = addMissingWordsToText(
+		parseIgnoreBounds(subm.data.text, subm.data.ignoreText),
+		unwrappedMistakes,
+		adjBounds
+	);
 
 	// For mistakes, where a single space is inbetween bounds, add the space to the bounds
 	for (const m of mistakes) {

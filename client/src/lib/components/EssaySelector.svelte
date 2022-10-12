@@ -89,6 +89,7 @@
 		activeIndex = nextIndex;
 		selectIndex(activeIndex);
 
+		console.log("he");
 		const subm = await $activeSubmission;
 		if (subm !== null) console.log(exportSubmission(subm, (await $workspace)!));
 	}

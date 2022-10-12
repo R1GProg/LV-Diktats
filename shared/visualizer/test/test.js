@@ -1,7 +1,7 @@
 const submissions = Object.create(null);
 const dropdown = document.getElementById("submissions");
 
-fetch("./vis_data_2.json")
+fetch("./visdata.json")
   .then((response) => response.json())
   .then((json) => {
     let elements = [];
