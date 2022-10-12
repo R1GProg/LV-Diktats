@@ -27,13 +27,14 @@
 		if (!ws) return;
 
 		const submissions = ws.submissions as unknown as Record<string, Submission>;
-		const output: Record<string, { urlId: string, data: ExportedSubmission }> = {};
+		const output: Record<string, { id: string, data: ExportedSubmission }> = {};
 
 		for (const subm of Object.values(submissions)) {
 			const data = exportSubmission(subm, ws);
-			
-			output[subm.id] = {
-				urlId: genURLId(),
+			const urlId = genURLId();
+
+			output[urlId] = {
+				id: subm.id,
 				data
 			};
 		}
