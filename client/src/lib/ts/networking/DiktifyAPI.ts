@@ -117,7 +117,7 @@ export default class DiktifyAPI {
 	}
 
 	async logout(): Promise<void> {
-
+		throw "NYI";
 	}
 
 	async getUsers(): Promise<User[]> {
@@ -142,7 +142,7 @@ export default class DiktifyAPI {
 export const api = new DiktifyAPI();
 
 async function loadDebugWorkspace(): Promise<Workspace> {
-	const req = await fetch("/data_graded.json");
+	const req = await fetch("/output.json");
 	const ws: Workspace = {
 		...(await req.json()),
 		id: config.debugWorkspaceId,
@@ -161,20 +161,20 @@ async function loadDebugWorkspace(): Promise<Workspace> {
 	return ws;
 }
 
-function calcAvgRegisteredMistakes(ws: Workspace & { submissions: Record<string, Submission> }) {
-	const submAvg: number[] = [];
+// function calcAvgRegisteredMistakes(ws: Workspace & { submissions: Record<string, Submission> }) {
+// 	const submAvg: number[] = [];
 
-	for (const subm of Object.values(ws.submissions)) {
-		if (subm.data.mistakes.length > ws.template.length * config.incompleteFraction)
-			continue;
+// 	for (const subm of Object.values(ws.submissions)) {
+// 		if (subm.data.mistakes.length > ws.template.length * config.incompleteFraction)
+// 			continue;
 
-		const rawMistakes = subm.data.mistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
-		const registeredMistakes = subm.data.mistakes
-			.filter((m) => mistakeInRegister(m.hash, ws.register))
-			.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+// 		const rawMistakes = subm.data.mistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+// 		const registeredMistakes = subm.data.mistakes
+// 			.filter((m) => mistakeInRegister(m.hash, ws.register))
+// 			.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
 
-		submAvg.push(registeredMistakes.length / rawMistakes.length);
-	}
+// 		submAvg.push(registeredMistakes.length / rawMistakes.length);
+// 	}
 
-	return submAvg.reduce((acc, cur) => acc + cur) / submAvg.length;
-}
+// 	return submAvg.reduce((acc, cur) => acc + cur) / submAvg.length;
+// }

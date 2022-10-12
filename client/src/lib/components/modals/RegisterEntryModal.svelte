@@ -1,7 +1,7 @@
 <script lang="ts">
 	import store, { type Stores } from "$lib/ts/stores";
 	import { getAllSubmissionsWithMistakes, deleteAllMatching, deleteFirstMatching } from "$lib/ts/util";
-	import type { RegisterEntry, Submission, UUID } from "@shared/api-types";
+	import type { RegisterEntry, RegisterOptions, Submission, UUID } from "@shared/api-types";
 	import type { MistakeHash } from "@shared/diff-engine";
 	import { onMount } from "svelte";
 	import Modal from "./Modal.svelte";
@@ -12,7 +12,11 @@
 
 	let modal: Modal;
 	let desc = "";
-	let ignore = false;
+	let regOpts: RegisterOptions = {
+		ignore: false,
+		mistakeType: "ORTHO",
+		countType: "TOTAL",
+	};
 	let registerId: UUID;
 	let mistakes: { hash: MistakeHash, word: string, submissions: string[] }[] = [];
 	let entry: RegisterEntry;
@@ -41,7 +45,7 @@
 		
 		registerId = id;
 		desc = existingEntry.description;
-		ignore = existingEntry.ignore;
+		regOpts = {...existingEntry.opts};
 		mistakes = mistakes;
 		
 		modal.open();
@@ -69,7 +73,7 @@
 			id: registerId,
 			mistakes: mistakes.map((m) => m.hash),
 			description: desc,
-			ignore,
+			opts: regOpts,
 		}, $activeWorkspaceID!);
 	}
 
@@ -84,7 +88,7 @@
 			id: registerId,
 			mistakes: mistakes.map((m) => m.hash),
 			description: desc,
-			ignore,
+			opts: regOpts,
 		}, $activeWorkspaceID!);
 	}
 
@@ -158,8 +162,26 @@
 		<input
 			type="checkbox"
 			id="regIgnore"
-			bind:checked={ignore}
+			bind:checked={regOpts.ignore}
 		/>
+
+		<label for="regMistakeType">Kļūdas tips</label>
+		<div class="selectContainer">
+			<select id="regMistakeType" bind:value={regOpts.mistakeType}>
+				<option value="ORTHO">Ortogrāfijas</option>
+				<option value="PUNCT">Interpunkcijas</option>
+				<option value="TEXT">Trūkst teksts</option>
+			</select>
+		</div>
+
+		<label for="regCountType">Kļūdu skaita vizualizācija</label>
+		<div class="selectContainer">
+			<select id="regCountType" bind:value={regOpts.countType}>
+				<option value="TOTAL">Rādīt kopējo</option>
+				<option value="VARIATION">Rādīt katrai variācijai savu</option>
+				<option value="NONE">Nerādīt</option>
+			</select>
+		</div>
 	</div>
 
 	<div class="input-container">
@@ -289,5 +311,9 @@
 				background-color: $COL_BG_REG;
 			}
 		}
+	}
+
+	.selectContainer {
+		@include dropdown(3rem);
 	}
 </style>

@@ -2,17 +2,21 @@
 	import type { MistakeHash } from "@shared/diff-engine";
 	import InputModal from "./InputModal.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
-	import type { RegisterEntry, RegisterEntryData, UUID } from "@shared/api-types";
+	import type { RegisterEntry, RegisterEntryData, RegisterOptions, UUID } from "@shared/api-types";
 	import { v4 as uuidv4 } from "uuid";
 
 	const workspace = store("workspace") as Stores["workspace"];
 
 	let modal: InputModal;
 	let desc = "";
-	let ignore = false;
 	let isVariation = false;
 	let variation: UUID = "";
 	let variationMistakes: MistakeHash[] = [];
+	let regOpts: RegisterOptions = {
+		ignore: false,
+		mistakeType: "ORTHO",
+		countType: "TOTAL"
+	};
 	
 	let edit = false;
 	let curMistake: MistakeHash;
@@ -39,7 +43,9 @@
 
 			if (mode === "ADD") {
 				desc = "";
-				ignore = false;
+				regOpts.ignore = false;
+				regOpts.mistakeType = "ORTHO";
+				regOpts.countType = "TOTAL";
 				edit = false;
 				isVariation = false;
 				variation = "";
@@ -52,7 +58,7 @@
 				}
 
 				desc = existingEntry.description;
-				ignore = existingEntry.ignore;
+				regOpts = {...existingEntry.opts};
 				edit = true;
 			}
 
@@ -73,7 +79,7 @@
 			id: curRegisterEntry ?? undefined,
 			mistakes: isVariation ? [ ...variationMistakes, curMistake ] : [ curMistake ],
 			description: desc,
-			ignore,
+			opts: regOpts,
 			action: edit ? "EDIT" : "ADD",
 		});
 	}
@@ -103,9 +109,16 @@
 		if (!entry) return;
 
 		desc = entry.description;
-		ignore = entry.ignore;
+		regOpts = {...entry.opts};
 		curRegisterEntry = variation;
 		variationMistakes = entry.mistakes;
+	}
+
+	function getSortedRegister(reg: RegisterEntry[]) {
+		const arrCopy = [...reg];
+		arrCopy.sort((a, b) => a.description.localeCompare(b.description));
+
+		return arrCopy;
 	}
 </script>
 
@@ -124,7 +137,7 @@
 
 		{#if isVariation}
 		<label for="regVariationSelect">Esošais ieraksts</label>
-		<div class="regVariationSelectContainer">
+		<div class="selectContainer">
 			<select
 				id="regVariationSelect"
 				on:change={onVariationSelect}
@@ -133,7 +146,7 @@
 				<option value="">- Izvēlēties ierakstu -</option>
 				{#await $workspace then ws}
 					{#if ws !== null}
-						{#each ws.register as entry}
+						{#each getSortedRegister(ws.register) as entry}
 						<option value={entry.id}>{entry.description}</option>
 						{/each}
 					{/if}
@@ -158,8 +171,26 @@
 			disabled={isVariation ? true : false}
 			type="checkbox"
 			id="regIgnore"
-			bind:checked={ignore}
+			bind:checked={regOpts.ignore}
 		/>
+
+		<label for="regMistakeType">Kļūdas tips</label>
+		<div class="selectContainer">
+			<select id="regMistakeType" bind:value={regOpts.mistakeType}>
+				<option value="ORTHO">Ortogrāfijas</option>
+				<option value="PUNCT">Interpunkcijas</option>
+				<option value="TEXT">Trūkst teksts</option>
+			</select>
+		</div>
+
+		<label for="regCountType">Kļūdu skaita vizualizācija</label>
+		<div class="selectContainer">
+			<select id="regCountType" bind:value={regOpts.countType}>
+				<option value="TOTAL">Rādīt kopējo</option>
+				<option value="VARIATION">Rādīt katrai variācijai savu</option>
+				<option value="NONE">Nerādīt</option>
+			</select>
+		</div>
 	</div>
 </InputModal>
 
@@ -188,7 +219,7 @@
 			}
 		}
 
-		.regVariationSelectContainer {
+		.selectContainer {
 			@include dropdown(3rem);
 		}
 	}

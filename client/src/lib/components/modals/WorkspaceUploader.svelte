@@ -64,7 +64,8 @@
 				name: uploadData.name,
 				id: key,
 				template: processString(data[0]),
-				submissions: entries,
+				submissions: entries as any,
+				local: true,
 				// local: true,
 				register: [],
 			};
