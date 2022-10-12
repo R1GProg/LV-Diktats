@@ -5,7 +5,7 @@ export type Bounds = {
 	end: number;
 };
 
-export type MistakeType = "ORTHO" | "PUNCT" | "MERGED";
+export type MistakeType = "ORTHO" | "PUNCT" | "TEXT";
 
 export interface SubmissionMistake {
 	id: string,
@@ -19,6 +19,7 @@ export interface SubmissionMistake {
 export interface GradedSubmission {
 	author: string,
 	text: string,
+	isRejected: boolean,
 	mistakes: SubmissionMistake[]
 }
 
@@ -29,6 +30,19 @@ interface BoundsMistakeSet {
 
 export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	injectCSS();
+
+	if (jsonData.isRejected) {
+		const element = `<div class="visualisation">
+	<link rel="preconnect" href="https://fonts.googleapis.com"/>
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:opsz@8..144&display=swap" rel="stylesheet"/>
+	<div class="left">
+		<span class="fieldName">Iesniegtais teksts neatbilst nepieciešamajiem nosacījumiem, lai tam būtu iespējams veikt labošanu.</span>
+	</div>
+</div>`
+		document.getElementById(containerId)!.innerHTML = element;
+		return;
+	}
 
 	let resultingText = jsonData.text;
 	let offset = 0;
@@ -70,12 +84,9 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
     <div class="desc">placeholder description</div>
     <div class="footer">Kļūda fiksēta 0 (0%) darbos</div>
 </div>
-	<div class="left">
-		<span class="fieldName">Rakstīja</span><br/>${jsonData.author}
-	</div>
 	<div class="right">
-		<span class="fieldName">Ortogrāfijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "ORTHO" || x.mistakeType === "MERGED").length}<br/>
-		<span class="fieldName">Interpunkcijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "PUNCT" || x.mistakeType === "MERGED").length}
+		<span class="fieldName">Ortogrāfijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "ORTHO" || x.mistakeType === "TEXT").length}<br/>
+		<span class="fieldName">Interpunkcijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "PUNCT" || x.mistakeType === "TEXT").length}
 	</div>
 	<div class="submission">
 		<div class="text">
