@@ -6,6 +6,7 @@
 	import { v4 as uuidv4 } from "uuid";
 
 	const workspace = store("workspace") as Stores["workspace"];
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 
 	let modal: InputModal;
 	let desc = "";
@@ -43,9 +44,7 @@
 
 			if (mode === "ADD") {
 				desc = "";
-				regOpts.ignore = false;
-				regOpts.mistakeType = "ORTHO";
-				regOpts.countType = "TOTAL";
+				regOpts = { ignore: false, mistakeType: "ORTHO", countType: "TOTAL" };
 				edit = false;
 				isVariation = false;
 				variation = "";
@@ -64,11 +63,49 @@
 
 			curRegisterEntry = registerId;
 			curMistake = hash;
+			autofillOpts();
 
 			modal.open();
 			promiseResolve = res;
 			promiseReject = rej;
 		})
+	}
+
+	async function autofillOpts() {
+		const subm = await $activeSubmission;
+		const m = subm!.data.mistakes.find((m) => m.hash === curMistake)!;
+
+		if (m.subtype === "WORD") {
+			regOpts.mistakeType = "ORTHO";
+		} else if (m.subtype === "OTHER") {
+			regOpts.mistakeType = "PUNCT";
+		} else {
+			if (
+				m.children.every((c) =>
+					c.subtype === "WORD"
+					|| c.word === " "
+					|| c.wordCorrect === " ")
+				&& m.children.length <= 5 // A very arbitrary number
+			) {
+				regOpts.mistakeType = "ORTHO";
+			} else if (m.children.every((c) => c.subtype === "OTHER")) {
+				regOpts.mistakeType = "PUNCT";
+			} else {
+				regOpts.mistakeType = "TEXT";
+			}
+		}
+
+		switch(regOpts.mistakeType) {
+			case "ORTHO":
+				regOpts.countType = "TOTAL";
+				break;
+			case "PUNCT":
+				regOpts.countType = "TOTAL";
+				break;
+			case "TEXT":
+				regOpts.countType = "NONE";
+				break;
+		}
 	}
 
 	async function onConfirm() {
