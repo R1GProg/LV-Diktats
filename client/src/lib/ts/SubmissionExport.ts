@@ -1,5 +1,6 @@
-import type { ExportedSubmission, ExportedSubmissionMistake, ExportedSubmissionMistakeType, Submission, Workspace } from "@shared/api-types";
+import type { ExportedSubmission, ExportedSubmissionMistake, Submission, Workspace } from "@shared/api-types";
 import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
+import { getAllSubmissionsWithMistakes } from "./util";
 
 function addMissingWordsToText(rawText: string, mistakes: MistakeData[], adjBounds: Record<MistakeId, Bounds>) {
 	let text = rawText;
@@ -37,52 +38,78 @@ function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
 	return text;
 }
 
+function calcSubmissionAvgMistakesPerWord(subm: Submission, ws: Workspace): { punct: number, ortho: number } {
+	const output = { ortho: 0, punct: 0 };
+
+	for (const m of subm.data.mistakes) {
+		const registerEntry = ws.register.find((e) => e.mistakes.includes(m.hash));
+
+		if (!registerEntry) continue;
+		if (registerEntry.opts.ignore) continue;
+		if (registerEntry.opts.mistakeType === "TEXT") continue;
+
+		if (registerEntry.opts.mistakeType === "ORTHO") {
+			output.ortho++;
+		} else {
+			output.punct++;
+		}
+	}
+
+	const wordCount = subm.data.text.split(" ").length;
+	output.ortho /= wordCount;
+	output.punct /= wordCount;
+
+	return output;
+}
+
 export function exportSubmission(subm: Submission, workspace: Workspace): ExportedSubmission {
 	// Add mistake descriptions from register
 	const mistakes: ExportedSubmissionMistake[] = [];
 	const totalSubmCount = Object.values(workspace.submissions).length;
+	const avgMistakes = calcSubmissionAvgMistakesPerWord(subm, workspace);
 
 	for (const m of subm.data.mistakes) {
 		const registerEntry = workspace.register.find((e) => e.mistakes.includes(m.hash));
 
 		if (!registerEntry) continue;
-		if (registerEntry.ignore) continue;
+		if (registerEntry.opts.ignore) continue;
 
-		let mistakeType: ExportedSubmissionMistakeType = "TEXT";
+		let mistakeCount: number;
 
-		switch(m.subtype) {
-			case "WORD":
-				mistakeType = "ORTHO";
+		switch (registerEntry.opts.countType) {
+			case "TOTAL":
+				mistakeCount = registerEntry.count;
 				break;
-			case "OTHER":
-				mistakeType = "PUNCT";
+			case "VARIATION":
+				mistakeCount = getAllSubmissionsWithMistakes(
+					Object.values(workspace.submissions) as unknown as Submission[],
+					[ m.hash ]
+				).length;
+
 				break;
-			case "MERGED":
-				if (m.children.every((c) => c.subtype === "WORD")) {
-					mistakeType = "ORTHO";
-				} else if (m.children.every((c) => c.subtype === "OTHER")) {
-					mistakeType = "PUNCT";
-				} else {
-					// Special case for wrong or missing sentence stops
-					if (m.children.length === 2) {
-						const wordMistake = m.children.find((c) => c.subtype === "WORD");
-						const punctMistake = m.children.find((c) => c.subtype === "OTHER");
+			case "NONE":
+				mistakeCount = -1;
+				break;
+		}
 
-						if (!wordMistake || !punctMistake) break;
-						if (!(punctMistake.word.includes(".") || punctMistake.wordCorrect?.includes("."))) break;
-						if (wordMistake.actions.length !== 2) break;
-						
-						const addAction = wordMistake.actions.find((a) => a.type === "ADD");
-						const delAction = wordMistake.actions.find((a) => a.type === "DEL");
+		let typeCounter: { ortho: number, punct: number };
 
-						if (!addAction || !delAction) break;
-						if (addAction.char.toLocaleLowerCase() !== delAction.char.toLocaleLowerCase()) break;
+		switch (registerEntry.opts.mistakeType) {
+			case "ORTHO":
+				typeCounter = { ortho: 1, punct: 0 };
+				break;
+			case "PUNCT":
+				typeCounter = { ortho: 0, punct: 1 };
+				break;
+			case "TEXT":
+				{
+					const mistakeLen = m.children.filter((c) => c.subtype === "WORD").length;
 
-						mistakeType = "PUNCT";
-						break;
-					}
+					typeCounter = {
+						ortho: Math.max(1, Math.round(mistakeLen * avgMistakes.ortho)),
+						punct: Math.max(1, Math.round(mistakeLen * avgMistakes.punct))
+					};
 				}
-
 				break;
 		}
 
@@ -90,9 +117,10 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 			id: m.id,
 			bounds: [],
 			description: registerEntry.description,
-			submissionStatistic: registerEntry.count,
-			percentage: Math.round(registerEntry.count / totalSubmCount * 10000) / 10000,
-			mistakeType,
+			submissionStatistic: mistakeCount,
+			percentage: Math.round(mistakeCount / totalSubmCount * 10000) / 10000,
+			mistakeType: registerEntry.opts.mistakeType,
+			typeCounter
 		});
 	}
 

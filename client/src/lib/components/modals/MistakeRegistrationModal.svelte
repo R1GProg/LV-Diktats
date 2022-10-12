@@ -4,6 +4,7 @@
 	import store, { type Stores } from "$lib/ts/stores";
 	import type { RegisterEntry, RegisterEntryData, RegisterOptions, UUID } from "@shared/api-types";
 	import { v4 as uuidv4 } from "uuid";
+	import { isMistakeASentenceBreak } from "$lib/ts/util";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
@@ -63,7 +64,7 @@
 
 			curRegisterEntry = registerId;
 			curMistake = hash;
-			autofillOpts();
+			if (mode === "ADD") autofillOpts();
 
 			modal.open();
 			promiseResolve = res;
@@ -88,7 +89,10 @@
 				&& m.children.length <= 5 // A very arbitrary number
 			) {
 				regOpts.mistakeType = "ORTHO";
-			} else if (m.children.every((c) => c.subtype === "OTHER")) {
+			} else if (
+				m.children.every((c) => c.subtype === "OTHER")
+				|| isMistakeASentenceBreak(m)
+			) {
 				regOpts.mistakeType = "PUNCT";
 			} else {
 				regOpts.mistakeType = "TEXT";

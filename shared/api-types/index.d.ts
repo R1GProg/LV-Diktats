@@ -168,6 +168,7 @@ export interface ExportedSubmissionMistake {
 	description: string,
 	submissionStatistic: number,
 	percentage: number,
+	typeCounter: { ortho: number, punct: number }
 }
 
 export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "TEXT";

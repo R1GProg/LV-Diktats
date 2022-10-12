@@ -27,9 +27,10 @@
 		if (!ws) return;
 
 		const submissions = ws.submissions as unknown as Record<string, Submission>;
+		const submTest = Object.values(submissions).filter((s) => s.id === "121");
 		const output: Record<string, { id: string, data: ExportedSubmission }> = {};
 
-		for (const subm of Object.values(submissions)) {
+		for (const subm of submTest) {
 			const data = exportSubmission(subm, ws);
 			const urlId = genURLId();
 
