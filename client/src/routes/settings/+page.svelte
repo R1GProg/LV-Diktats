@@ -27,10 +27,10 @@
 		if (!ws) return;
 
 		const submissions = Object.values(ws.submissions as unknown as Record<string, Submission>);
-		// const submTest = submissions.filter((s) => s.id === "121");
+		const submTest = submissions.filter((s) => s.id === "9999");
 		const output: Record<string, { id: string, data: ExportedSubmission }> = {};
 
-		for (const subm of submissions) {
+		for (const subm of submTest) {
 			const data = exportSubmission(subm, ws);
 			const urlId = genURLId();
 
@@ -40,7 +40,8 @@
 			};
 		}
 
-		downloadText("vis_data.json", JSON.stringify(output));
+		console.log(output);
+		// downloadText("vis_data.json", JSON.stringify(output));
 	}
 </script>
 
