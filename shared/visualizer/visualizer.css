@@ -46,7 +46,7 @@
 	position: absolute;
 	width: 90%;
 		left: 5%;
-		top: clamp(calc(10% + 6em), calc(20% + 6em), 20%);
+		top: clamp(calc(10% + 7.5em), calc(20% + 7.5em), 20%);
 }
 
 .text {
@@ -77,7 +77,8 @@
 .tooltip {
 	position: absolute;
 	width: min(230px, 15vw);
-		height: min(115px, 7.5vw);
+	height: -moz-fit-content;
+		height: fit-content;
 	background-color: white;
 	border-radius: 2px 2px 2px 0px;
 	box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.25);
@@ -88,15 +89,19 @@
 
 .line {
 	position: relative;
-	height: 10%;
+	height: 0.5em;
 	background-color: #F86060;
 	border-radius: 2px 2px 0px 0px;
 }
 
 .desc {
-	position: absolute;
+	position: relative;
 	left: 9px;
 	top: 12%;
+	margin-top: 0.5em;
+		margin-bottom: 0.5em;
+		width: calc(min(230px, 15vw) - 18px);
+		height: fit-content;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
@@ -108,7 +113,7 @@
 }
 
 .footer {
-	position: absolute;
+	position: relative;
 	right: 9px;
 		bottom: 2%;
 

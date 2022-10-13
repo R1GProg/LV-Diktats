@@ -1,7 +1,7 @@
 const submissions = Object.create(null);
 const dropdown = document.getElementById("submissions");
 
-fetch("./vis_data_2.json")
+fetch("./vis_test_data.json")
   .then((response) => response.json())
   .then((json) => {
     let elements = [];
@@ -29,3 +29,29 @@ fetch("./vis_data_2.json")
       );
     }
   });
+
+const resizeObserver = new ResizeObserver((entries) => {
+  const mistakeLines = document.getElementsByClassName("mistakeLine");
+  Array.prototype.forEach.call(mistakeLines, (el) => {
+    el.parentNode.removeChild(el);
+  });
+  const mistakes = document.getElementsByClassName("mistake");
+  const doneYLevels = [];
+  Array.prototype.forEach.call(mistakes, (el) => {
+    const rect = el.getBoundingClientRect();
+    if (doneYLevels.includes(rect.y)) return;
+    document
+      .getElementsByClassName("text")[0]
+      .insertAdjacentHTML(
+        "afterend",
+        '<div class="mistakeLine" style="top:' +
+          (el.offsetTop + el.parentNode.offsetTop) +
+          "px; height:" +
+          rect.height +
+          'px;"></div>'
+      );
+    doneYLevels.push(rect.y);
+  });
+});
+
+resizeObserver.observe(document.body);

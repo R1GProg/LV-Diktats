@@ -13,7 +13,11 @@ export interface SubmissionMistake {
 	bounds: Bounds[],
 	description: string,
 	submissionStatistic: number,
-	percentage: number
+	percentage: number,
+	typeCounter: {
+		ortho: number,
+		punct: number
+	}
 }
 
 export interface GradedSubmission {
@@ -37,7 +41,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 	<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:opsz@8..144&display=swap" rel="stylesheet"/>
 	<div class="left">
-		<span class="fieldName">Iesniegtais teksts neatbilst nepieciešamajiem nosacījumiem, lai tam būtu iespējams veikt labošanu.</span>
+		<span class="fieldName">Pateicamies par Jūsu dalību VIII pasaules diktātā latviešu valodā! <br> Diemžēl nevarējām izlabot Jūsu darbu, jo tas bija pārāk atšķirīgs no oriģināla. <br> Tas, iespējams, saistīts ar diakritisko zīmju trūkumu vai arī diktāts bija uzrakstīts tikai daļēji.</span>
 	</div>
 </div>`
 		document.getElementById(containerId)!.innerHTML = element;
@@ -74,6 +78,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 		// console.log("<br/>");
 		offset += modified.length - original.length;
 	}
+	const total = jsonData.mistakes.map(x => x.typeCounter.ortho + x.typeCounter.punct).reduce((x, y, i) => x + y);
 	// Visualisation HTML
 	const element = `<div class="visualisation">
 	<link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -84,9 +89,12 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
     <div class="desc">placeholder description</div>
     <div class="footer">Kļūda fiksēta 0 (0%) darbos</div>
 </div>
+	<div class="left">
+		<span class="fieldName">Ortogrāfijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}<br>
+		<span class="fieldName">Interpunkcijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}
+	</div>
 	<div class="right">
-		<span class="fieldName">Ortogrāfijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "ORTHO" || x.mistakeType === "TEXT").length}<br/>
-		<span class="fieldName">Interpunkcijas kļūdas</span><br/>${jsonData.mistakes.filter(x => x.mistakeType === "PUNCT" || x.mistakeType === "TEXT").length}
+		<span class="fieldName">Kopā:</span><br>${total} ${total > 1 ? "kļūdas" : "kļūda"}
 	</div>
 	<div class="submission">
 		<div class="text">
