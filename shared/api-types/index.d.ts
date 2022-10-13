@@ -38,9 +38,15 @@ export interface RegisterEntry {
 	id: UUID,
 	mistakes: MistakeHash[],
 	description: string,
-	ignore: boolean,
 	count: number,
+	opts: RegisterOptions,
 	_mistakeWords?: Record<MistakeHash, string>, // Temporary field for the debug dataset
+}
+
+export interface RegisterOptions {
+	ignore: boolean,
+	countType: "TOTAL" | "VARIATION" | "NONE",
+	mistakeType: "ORTHO" | "PUNCT" | "TEXT"
 }
 
 // The uninitialized data (Not yet processed to DB), sent from client
@@ -49,7 +55,7 @@ export interface RegisterEntryData {
 	id?: UUID,
 	mistakes?: MistakeHash[],
 	description?: string,
-	ignore?: boolean,
+	opts?: RegisterOptions,
 }
 
 export interface Setting {
@@ -162,6 +168,7 @@ export interface ExportedSubmissionMistake {
 	description: string,
 	submissionStatistic: number,
 	percentage: number,
+	typeCounter: { ortho: number, punct: number }
 }
 
 export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "TEXT";

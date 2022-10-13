@@ -1,5 +1,5 @@
 import type { RegisterEntry, Submission } from "@shared/api-types";
-import type { MistakeHash } from "@shared/diff-engine";
+import type { MistakeData, MistakeHash } from "@shared/diff-engine";
 
 export function deleteFirstMatching<T>(arr: T[], predicate: (val: T, i: number) => boolean) {
 	for (let i = 0; i < arr.length; i++) {
@@ -31,7 +31,7 @@ export function readTextFile(file: File) {
 }
 
 export function downloadText(filename: string, text: string) {
-	var element = document.createElement('a');
+	const element = document.createElement('a');
 	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
 	element.setAttribute('download', filename);
 	
@@ -71,4 +71,26 @@ export function mistakeInRegister(hash: MistakeHash, register: RegisterEntry[]) 
 
 export function getRegisterId(hash: MistakeHash, register: RegisterEntry[]) {
 	return register.find((e) => e.mistakes.includes(hash))?.id ?? null;
+}
+
+// A pretty temporary and hacky check for a special case
+export function isMistakeASentenceBreak(m: MistakeData) {
+	if (m.children.length === 2) {
+		const wordMistake = m.children.find((c) => c.subtype === "WORD");
+		const punctMistake = m.children.find((c) => c.subtype === "OTHER");
+
+		if (!wordMistake || !punctMistake) return false;
+		if (!(punctMistake.word.includes(".") || punctMistake.wordCorrect?.includes("."))) return false;
+		if (wordMistake.actions.length !== 2) return false;
+		
+		const addAction = wordMistake.actions.find((a) => a.type === "ADD");
+		const delAction = wordMistake.actions.find((a) => a.type === "DEL");
+
+		if (!addAction || !delAction) return false;
+		if (addAction.char.toLocaleLowerCase() !== delAction.char.toLocaleLowerCase()) return false;
+
+		return true;
+	}
+
+	return false;
 }

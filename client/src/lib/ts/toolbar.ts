@@ -16,7 +16,7 @@ export interface ToolbarModeEvent {
 
 export type ToolbarModeEventCallback = (ev: ToolbarModeEvent) => void;
 
-let cbs: ToolbarModeEventCallback[] = [];
+const cbs: ToolbarModeEventCallback[] = [];
 let prevMode: ToolbarMode | null = null;
 
 export function subToToolbarMode(cb: ToolbarModeEventCallback) {

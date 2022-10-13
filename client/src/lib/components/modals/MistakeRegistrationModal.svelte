@@ -2,17 +2,23 @@
 	import type { MistakeHash } from "@shared/diff-engine";
 	import InputModal from "./InputModal.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
-	import type { RegisterEntry, RegisterEntryData, UUID } from "@shared/api-types";
+	import type { RegisterEntry, RegisterEntryData, RegisterOptions, UUID } from "@shared/api-types";
 	import { v4 as uuidv4 } from "uuid";
+	import { isMistakeASentenceBreak } from "$lib/ts/util";
 
 	const workspace = store("workspace") as Stores["workspace"];
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 
 	let modal: InputModal;
 	let desc = "";
-	let ignore = false;
 	let isVariation = false;
 	let variation: UUID = "";
 	let variationMistakes: MistakeHash[] = [];
+	let regOpts: RegisterOptions = {
+		ignore: false,
+		mistakeType: "ORTHO",
+		countType: "TOTAL"
+	};
 	
 	let edit = false;
 	let curMistake: MistakeHash;
@@ -39,7 +45,7 @@
 
 			if (mode === "ADD") {
 				desc = "";
-				ignore = false;
+				regOpts = { ignore: false, mistakeType: "ORTHO", countType: "TOTAL" };
 				edit = false;
 				isVariation = false;
 				variation = "";
@@ -52,17 +58,58 @@
 				}
 
 				desc = existingEntry.description;
-				ignore = existingEntry.ignore;
+				regOpts = {...existingEntry.opts};
 				edit = true;
 			}
 
 			curRegisterEntry = registerId;
 			curMistake = hash;
+			if (mode === "ADD") autofillOpts();
 
 			modal.open();
 			promiseResolve = res;
 			promiseReject = rej;
 		})
+	}
+
+	async function autofillOpts() {
+		const subm = await $activeSubmission;
+		const m = subm!.data.mistakes.find((m) => m.hash === curMistake)!;
+
+		if (m.subtype === "WORD") {
+			regOpts.mistakeType = "ORTHO";
+		} else if (m.subtype === "OTHER") {
+			regOpts.mistakeType = "PUNCT";
+		} else {
+			if (
+				m.children.every((c) =>
+					c.subtype === "WORD"
+					|| c.word === " "
+					|| c.wordCorrect === " ")
+				&& m.children.length <= 5 // A very arbitrary number
+			) {
+				regOpts.mistakeType = "ORTHO";
+			} else if (
+				m.children.every((c) => c.subtype === "OTHER")
+				|| isMistakeASentenceBreak(m)
+			) {
+				regOpts.mistakeType = "PUNCT";
+			} else {
+				regOpts.mistakeType = "TEXT";
+			}
+		}
+
+		switch(regOpts.mistakeType) {
+			case "ORTHO":
+				regOpts.countType = "TOTAL";
+				break;
+			case "PUNCT":
+				regOpts.countType = "TOTAL";
+				break;
+			case "TEXT":
+				regOpts.countType = "NONE";
+				break;
+		}
 	}
 
 	async function onConfirm() {
@@ -73,7 +120,7 @@
 			id: curRegisterEntry ?? undefined,
 			mistakes: isVariation ? [ ...variationMistakes, curMistake ] : [ curMistake ],
 			description: desc,
-			ignore,
+			opts: regOpts,
 			action: edit ? "EDIT" : "ADD",
 		});
 	}
@@ -103,9 +150,16 @@
 		if (!entry) return;
 
 		desc = entry.description;
-		ignore = entry.ignore;
+		regOpts = {...entry.opts};
 		curRegisterEntry = variation;
 		variationMistakes = entry.mistakes;
+	}
+
+	function getSortedRegister(reg: RegisterEntry[]) {
+		const arrCopy = [...reg];
+		arrCopy.sort((a, b) => a.description.localeCompare(b.description));
+
+		return arrCopy;
 	}
 </script>
 
@@ -124,7 +178,7 @@
 
 		{#if isVariation}
 		<label for="regVariationSelect">Esošais ieraksts</label>
-		<div class="regVariationSelectContainer">
+		<div class="selectContainer">
 			<select
 				id="regVariationSelect"
 				on:change={onVariationSelect}
@@ -133,7 +187,7 @@
 				<option value="">- Izvēlēties ierakstu -</option>
 				{#await $workspace then ws}
 					{#if ws !== null}
-						{#each ws.register as entry}
+						{#each getSortedRegister(ws.register) as entry}
 						<option value={entry.id}>{entry.description}</option>
 						{/each}
 					{/if}
@@ -158,8 +212,26 @@
 			disabled={isVariation ? true : false}
 			type="checkbox"
 			id="regIgnore"
-			bind:checked={ignore}
+			bind:checked={regOpts.ignore}
 		/>
+
+		<label for="regMistakeType">Kļūdas tips</label>
+		<div class="selectContainer">
+			<select id="regMistakeType" bind:value={regOpts.mistakeType}>
+				<option value="ORTHO">Ortogrāfijas</option>
+				<option value="PUNCT">Interpunkcijas</option>
+				<option value="TEXT">Trūkst teksts</option>
+			</select>
+		</div>
+
+		<label for="regCountType">Kļūdu skaita vizualizācija</label>
+		<div class="selectContainer">
+			<select id="regCountType" bind:value={regOpts.countType}>
+				<option value="TOTAL">Rādīt kopējo</option>
+				<option value="VARIATION">Rādīt katrai variācijai savu</option>
+				<option value="NONE">Nerādīt</option>
+			</select>
+		</div>
 	</div>
 </InputModal>
 
@@ -188,7 +260,7 @@
 			}
 		}
 
-		.regVariationSelectContainer {
+		.selectContainer {
 			@include dropdown(3rem);
 		}
 	}

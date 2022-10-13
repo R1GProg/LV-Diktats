@@ -59,10 +59,11 @@ export default class DiktifySocket {
 		activeSubmissionID: Stores["activeSubmissionID"],
 		localWorkspaceDb: Stores["localWorkspaceDatabase"]
 	) {
-		this.connectPromise = new Promise(async (res, rej) => {
+		this.connectPromise = new Promise(async (res) => {
 			if (await APP_ONLINE) {
 				this.socket = io(url);
 				this.initSocketListening();
+				res();
 			}
 		});
 
@@ -288,7 +289,7 @@ export default class DiktifySocket {
 				id: uuidv4(),
 				mistakes: data.mistakes!,
 				description: data.description!,
-				ignore: data.ignore!,
+				opts: data.opts!,
 				count,
 				_mistakeWords,
 			};
@@ -300,7 +301,7 @@ export default class DiktifySocket {
 					id: uuidv4(),
 					mistakes: data.mistakes!,
 					description: data.description!,
-					ignore: data.ignore!,
+					opts: data.opts!,
 					count: 0, // The Server will do the counting
 				}
 				const request: RegisterNewEventData = {
@@ -330,7 +331,7 @@ export default class DiktifySocket {
 				id: data.id!,
 				mistakes: data.mistakes!,
 				description: data.description!,
-				ignore: data.ignore!,
+				opts: data.opts!,
 				count,
 				_mistakeWords
 			};
@@ -342,7 +343,7 @@ export default class DiktifySocket {
 					id: data.id!,
 					mistakes: data.mistakes!,
 					description: data.description!,
-					ignore: data.ignore!,
+					opts: data.opts!,
 					count: 0, // The Server will do the counting
 				}
 				const request: RegisterEditEventData = {
@@ -361,7 +362,7 @@ export default class DiktifySocket {
 				id: data.id!,
 				mistakes: data.mistakes!,
 				description: data.description!,
-				ignore: data.ignore!,
+				opts: data.opts!,
 				count: 0,
 			};
 	
