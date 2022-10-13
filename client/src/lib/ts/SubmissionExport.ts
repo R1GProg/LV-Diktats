@@ -161,6 +161,38 @@ function genDiffBounds(subm: Submission, exportedMistakeIDs: string[]) {
 			}
 		}
 
+		// Special case bound repositioning for words that have an unnecessary space in the middle
+		// quite hacky
+		if (children.length === 2) {
+			const mixedMistake = children.find((c) => c.type === "MIXED");
+			const delMistake = children.find((c) => c.type === "DEL");
+
+			if (
+				mixedMistake
+				&& delMistake
+				&& mixedMistake.wordCorrect!.includes(delMistake.word.trim())
+			) {
+				const addBoundIndex = bounds.findIndex((b) => b.type === "ADD");
+
+				// If the add is in the middle
+				if (addBoundIndex === 1) {
+					const otherDelBound = bounds[2];
+					const addBound = bounds[1];
+
+					otherDelBound.bounds = {
+						start: addBound.bounds.start + 1,
+						end: addBound.bounds.start + 1 + otherDelBound.content.length,
+					};
+					
+					addBound.bounds = {
+						start: otherDelBound.bounds.end,
+						end: otherDelBound.bounds.end + addBound.content.length,
+					}
+				}
+			}
+		}
+
+		bounds.sort((a, b) => a.bounds.start - b.bounds.start);
 		adjBounds[m.id] = bounds;
 	}
 
@@ -176,6 +208,31 @@ function parseText(subm: Submission, adjBounds: Record<MistakeId, ExportedSubmis
 		);
 
 	return addMissingWordsToText(parsedRaw, words);
+}
+
+function consolidateSpaceSeparatedBounds(parsedText: string, mistakes: ExportedSubmissionMistake[]) {
+	for (const m of mistakes) {
+		if (m.bounds.length === 1) continue;
+
+		const parsedBounds: ExportedSubmissionMistakeBounds[] = [...m.bounds];
+
+		for (let i = 0; i < parsedBounds.length - 1; i++) {
+			const b1 = m.bounds[i];
+			const b2 = m.bounds[i + 1];
+
+			if (
+				b1.type === b2.type
+				&& b1.bounds.end + 1 === b2.bounds.start
+				&& parsedText.substring(b1.bounds.end, b2.bounds.start) === " "
+			) {
+				b1.bounds.end = b2.bounds.end;
+				parsedBounds.splice(i + 1, 1);
+				i--;
+			}
+		}
+
+		m.bounds = parsedBounds;
+	}
 }
 
 export function exportSubmission(subm: Submission, workspace: Workspace): ExportedSubmission {
@@ -215,28 +272,8 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 	const parsedText = parseText(subm, adjBounds);
 
-	// For mistakes, where a single space is inbetween bounds, add the space to the bounds
-	// for (const m of mistakes) {
-	// 	if (m.bounds.length === 1) continue;
-
-	// 	const parsedBounds: Bounds[] = [...m.bounds];
-
-	// 	for (let i = 0; i < parsedBounds.length - 1; i++) {
-	// 		const b1 = m.bounds[i];
-	// 		const b2 = m.bounds[i + 1];
-
-	// 		if (
-	// 			b1.end + 1 === b2.start
-	// 			&& parsedText.substring(b1.end, b2.start) === " "
-	// 		) {
-	// 			b1.end = b2.end;
-	// 			parsedBounds.splice(i + 1, 1);
-	// 			i--;
-	// 		}
-	// 	}
-
-	// 	m.bounds = parsedBounds;
-	// }
+	// Modifies mistakes by reference
+	consolidateSpaceSeparatedBounds(parsedText, mistakes);
 
 	return {
 		author: "Anonīms",
