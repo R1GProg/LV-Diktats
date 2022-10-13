@@ -91,7 +91,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 </div>
 	<div class="left">
 		<span class="fieldName">Ortogrāfijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}<br>
-		<span class="fieldName">Interpunkcijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}
+		<span class="fieldName">Interpunkcijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.punct).reduce((x, y, i) => x + y)}
 	</div>
 	<div class="right">
 		<span class="fieldName">Kopā:</span><br>${total} ${total > 1 ? "kļūdas" : "kļūda"}
