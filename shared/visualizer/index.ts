@@ -10,7 +10,7 @@ export type MistakeType = "ORTHO" | "PUNCT" | "TEXT";
 export interface SubmissionMistake {
 	id: string,
 	mistakeType: MistakeType,
-	bounds: Bounds[],
+	bounds: ExportedSubmissionMistakeBounds[],
 	description: string,
 	submissionStatistic: number,
 	percentage: number,
@@ -18,6 +18,11 @@ export interface SubmissionMistake {
 		ortho: number,
 		punct: number
 	}
+}
+
+export interface ExportedSubmissionMistakeBounds {
+	type: "ADD" | "DEL",
+	bounds: Bounds
 }
 
 export interface GradedSubmission {
@@ -28,7 +33,7 @@ export interface GradedSubmission {
 }
 
 interface BoundsMistakeSet {
-	bounds: Bounds,
+	bounds: ExportedSubmissionMistakeBounds,
 	mistake: SubmissionMistake
 }
 
@@ -59,18 +64,18 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	}
 
 	// Sort bounds in an ascending order
-	boundMistakeList.sort((x, y) => x.bounds.start - y.bounds.start);
+	boundMistakeList.sort((x, y) => x.bounds.bounds.start - y.bounds.bounds.start);
 
 	// console.table(boundMistakeList);
 
 	// Generate the graded text by wrapping all mistakes with spans
 	for (const boundsMistakeSet of boundMistakeList) {
-		const start = boundsMistakeSet.bounds.start;
-		const end = boundsMistakeSet.bounds.end;
+		const start = boundsMistakeSet.bounds.bounds.start;
+		const end = boundsMistakeSet.bounds.bounds.end;
 		const mistake = boundsMistakeSet.mistake;
 		const original = jsonData.text.substring(start, end);
 		// console.log(original);
-		const modified = `<span class="mistake ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span>`;
+		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span> `;
 		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
 		// console.log(boundsMistakeSet.bounds);
 		// console.log(original);

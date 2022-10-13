@@ -4,8 +4,17 @@
 }
 
 .mistake {
+	background-color: #F8606055;
 	transition: 0.5s;
-	background-color: #F86060;
+}
+
+.boundADD {
+	/* background-color: #6060F855; */
+	text-decoration: underline;
+}
+
+.boundDEL {
+	text-decoration: line-through;
 }
 .mistakeHovered {
 	filter: brightness(0.85);

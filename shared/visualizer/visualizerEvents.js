@@ -86,10 +86,10 @@ function onClickMistake(elem, id, ev) {
   } else {
     hold = !hold;
     if (hold) {
-      // elem.style.background = "#FFB74D";
+      // elem.style.background = "#FFB74D55";
       Array.prototype.forEach.call(
         document.getElementsByClassName(id),
-        (element) => (element.style.background = "#FFB74D")
+        (element) => (element.style.background = "#FFB74D55")
       );
     }
     if (!hold) {
@@ -98,7 +98,7 @@ function onClickMistake(elem, id, ev) {
       Array.prototype.forEach.call(
         document.getElementsByClassName("mistake"),
         (el) => {
-          el.style.background = "#F86060";
+          el.style.background = "#F8606055";
         }
       );
       const evt = new Event("mouseenter");
