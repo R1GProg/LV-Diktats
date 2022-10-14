@@ -235,6 +235,23 @@ function consolidateSpaceSeparatedBounds(parsedText: string, mistakes: ExportedS
 	}
 }
 
+function trimBounds(parsedText: string, mistakes: ExportedSubmissionMistake[]) {
+	for (const m of mistakes) {
+		for (const b of m.bounds) {
+			const content = parsedText.substring(b.bounds.start, b.bounds.end);
+			const spacesBefore = content.length - content.trimStart().length;
+			const spacesAfter = content.length - content.trimEnd().length;
+
+			b.bounds = {
+				start: b.bounds.start + spacesBefore,
+				end: b.bounds.end - spacesAfter
+			};
+
+			b.content = b.content.trim();
+		}
+	}
+}
+
 export function exportSubmission(subm: Submission, workspace: Workspace): ExportedSubmission {
 	// Add mistake descriptions from register
 	const mistakes: ExportedSubmissionMistake[] = [];
@@ -274,6 +291,7 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 	// Modifies mistakes by reference
 	consolidateSpaceSeparatedBounds(parsedText, mistakes);
+	trimBounds(parsedText, mistakes);
 
 	return {
 		author: "Anonīms",

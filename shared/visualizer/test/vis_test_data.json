@@ -1,5 +1,5 @@
 {
-    "92r8l52": {
+    "t5z532m": {
         "id": "9999",
         "data": {
             "author": "Anonīms",
@@ -7,7 +7,7 @@
             "isRejected": false,
             "mistakes": [
                 {
-                    "id": "b0ff2b31-0ac7-4429-ae4a-35366d85e923",
+                    "id": "dbd2c499-7108-4773-9288-ae02847452ba",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -22,7 +22,7 @@
                             "content": "it",
                             "bounds": {
                                 "start": 251,
-                                "end": 257
+                                "end": 256
                             }
                         }
                     ],
@@ -36,13 +36,13 @@
                     }
                 },
                 {
-                    "id": "42b911ae-3a88-42ce-98f0-331398722620",
+                    "id": "23d8cf6c-a2a6-46b9-8b65-2dddc2997e11",
                     "bounds": [
                         {
                             "type": "DEL",
                             "bounds": {
                                 "start": 314,
-                                "end": 326
+                                "end": 325
                             },
                             "content": "darba"
                         },
@@ -65,7 +65,7 @@
                     }
                 },
                 {
-                    "id": "d9d98c37-6c85-4f42-b686-aa8a4cbe9e54",
+                    "id": "65206bb4-d25c-49a9-a61b-7cbbd77d7f99",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -86,7 +86,7 @@
                     }
                 },
                 {
-                    "id": "218dec7c-cb90-459c-b9a0-fa128a041364",
+                    "id": "66063a4e-afb1-4692-8a16-156731f30cd7",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -98,9 +98,9 @@
                         },
                         {
                             "type": "ADD",
-                            "content": " —",
+                            "content": "—",
                             "bounds": {
-                                "start": 951,
+                                "start": 952,
                                 "end": 953
                             }
                         },
@@ -114,9 +114,9 @@
                         },
                         {
                             "type": "ADD",
-                            "content": " —",
+                            "content": "—",
                             "bounds": {
-                                "start": 977,
+                                "start": 978,
                                 "end": 979
                             }
                         }
@@ -131,7 +131,7 @@
                     }
                 },
                 {
-                    "id": "dab54c24-0ec7-442d-bba9-6d842a435971",
+                    "id": "9021b3b5-393d-4522-90c2-dab4de5d2335",
                     "bounds": [
                         {
                             "type": "ADD",
@@ -152,7 +152,7 @@
                     }
                 },
                 {
-                    "id": "fed8a34b-80af-45ea-b4c6-78bc02a83b03",
+                    "id": "ed830e47-093b-4670-981f-00a5c9ba3b73",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -181,7 +181,7 @@
                     }
                 },
                 {
-                    "id": "02cce887-a504-4347-b606-86a0233b18a8",
+                    "id": "9fa44f3a-f440-44bd-ac0a-31cdd8082f2a",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -210,7 +210,7 @@
                     }
                 },
                 {
-                    "id": "3788c24f-8dd1-4d72-9cc0-5858644c44b2",
+                    "id": "65286a70-c83f-4b12-9351-8676b88c8c39",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -231,7 +231,7 @@
                     }
                 },
                 {
-                    "id": "debeac9a-da2d-438a-8bd6-35e3b4befb1c",
+                    "id": "836eab30-e287-4d7e-a70f-cd2538520f7c",
                     "bounds": [
                         {
                             "type": "ADD",
@@ -252,7 +252,7 @@
                     }
                 },
                 {
-                    "id": "9afcf63e-4b7c-4169-bf50-e39f83a3ff24",
+                    "id": "8f38b021-113a-40a1-a04a-ca5d505fb5c2",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -281,7 +281,7 @@
                     }
                 },
                 {
-                    "id": "27dca886-593d-4487-8913-ee717e077967",
+                    "id": "31956d48-abd1-4650-9e74-ab774ff189fe",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -310,7 +310,7 @@
                     }
                 },
                 {
-                    "id": "a9946ab6-c322-4821-bf88-190b9acbe142",
+                    "id": "c98abff7-a179-48b5-b9e9-8c50fdc3dc19",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -339,7 +339,7 @@
                     }
                 },
                 {
-                    "id": "749bb160-cee3-4e77-9a5b-407518264fbf",
+                    "id": "0d838de9-86c8-4e16-aff5-f099bddb067b",
                     "bounds": [
                         {
                             "type": "ADD",
@@ -368,7 +368,7 @@
                     }
                 },
                 {
-                    "id": "3b54d73e-aa7b-4457-afa4-ee5fd4dc83e2",
+                    "id": "db7b0415-8d11-4965-b1e2-55d053c2c98c",
                     "bounds": [
                         {
                             "type": "ADD",
@@ -382,17 +382,17 @@
                             "type": "DEL",
                             "bounds": {
                                 "start": 1571,
-                                "end": 1574
+                                "end": 1573
                             },
-                            "content": "tā "
+                            "content": "tā"
                         },
                         {
                             "type": "DEL",
                             "bounds": {
                                 "start": 1574,
-                                "end": 1578
+                                "end": 1577
                             },
-                            "content": "pat "
+                            "content": "pat"
                         }
                     ],
                     "description": "",
@@ -405,7 +405,7 @@
                     }
                 },
                 {
-                    "id": "7a9daa54-edf5-4c38-8a3f-eca154032467",
+                    "id": "ccdfdc24-ec51-4aa5-980e-6b415ca15fed",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -434,7 +434,7 @@
                     }
                 },
                 {
-                    "id": "f80809ad-e01f-41e0-ad7a-f2a58686f747",
+                    "id": "aa3748e3-ba9e-4664-8e3d-0b781fd33128",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -463,13 +463,13 @@
                     }
                 },
                 {
-                    "id": "6c1ae3c0-5c26-4c93-9dc1-5d76d430ba1c",
+                    "id": "ba3e953e-50d7-4d17-9c28-3c38ac9126d5",
                     "bounds": [
                         {
                             "type": "DEL",
                             "bounds": {
                                 "start": 1737,
-                                "end": 1746
+                                "end": 1745
                             },
                             "content": "tik"
                         },
@@ -492,7 +492,7 @@
                     }
                 },
                 {
-                    "id": "9d1f1161-1cf6-4772-83c5-1faa521f5eb0",
+                    "id": "ed507900-97cc-41b8-ba01-73d6dcca650d",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -521,7 +521,7 @@
                     }
                 },
                 {
-                    "id": "6d2a9f38-232f-4da7-b4ed-58faa45e4c9d",
+                    "id": "f56674c6-e68d-41ea-a410-11240a08d41e",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -550,7 +550,7 @@
                     }
                 },
                 {
-                    "id": "462f5a71-d677-4d3b-adfd-a9657630b5ab",
+                    "id": "f08ff6dc-6689-4f75-9fd7-0e41760df03d",
                     "bounds": [
                         {
                             "type": "DEL",
@@ -571,7 +571,7 @@
                     }
                 },
                 {
-                    "id": "fc060a8b-d9f2-4eff-9cc2-c8101ec56890",
+                    "id": "674b22c0-b3b1-4d0c-b103-9c409f7d9b5b",
                     "bounds": [
                         {
                             "type": "DEL",
