@@ -9,9 +9,36 @@
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import Visualizer from "$lib/components/Visualizer.svelte";
 	import SubmissionStatusIndicator from "$lib/components/SubmissionStatusIndicator.svelte";
+	import { onMount } from "svelte";
+	import { downloadText } from "$lib/ts/util";
+	import SaveStatus from "$lib/components/modals/status/SaveStatus.svelte";
 
 	const mode = store("mode") as Stores["mode"];
+	const workspace = store("workspace") as Stores["workspace"];
+
+	let saveModal: SaveStatus;
+
+	onMount(() => {
+		document.addEventListener('keydown', async (e) => {
+			if (e.ctrlKey && e.key === 's') {
+				e.preventDefault();
+				
+				const ws = await $workspace;
+
+				if (ws === null) return;
+
+				saveModal.open(new Promise<void>((res) => {
+					setTimeout(() => {
+						downloadText(`diktify-${new Date().toISOString()}.json`, JSON.stringify(ws));
+						res();
+					}, 1000);
+				}));
+			}
+		});
+	});
 </script>
+
+<SaveStatus bind:this={saveModal} />
 
 <div class="container">
 	<Toolbar/>

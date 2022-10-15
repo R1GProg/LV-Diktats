@@ -30,7 +30,7 @@
 		const submTest = submissions.filter((s) => s.id === "9999");
 		const output: Record<string, { id: string, data: ExportedSubmission }> = {};
 
-		for (const subm of submTest) {
+		for (const subm of submissions) {
 			const data = exportSubmission(subm, ws);
 			const urlId = genURLId();
 
@@ -40,8 +40,8 @@
 			};
 		}
 
-		console.log(output);
-		// downloadText("vis_data.json", JSON.stringify(output));
+		// console.log(output);
+		downloadText("vis_data.json", JSON.stringify(output));
 	}
 </script>
 
