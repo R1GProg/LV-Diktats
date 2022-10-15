@@ -5,11 +5,12 @@
 	import { renderCorrect } from "@shared/visualizer";
 	import { onMount } from "svelte";
 	import store, { type Stores } from "$lib/ts/stores";
-	import { browser } from "$app/environment";
 
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const workspace = store("workspace") as Stores["workspace"];
 	const mode = store("mode") as Stores["mode"];
+
+	let visContainer: HTMLElement;
 
 	async function loadVisualization() {
 		const ws = await $workspace;
@@ -18,6 +19,7 @@
 		if ($activeSubmission === null) return;
 		if (ws === null || subm === null) return;
 		
+		visContainer.innerHTML = "";
 		renderCorrect("visContainer", exportSubmission(subm, ws), false);
 	}
 
@@ -32,7 +34,7 @@
 </script>
 
 <div class="main-container">
-	<div id="visContainer"></div>
+	<div id="visContainer" bind:this={visContainer}></div>
 </div>
 
 <style lang="scss">

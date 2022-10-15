@@ -57,8 +57,8 @@ function onEnterMistake(ev, parent, description, count, percentage, mistakeType,
 	const rootRect = tooltip.parentNode.parentNode;
 	const scroll = getScrollXY(parent);
 
-	tooltip.style.top = `${rect.y - rootRect.offsetTop - tooltip.offsetHeight + yOffset + scroll[1] - containerRect.top}px`;
-	tooltip.style.left = `${ev.clientX - rootRect.offsetLeft + scroll[0] - containerRect.left}px`;
+	tooltip.style.top = `${rect.y - tooltip.offsetHeight + yOffset + scroll[1] - containerRect.top}px`;
+	tooltip.style.left = `${ev.clientX + scroll[0] - containerRect.left}px`;
 	tooltip.classList.remove("hiddenTooltip");
 }
 
