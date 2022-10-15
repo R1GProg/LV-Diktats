@@ -238,13 +238,13 @@
 			border-bottom: 1px solid $COL_ACCENT;
 
 			font-family: $FONT_HEADING;
-			color: $COL_BG_LIGHT;
+			color: $COL_BGFG_REG;
 			font-size: 1.5rem;
 			cursor: pointer;
 			transition: background-color 0.3s, color 0.3s;
 
 			&:not([disabled]):not(.active):hover {
-				background-color: $COL_BG_REG;
+				// background-color: $COL_BG_REG;
 
 				&.status-rejected {
 					color: $COL_SUBM_REJECTED_DARK;
