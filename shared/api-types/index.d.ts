@@ -144,13 +144,14 @@ export interface SubmissionData {
 	ignoreText: Bounds[],
 	mistakes: MistakeData[],
 	metadata: {
-		age: number,
-		language: string,
-		language_other: string,
-		level: string,
-		degree: string,
-		country: string,
-		city: string
+		age?: number,
+		language?: string,
+		language_other?: string,
+		level?: string,
+		degree?: string,
+		country?: string,
+		city?: string,
+		email?: string
 	}
 }
 

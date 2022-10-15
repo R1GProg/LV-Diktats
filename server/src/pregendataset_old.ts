@@ -6,21 +6,27 @@ import path from "path";
 import { logger } from "yatsl";
 import { Submission, SubmissionData, SubmissionID, SubmissionPreview, Workspace } from '@shared/api-types';
 
+// interface CSVSubmission {
+// 	id: number;
+// 	created_at: string;
+// 	message: string;
+// 	age: number;
+// 	language: string;
+// 	language_other: string;
+// 	level: string;
+// 	degree: string;
+// 	country: string;
+// 	city: string;
+// };
+
 interface CSVSubmission {
-	id: number;
-	created_at: string;
-	message: string;
-	age: number;
-	language: string;
-	language_other: string;
-	level: string;
-	degree: string;
-	country: string;
-	city: string;
-};
+		id: number;
+		email: string;
+		text: string;
+	};
 
 async function parseshitdicksv2() {
-	const csv = fs.readFileSync(path.join(__dirname, "..", "data", "data1.csv"), "utf8");
+	const csv = fs.readFileSync(path.join(__dirname, "..", "data", "data-prod.csv"), "utf8");
 	const template = processString(fs.readFileSync(path.join(__dirname, "..", "data", "correct1.txt"), "utf8"));
 
 	const submissions: Record<SubmissionID, Submission> = {};
@@ -28,7 +34,7 @@ async function parseshitdicksv2() {
 	parse(csv, {
 		delimiter: ',',
 		from_line: 2,
-		columns: ["id", "created_at", "message", "age", "language", "language_other", "level", "degree", "country", "city"]
+		columns: ["id", "email", "text"]
 	}, async (err, records: CSVSubmission[], info) => {
 		if (err) {
 			logger.error(err);
@@ -38,8 +44,8 @@ async function parseshitdicksv2() {
 		for (const val of records) {
 			logger.info(`Beginning processing of submission #${val.id}...`);
 			// TODO: generate diff and categorise mistakes
-			val.message = processString(val.message);
-			const diff = new DiffONP(val.message, template);
+			val.text = processString(val.text);
+			const diff = new DiffONP(val.text, template);
 			diff.calc();
 
 			const id = val.id.toString();
@@ -50,17 +56,11 @@ async function parseshitdicksv2() {
 				id,
 				state: "UNGRADED",
 				data: {
-					text: val.message,
+					text: val.text,
 					ignoreText: [],
 					mistakes: mistakeData,
 					metadata: {
-						age: val.age,
-						language: val.language,
-						language_other: val.language_other,
-						level: val.level,
-						degree: val.degree,
-						country: val.country,
-						city: val.city
+						email: val.email
 					}
 				}
 			};

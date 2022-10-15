@@ -20,10 +20,10 @@
 
 		const num = countRegisteredMistakes(subm.data.mistakes, ws.register);
 
-		if (num === 0) {
-			status = 0;
-		} else if (num === subm.data.mistakes.length) {
+		if (num === subm.data.mistakes.length) {
 			status = 2;
+		} else if (num === 0) {
+			status = 0;
 		} else {
 			status = 1;
 		}
