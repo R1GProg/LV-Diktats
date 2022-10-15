@@ -111,7 +111,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 
 	// Script that generates mistake rectangles once the entire div is generated (approx. 50ms after, which should be more than enough time for the innerHTML to set)
 	const script = `setTimeout(() => {
-		const mistakes = document.getElementsByClassName("mistake");
+		const mistakes = document.getElementsByClassName("submission")[0].getElementsByClassName("mistake");
 		const doneYLevels = [];
 		Array.prototype.forEach.call(mistakes, (el) => {
 			const rect = el.getBoundingClientRect();
