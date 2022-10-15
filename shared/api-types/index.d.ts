@@ -164,11 +164,17 @@ export interface ExportedSubmission {
 export interface ExportedSubmissionMistake {
 	id: string,
 	mistakeType: ExportedSubmissionMistakeType,
-	bounds: Bounds[],
+	bounds: ExportedSubmissionMistakeBounds[],
 	description: string,
 	submissionStatistic: number,
 	percentage: number,
 	typeCounter: { ortho: number, punct: number }
+}
+
+export interface ExportedSubmissionMistakeBounds {
+	type: "ADD" | "DEL",
+	bounds: Bounds,
+	content: string
 }
 
 export type ExportedSubmissionMistakeType = "ORTHO" | "PUNCT" | "TEXT";

@@ -4,16 +4,18 @@
 }
 
 .mistake {
-	background-color: #F8606055;
+	/* background-color: #F8606055; */
 	transition: 0.5s;
 }
 
 .boundADD {
 	/* background-color: #6060F855; */
 	text-decoration: underline;
+	color: #0077FF;
 }
 
 .boundDEL {
+	color: #F86060;
 	text-decoration: line-through;
 }
 .mistakeHovered {
@@ -42,7 +44,7 @@
 .left {
 	position: absolute;
 	left: 5%;
-		top: 5%;
+	top: 5%;
 
 	font-family: 'Roboto Serif';
 	font-style: normal;

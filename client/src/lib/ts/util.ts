@@ -73,6 +73,10 @@ export function getRegisterId(hash: MistakeHash, register: RegisterEntry[]) {
 	return register.find((e) => e.mistakes.includes(hash))?.id ?? null;
 }
 
+export function getRegisterEntry(hash: MistakeHash, register: RegisterEntry[]) {
+	return register.find((e) => e.mistakes.includes(hash)) ?? null;
+}
+
 // A pretty temporary and hacky check for a special case
 export function isMistakeASentenceBreak(m: MistakeData) {
 	if (m.children.length === 2) {

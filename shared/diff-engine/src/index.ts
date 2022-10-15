@@ -1,6 +1,6 @@
 import { charIsWordDelimeter } from "./langUtil";
 import { Action } from "./Action";
-import { Mistake } from "./Mistake";
+import { Bounds, Mistake } from "./Mistake";
 import DiffONP, { DiffAction } from "./DiffONP";
 
 export interface WordItem {
@@ -220,12 +220,6 @@ export default class Diff {
 			const addMistake = m.type === "ADD" ? m : nextM;
 			const delMistake = m.type === "ADD" ? nextM : m;
 
-			// The sub mistake will be in place of the leftmost mistake
-			let subBounds = m.boundsDiff;
-			if (m.type === "ADD") {
-				subBounds.end += delMistake.word.length - addMistake.word.length;
-			}
-
 			// Diff the words and generate the actions
 			const actions: Action[] = [];
 
@@ -265,6 +259,12 @@ export default class Diff {
 					subtype: m.subtype === "WORD" ? "ORTHO" : "PUNCT",
 				}));
 			}
+
+			// The sub mistake will be in place of the leftmost mistake
+			const subBounds: Bounds = {
+				start: m.boundsDiff.start,
+				end: m.boundsDiff.start + delMistake.word.length + actions.filter((a) => a.type === "ADD").length,
+			};
 
 			const subMistake = new Mistake({
 				type: "MIXED",

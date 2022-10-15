@@ -55,7 +55,7 @@
 					{/each}
 				</td>
 				<td class="desc"><span>{entry.description}</span></td>
-				<td><span>{entry.opts.ignore ? "X" : "+"}</span></td>
+				<td><span>{entry?.opts?.ignore ? "X" : "+"}</span></td>
 				<td><span>{entry.count}</span></td>
 			</tr>
 			{/each}
