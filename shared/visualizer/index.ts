@@ -75,7 +75,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 		const mistake = boundsMistakeSet.mistake;
 		const original = jsonData.text.substring(start, end);
 		// console.log(original);
-		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span> `;
+		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.mistakeType}', '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span> `;
 		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
 		// console.log(boundsMistakeSet.bounds);
 		// console.log(original);
@@ -92,6 +92,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
 	<div class="tooltip hiddenTooltip" id="tooltip">
     <div class="line"></div>
     <div class="desc">placeholder description</div>
+    <div class="type">Kļūdas tips:</div>
     <div class="footer">Kļūda fiksēta 0 (0%) darbos</div>
 </div>
 	<div class="left">

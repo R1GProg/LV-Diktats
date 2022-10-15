@@ -23,7 +23,7 @@ function getScrollXY(elem) {
   return [scrOfX, scrOfY];
 }
 
-function setTooltipText(description, count, percentage) {
+function setTooltipText(description, count, percentage, mistakeType) {
   const tooltip = document.getElementById("tooltip");
   const percent = Math.floor(percentage * 1000) / 10;
   tooltip.getElementsByClassName("desc")[0].innerHTML = description;
@@ -31,15 +31,38 @@ function setTooltipText(description, count, percentage) {
     count >= 0
       ? `Kļūda fiksēta ${count} (${percent >= 0.1 ? percent : "<0.1"}%) darbos`
       : ``;
+  let typeStr = "";
+  switch (mistakeType) {
+    case "ORTHO":
+      typeStr = "Ortogrāfijas";
+      break;
+    case "PUNCT":
+      typeStr = "Interpunkcijas";
+      break;
+    case "TEXT":
+      typeStr = "Trūkstošs Teksts";
+      break;
+  }
+  tooltip.getElementsByClassName(
+    "type"
+  )[0].innerHTML = `Kļūdas tips: ${typeStr}`;
 }
 
-function onEnterMistake(ev, parent, description, count, percentage, id) {
+function onEnterMistake(
+  ev,
+  parent,
+  description,
+  count,
+  percentage,
+  mistakeType,
+  id
+) {
   Array.prototype.forEach.call(document.getElementsByClassName(id), (element) =>
     element.classList.add("mistakeHovered")
   );
   if (hold) return;
   if (timeout !== null) clearTimeout(timeout);
-  setTooltipText(description, count, percentage);
+  setTooltipText(description, count, percentage, mistakeType);
   let tooltip = document.getElementById("tooltip");
   const rect = parent.getBoundingClientRect();
   const rootRect = tooltip.parentNode.parentNode;
