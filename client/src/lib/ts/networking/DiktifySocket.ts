@@ -7,7 +7,7 @@ import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
-import { getAllSubmissionsWithMistakes, submissionContainsMistake } from "../util";
+import { getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
 import { v4 as uuidv4 } from "uuid";
 
 // Here temporarily
@@ -158,6 +158,14 @@ export default class DiktifySocket {
 			
 			if (rawData.data.text.length < ws.template.length * config.incompleteFraction) {
 				state = "REJECTED";
+			} else {
+				const gradingStatus = getSubmissionGradingStatus({ data: updatedData } as Submission, ws);
+
+				if (gradingStatus === 1) {
+					state = "WIP";
+				} else if (gradingStatus === 2) {
+					state = "DONE";
+				}
 			}
 
 			return this.setSubmissionDataPromise(() => {
@@ -504,7 +512,17 @@ export default class DiktifySocket {
 				}
 			}
 
-			if (reloadCurrent) this.reloadActiveSubmission();
+			if (reloadCurrent) {
+				const gradingStatus = getSubmissionGradingStatus(curSub, ws);
+
+				if (gradingStatus === 1) {
+					this.submissionStateChange("DONE", curSub.id, ws.id);
+				} else if (curSub.state === "DONE") {
+					this.submissionStateChange("WIP", curSub.id, ws.id);
+				}
+				
+				this.reloadActiveSubmission();
+			}
 		}
 
 		if (ws.local) {

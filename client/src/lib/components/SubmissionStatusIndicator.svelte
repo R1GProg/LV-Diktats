@@ -1,16 +1,12 @@
 <script lang="ts">
 	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
 	import store, { type Stores } from "$lib/ts/stores";
-	import { mistakeInRegister } from "$lib/ts/util";
+	import { getSubmissionGradingStatus, mistakeInRegister } from "$lib/ts/util";
 	import type { MistakeData } from "@shared/diff-engine";
 
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const workspace = store("workspace") as Stores["workspace"];
 	let status: number = 0;
-
-	function countRegisteredMistakes(mArr: MistakeData[], reg: RegisterEntry[]) {
-		return mArr.filter((m) => mistakeInRegister(m.hash, reg)).length;
-	}
 
 	async function onSubmChange(submPromise: Promise<Submission | null> | null, wsPromise: Promise<Workspace> | null) {
 		const subm = await submPromise;
@@ -18,15 +14,7 @@
 
 		if (subm === null || ws === null) return;
 
-		const num = countRegisteredMistakes(subm.data.mistakes, ws.register);
-
-		if (num === subm.data.mistakes.length) {
-			status = 2;
-		} else if (num === 0) {
-			status = 0;
-		} else {
-			status = 1;
-		}
+		status = getSubmissionGradingStatus(subm, ws);
 	}
 
 	$: onSubmChange($activeSubmission, $workspace);

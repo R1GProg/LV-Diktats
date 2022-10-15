@@ -5,6 +5,7 @@
 	import type { MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
 	import { exportSubmission } from "$lib/ts/SubmissionExport";
+	import { getSubmissionGradingStatus } from "$lib/ts/util";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const sort = store("sort") as Stores["sort"];

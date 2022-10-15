@@ -1,4 +1,4 @@
-import type { RegisterEntry, Submission } from "@shared/api-types";
+import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
 import type { MistakeData, MistakeHash } from "@shared/diff-engine";
 
 export function deleteFirstMatching<T>(arr: T[], predicate: (val: T, i: number) => boolean) {
@@ -97,4 +97,20 @@ export function isMistakeASentenceBreak(m: MistakeData) {
 	}
 
 	return false;
+}
+
+export function countRegisteredMistakes(subm: Submission, reg: RegisterEntry[]) {
+	return subm.data.mistakes.filter((m) => mistakeInRegister(m.hash, reg)).length;
+}
+
+export function getSubmissionGradingStatus(subm: Submission, ws: Workspace) {
+	const num = countRegisteredMistakes(subm, ws.register);
+	
+	if (num === subm.data.mistakes.length) {
+		return 2;
+	} else if (num === 0) {
+		return 0;
+	} else {
+		return 1;
+	}
 }
