@@ -7,6 +7,8 @@ export function processString(text: string) {
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
 		// Clean up newlines
 		.replace(/((\r\n)|(\n))+/g, "\n") // Turn \n\r -> \n and remove any extra newlines (we only need one)
+		// Ellipses
+		.replace(/\.[ ]?\.[ ]?\.[ ]?/g, "…")
 		// Add space to punctuation
 		.replace(/\.(?=[^\s])/g, ". ") // Add space after dot, if none
 		.replace(/,(?=[^\s])/g, ", ") // Add space after coma, if none

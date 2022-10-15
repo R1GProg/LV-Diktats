@@ -92,6 +92,7 @@
 			font-size: 2.25rem;
 			top: calc(-1em - 5px);
 			width: 100%;
+			height: 1em;
 
 			div {
 				width: 100%;
