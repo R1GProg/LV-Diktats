@@ -1,5 +1,5 @@
 export function charIsPunctuation(char: string): boolean {
-	return (char !== undefined && char?.match(/[,.\?!";:\-—\(\)]/) !== null);
+	return (char !== undefined && char?.match(/[,.\?!";:\-—\(\)…]/) !== null);
 }
 
 export function charIsWordDelimeter(char: string): boolean {
