@@ -5,6 +5,12 @@
 	import SubmissionEssayBox from "$lib/components/EssayBox/SubmissionEssayBox.svelte";
 	import TemplateEssayBox from "$lib/components/EssayBox/TemplateEssayBox.svelte";
 	import Toolbar from "$lib/components/Toolbar.svelte";
+	import store, { type Stores } from "$lib/ts/stores";
+	import { ToolbarMode } from "$lib/ts/toolbar";
+	import Visualizer from "$lib/components/Visualizer.svelte";
+	import SubmissionStatusIndicator from "$lib/components/SubmissionStatusIndicator.svelte";
+
+	const mode = store("mode") as Stores["mode"];
 </script>
 
 <div class="container">
@@ -16,8 +22,17 @@
 	</div>
 
 	<div class="essay-container essay2">
-		<h2>Labošana</h2>
-		<div><DiffEssayBox/></div>
+		<div class="essay-container-head">
+			<h2>Labošana</h2>
+			<div><SubmissionStatusIndicator/></div>
+		</div>
+		<div>
+			{#if $mode === ToolbarMode.VIEW}
+			<Visualizer/>
+			{:else}
+			<DiffEssayBox/>
+			{/if}
+		</div>
 	</div>
 
 	<div class="essay-container essay3">
@@ -65,9 +80,26 @@
 			text-transform: uppercase;
 			font-weight: 400;
 			margin: 0;
+			font-size: 2.25rem;
 			position: absolute;
 			top: calc(-1em - 5px);
+		}
+
+		.essay-container-head {
+			display: flex;
+			flex-direction: row;
+			position: absolute;
 			font-size: 2.25rem;
+			top: calc(-1em - 5px);
+			width: 100%;
+
+			div {
+				width: 100%;
+			}
+
+			h2 {
+				position: static;
+			}
 		}
 
 		&.essay1 {

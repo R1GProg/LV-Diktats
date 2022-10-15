@@ -2,6 +2,7 @@ import type { Stores } from "./stores";
 
 export enum ToolbarMode {
 	READ,
+	VIEW,
 	EDIT,
 	IGNORE,
 	// MERGE,

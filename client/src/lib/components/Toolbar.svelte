@@ -28,14 +28,20 @@
 			on:click={() => { onBtnClick(ToolbarMode.READ); }}
 		></button>
 		<span class:active={$mode === ToolbarMode.READ}>Lasīt</span>
-		{#if !config.pilotMode}
+		<button
+			class="btn-view"
+			class:active={$mode === ToolbarMode.VIEW}
+			on:click={() => { onBtnClick(ToolbarMode.VIEW); }}
+		></button>
+		<span class:active={$mode === ToolbarMode.VIEW}>Skatīt labojumu</span>
+		<!-- {#if !config.pilotMode}
 		<button
 			class="btn-edit"
 			class:active={$mode === ToolbarMode.EDIT}
 			on:click={() => { onBtnClick(ToolbarMode.EDIT); }}
 		></button>
 		<span class:active={$mode === ToolbarMode.EDIT}>Rediģēt</span>
-		{/if}
+		{/if} -->
 		<button
 			class="btn-ignore"
 			class:active={$mode === ToolbarMode.IGNORE}
@@ -142,6 +148,14 @@
 
 				-webkit-mask-size: 90%;
 				mask-size: 90%;
+			}
+
+			&.btn-view {
+				-webkit-mask-image: url(/icons/icon-view.svg);
+				mask-image: url(/icons/icon-view.svg);
+
+				-webkit-mask-size: 100%;
+				mask-size: 100%;
 			}
 
 			&.btn-edit {

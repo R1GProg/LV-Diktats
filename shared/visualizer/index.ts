@@ -1,5 +1,3 @@
-const fs = require("fs");
-
 export type Bounds = {
 	start: number;
 	end: number;
@@ -37,8 +35,8 @@ interface BoundsMistakeSet {
 	mistake: SubmissionMistake
 }
 
-export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
-	injectCSS();
+export function renderCorrect(containerId: string, jsonData: GradedSubmission, embedCSS = true) {
+	if (embedCSS) injectCSS();
 
 	if (jsonData.isRejected) {
 		const element = `<div class="visualisation">
@@ -94,12 +92,14 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
     <div class="desc">placeholder description</div>
     <div class="footer">Kļūda fiksēta 0 (0%) darbos</div>
 </div>
-	<div class="left">
-		<span class="fieldName">Ortogrāfijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}<br>
-		<span class="fieldName">Interpunkcijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.punct).reduce((x, y, i) => x + y)}
-	</div>
-	<div class="right">
-		<span class="fieldName">Kopā:</span><br>${total} ${total > 1 ? "kļūdas" : "kļūda"}
+	<div class="head">
+		<div class="left">
+			<span class="fieldName">Ortogrāfijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}<br>
+			<span class="fieldName">Interpunkcijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.punct).reduce((x, y, i) => x + y)}
+		</div>
+		<div class="right">
+			<span class="fieldName">Kopā:</span><br>${total} ${total > 1 ? "kļūdas" : "kļūda"}
+		</div>
 	</div>
 	<div class="submission">
 		<div class="text">
@@ -142,7 +142,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission) {
  */
 
 function injectCSS() {
-	const css = fs.readFileSync("./visualizer.css", 'utf8');
+	const css = require("fs").readFileSync("./visualizer.css", 'utf8');
 	const styleEl = document.createElement("style");
 	styleEl.innerHTML = css;
 

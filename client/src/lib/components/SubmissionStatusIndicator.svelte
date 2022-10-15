@@ -1,0 +1,72 @@
+<script lang="ts">
+	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
+	import store, { type Stores } from "$lib/ts/stores";
+	import { mistakeInRegister } from "$lib/ts/util";
+	import type { MistakeData } from "@shared/diff-engine";
+
+	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
+	const workspace = store("workspace") as Stores["workspace"];
+	let status: number = 0;
+
+	function countRegisteredMistakes(mArr: MistakeData[], reg: RegisterEntry[]) {
+		return mArr.filter((m) => mistakeInRegister(m.hash, reg)).length;
+	}
+
+	async function onSubmChange(submPromise: Promise<Submission | null> | null, wsPromise: Promise<Workspace> | null) {
+		const subm = await submPromise;
+		const ws = await wsPromise;
+
+		if (subm === null || ws === null) return;
+
+		const num = countRegisteredMistakes(subm.data.mistakes, ws.register);
+
+		if (num === 0) {
+			status = 0;
+		} else if (num === subm.data.mistakes.length) {
+			status = 2;
+		} else {
+			status = 1;
+		}
+	}
+
+	$: onSubmChange($activeSubmission, $workspace);
+</script>
+
+<h2 class="indicator ind-{status}" class:hidden={$workspace === null}>
+	{#if status === 0}
+		{"Nav labots"}
+	{:else if status === 1}
+		{"Nav pabeigts"}
+	{:else if status === 2}
+		{"Pabeigts"}
+	{/if}
+</h2>
+
+<style lang="scss">
+	@import "../scss/global.scss";
+
+	.indicator {
+		text-align: right;
+		font-size: 1em;
+		color: $COL_FG_REG;
+		text-transform: uppercase;
+		font-weight: 400;
+		margin: 0;
+
+		&.hidden { 
+			visibility: hidden;
+		}
+
+		&.ind-0 {
+			color: $COL_SUBM_REJECTED;
+		}
+
+		&.ind-1 {
+			color: rgb(210, 180, 20);
+		}
+
+		&.ind-2 {
+			color: $COL_SUBM_DONE;
+		}
+	}
+</style>

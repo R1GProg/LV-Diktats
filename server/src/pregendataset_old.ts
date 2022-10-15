@@ -20,8 +20,8 @@ interface CSVSubmission {
 };
 
 async function parseshitdicksv2() {
-	const csv = fs.readFileSync(path.join(__dirname, "..", "data", "data.csv"), "utf8");
-	const template = processString(fs.readFileSync(path.join(__dirname, "..", "data", "correct.txt"), "utf8"));
+	const csv = fs.readFileSync(path.join(__dirname, "..", "data", "data1.csv"), "utf8");
+	const template = processString(fs.readFileSync(path.join(__dirname, "..", "data", "correct1.txt"), "utf8"));
 
 	const submissions: Record<SubmissionID, Submission> = {};
 
@@ -72,7 +72,7 @@ async function parseshitdicksv2() {
 
 		const outputWorkspace: Workspace = {
 			id: "debugworkspaceid",
-			name: "Mazsālīto gurķu blūzs",
+			name: "Krāsaina saule virs pelēkiem jumtiem",
 			template,
 			submissions: submissions as any,
 			register: [],
