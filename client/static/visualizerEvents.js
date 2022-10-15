@@ -2,6 +2,10 @@ let hold = false;
 const yOffset = -20; // tooltip::after height + line height
 let timeout = null;
 
+function getCont() {
+	return document.getElementsByClassName("visualisation")[0];
+}
+
 // A check to see whether the site is being accessed on a touchscreen device
 function is_touch_enabled() {
 	return "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
@@ -41,7 +45,7 @@ function setTooltipText(description, count, percentage, mistakeType) {
 }
 
 function onEnterMistake(ev, parent, description, count, percentage, mistakeType, id) {
-	Array.prototype.forEach.call(document.getElementsByClassName(id), (element) =>
+	Array.prototype.forEach.call(getCont().getElementsByClassName(id), (element) =>
 		element.classList.add("mistakeHovered")
 	);
 	if (hold) return;
@@ -49,16 +53,17 @@ function onEnterMistake(ev, parent, description, count, percentage, mistakeType,
 	setTooltipText(description, count, percentage, mistakeType);
 	let tooltip = document.getElementById("tooltip");
 	const rect = parent.getBoundingClientRect();
+	const containerRect = getCont().getBoundingClientRect();
 	const rootRect = tooltip.parentNode.parentNode;
 	const scroll = getScrollXY(parent);
-	tooltip.style.top =
-		rect.y - rootRect.offsetTop - tooltip.offsetHeight + yOffset + scroll[1] + "px";
-	tooltip.style.left = ev.clientX - rootRect.offsetLeft + scroll[0] + "px";
+
+	tooltip.style.top = `${rect.y - rootRect.offsetTop - tooltip.offsetHeight + yOffset + scroll[1] - containerRect.top}px`;
+	tooltip.style.left = `${ev.clientX - rootRect.offsetLeft + scroll[0] - containerRect.left}px`;
 	tooltip.classList.remove("hiddenTooltip");
 }
 
 function onLeaveMistake(id) {
-	Array.prototype.forEach.call(document.getElementsByClassName(id), (element) =>
+	Array.prototype.forEach.call(getCont().getElementsByClassName(id), (element) =>
 		element.classList.remove("mistakeHovered")
 	);
 	if (hold) return;
@@ -90,14 +95,14 @@ function onClickMistake(elem, id, ev) {
 		if (hold) {
 			// elem.style.background = "#FFB74D55";
 			Array.prototype.forEach.call(
-				document.getElementsByClassName(id),
+				getCont().getElementsByClassName(id),
 				(element) => (element.style.background = "#FFB74D55")
 			);
 		}
 		if (!hold) {
 			let tooltip = document.getElementById("tooltip");
 			tooltip.classList.add("hiddenTooltip");
-			Array.prototype.forEach.call(document.getElementsByClassName("mistake"), (el) => {
+			Array.prototype.forEach.call(getCont().getElementsByClassName("mistake"), (el) => {
 				el.style.background = "#F8606055";
 			});
 			const evt = new Event("mouseenter");
@@ -118,31 +123,19 @@ function onClickAnythingElse(ev) {
 	}
 }
 
-document.addEventListener("click", function (evt) {
-	//   if (!is_touch_enabled()) return;
-	let target = evt.target;
-	do {
-		if (target.classList?.contains("mistake")) {
-			return;
-		}
-		target = target.parentNode;
-	} while (target);
-	onClickAnythingElse(evt);
-});
-
 function onResize() {
-	const mistakeLines = document.getElementsByClassName("mistakeLine");
+	const mistakeLines = getCont().getElementsByClassName("mistakeLine");
 	Array.prototype.forEach.call(mistakeLines, (el) => {
 		el.remove();
 	});
-	const mistakes = document
+	const mistakes = getCont()
 		.getElementsByClassName("submission")[0]
 		.getElementsByClassName("mistake");
 	const doneYLevels = [];
 	Array.prototype.forEach.call(mistakes, (el) => {
 		const rect = el.getBoundingClientRect();
 		if (doneYLevels.includes(rect.y)) return;
-		document
+		getCont()
 			.getElementsByClassName("text")[0]
 			.insertAdjacentHTML(
 				"afterend",
@@ -156,8 +149,16 @@ function onResize() {
 	});
 }
 
-const resizeObserver = new ResizeObserver((entries) => {
-	onResize();
-});
-
 window.addEventListener("resize", () => onResize());
+new ResizeObserver(onResize);
+getCont().addEventListener("click", function (evt) {
+	//   if (!is_touch_enabled()) return;
+	let target = evt.target;
+	do {
+		if (target.classList?.contains("mistake")) {
+			return;
+		}
+		target = target.parentNode;
+	} while (target);
+	onClickAnythingElse(evt);
+});

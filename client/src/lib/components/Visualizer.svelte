@@ -5,6 +5,7 @@
 	import { renderCorrect } from "@shared/visualizer";
 	import { onMount } from "svelte";
 	import store, { type Stores } from "$lib/ts/stores";
+	import { browser } from "$app/environment";
 
 	const activeSubmission = store("activeSubmission") as Stores["activeSubmission"];
 	const workspace = store("workspace") as Stores["workspace"];

@@ -1,30 +1,31 @@
 .visualisation {
 	height: 100%;
 	width: 100%;
+	position: relative;
 }
 
-.mistake {
+.visualisation .mistake {
 	/* background-color: #F8606055; */
 	transition: 0.5s;
 }
 
-.boundADD {
+.visualisation .boundADD {
 	/* background-color: #6060F855; */
 	text-decoration: underline;
 	color: #0077FF;
 }
 
-.boundDEL {
+.visualisation .boundDEL {
 	color: #F86060;
 	text-decoration: line-through;
 }
-.mistakeHovered {
+.visualisation .mistakeHovered {
 	filter: brightness(0.85);
 	cursor: pointer;
 }
 
 
-.right {
+.visualisation .right {
 	text-align: right;
 	position: absolute;
 	top: 0;
@@ -32,16 +33,16 @@
 	right: 5%;
 }
 
-.fieldName {
+.visualisation .fieldName {
 	font-weight: bold;
 	font-size: 0.75em;
 }
 
-.left {
+.visualisation .left {
 	/* float: left; */
 }
 
-.head {
+.visualisation .head {
 	position: relative;
 	padding: 5%;
 
@@ -52,14 +53,14 @@
 	line-height: 1.1em;
 }
 
-.submission {
+.visualisation .submission {
 	position: relative;
 	width: 90%;
 		left: 5%;
 		top: clamp(calc(10% + 7.5em), calc(20% + 7.5em), 20%);
 }
 
-.text {
+.visualisation .text {
 	position: absolute;
 	width: 100%;
 	top: 7px;
@@ -71,7 +72,7 @@
 		line-height: 1.1em;
 }
 
-.mistakeLine {
+.visualisation .mistakeLine {
 	background-color: #F86060;
 	position: absolute;
 	left: -15px;
@@ -81,10 +82,10 @@
 
 
 /** tooltip stuff **/
-.hiddenTooltip {
+.visualisation .hiddenTooltip {
 	opacity: 0;
 }
-.tooltip {
+.visualisation .tooltip {
 	position: absolute;
 	width: min(230px, 15vw);
 	height: -moz-fit-content;
@@ -97,14 +98,14 @@
 	pointer-events: none;
 }
 
-.line {
+.visualisation .line {
 	position: relative;
 	height: 0.5em;
 	background-color: #F86060;
 	border-radius: 2px 2px 0px 0px;
 }
 
-.desc {
+.visualisation .desc {
 	position: relative;
 	left: 9px;
 	top: 12%;
@@ -122,7 +123,7 @@
 	color: #000000;
 }
 
-.type {
+.visualisation .type {
 	position: relative;
 	right: 9px;
 	bottom: 2%;
@@ -136,7 +137,7 @@
 
 	color: #000000;
 }
-.footer {
+.visualisation .footer {
 	position: relative;
 	right: 9px;
 		bottom: 2%;
@@ -151,7 +152,7 @@
 	color: #000000;
 }
 
-.tooltip::after {
+.visualisation .tooltip::after {
 	content: " ";
 	position: absolute;
 	top: 100%;
