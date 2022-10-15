@@ -122,6 +122,20 @@
 	color: #000000;
 }
 
+.type {
+	position: relative;
+	right: 9px;
+	bottom: 2%;
+
+	font-family: 'Roboto Serif';
+	font-style: normal;
+	font-weight: 400;
+	font-size: 10px;
+	line-height: 12px;
+	text-align: right;
+
+	color: #000000;
+}
 .footer {
 	position: relative;
 	right: 9px;

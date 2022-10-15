@@ -1,605 +1,605 @@
 {
-    "t5z532m": {
-        "id": "9999",
-        "data": {
-            "author": "Anonīms",
-            "text": "Aivars Eipurs\nMazsālīto gurķu blūzs\nNoņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.\nUz Jāņiem tirgū nopirku itkāit kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darba vietā darbavietāpastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un, ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.\nEs gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams, bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.\nNekad nebiju neko konservējis, — ne dārzeņus, ne augļus, — ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču šoreiz nolēmu to izdarīt, lai tur lūztlūst vai plīst, un pamatīgi izbrīnijuizbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats, šādu saimniekošanas formu nebijām novērojuši.\nAtcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt ingridientusingredientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu euroeiro. Būdams labs fiziogomistsfiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu. —Tāpat tā pat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai, diemžēl, nebija, tomēr par pirkumu paprasīja četrus euroeiro un septiņdesmit centus. Ne tik vien tikviensamaksāju, bet arī pateicos par konsultāciju.\nKāds idiots esmu, aptvēru tikai tramvajā!. Iznāk, ka par mārrutka lapu biju samaksājis trīs euroeiro. Tā lapa bija liela, taču ne jau tik liela, kā palma vai ziloņa auss.\nNākamajā reizē visu garšaugu komplektu nopirku par vienu euroeiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.",
-            "isRejected": false,
-            "mistakes": [
-                {
-                    "id": "dbd2c499-7108-4773-9288-ae02847452ba",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 247,
-                                "end": 251
-                            },
-                            "content": "itkā"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "it",
-                            "bounds": {
-                                "start": 251,
-                                "end": 256
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 158,
-                    "percentage": 0.0752,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "23d8cf6c-a2a6-46b9-8b65-2dddc2997e11",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 314,
-                                "end": 325
-                            },
-                            "content": "darba"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "darbavietā",
-                            "bounds": {
-                                "start": 326,
-                                "end": 336
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 891,
-                    "percentage": 0.4239,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "65206bb4-d25c-49a9-a61b-7cbbd77d7f99",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 414,
-                                "end": 415
-                            },
-                            "content": ","
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 599,
-                    "percentage": 0.285,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "66063a4e-afb1-4692-8a16-156731f30cd7",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 950,
-                                "end": 951
-                            },
-                            "content": ","
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "—",
-                            "bounds": {
-                                "start": 952,
-                                "end": 953
-                            }
-                        },
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 976,
-                                "end": 977
-                            },
-                            "content": ","
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "—",
-                            "bounds": {
-                                "start": 978,
-                                "end": 979
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 644,
-                    "percentage": 0.3064,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "9021b3b5-393d-4522-90c2-dab4de5d2335",
-                    "bounds": [
-                        {
-                            "type": "ADD",
-                            "bounds": {
-                                "start": 1061,
-                                "end": 1062
-                            },
-                            "content": ","
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 209,
-                    "percentage": 0.0994,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "ed830e47-093b-4670-981f-00a5c9ba3b73",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1071,
-                                "end": 1075
-                            },
-                            "content": "lūzt"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "lūst",
-                            "bounds": {
-                                "start": 1075,
-                                "end": 1079
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 1008,
-                    "percentage": 0.4795,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "9fa44f3a-f440-44bd-ac0a-31cdd8082f2a",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1103,
-                                "end": 1112
-                            },
-                            "content": "izbrīniju"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "izbrīnīju",
-                            "bounds": {
-                                "start": 1112,
-                                "end": 1121
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 59,
-                    "percentage": 0.0281,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "65286a70-c83f-4b12-9351-8676b88c8c39",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1181,
-                                "end": 1182
-                            },
-                            "content": ","
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 284,
-                    "percentage": 0.1351,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "836eab30-e287-4d7e-a70f-cd2538520f7c",
-                    "bounds": [
-                        {
-                            "type": "ADD",
-                            "bounds": {
-                                "start": 1255,
-                                "end": 1256
-                            },
-                            "content": ","
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 95,
-                    "percentage": 0.0452,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "8f38b021-113a-40a1-a04a-ca5d505fb5c2",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1295,
-                                "end": 1307
-                            },
-                            "content": "ingridientus"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "ingredientus",
-                            "bounds": {
-                                "start": 1307,
-                                "end": 1319
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 23,
-                    "percentage": 0.0109,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "31956d48-abd1-4650-9e74-ab774ff189fe",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1416,
-                                "end": 1420
-                            },
-                            "content": "euro"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "eiro",
-                            "bounds": {
-                                "start": 1420,
-                                "end": 1424
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 63,
-                    "percentage": 0.03,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "c98abff7-a179-48b5-b9e9-8c50fdc3dc19",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1438,
-                                "end": 1450
-                            },
-                            "content": "fiziogomists"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "fiziognomists",
-                            "bounds": {
-                                "start": 1450,
-                                "end": 1463
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 2,
-                    "percentage": 0.001,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "0d838de9-86c8-4e16-aff5-f099bddb067b",
-                    "bounds": [
-                        {
-                            "type": "ADD",
-                            "bounds": {
-                                "start": 1562,
-                                "end": 1563
-                            },
-                            "content": "."
-                        },
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1564,
-                                "end": 1565
-                            },
-                            "content": "—"
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 1,
-                    "percentage": 0.0005,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "db7b0415-8d11-4965-b1e2-55d053c2c98c",
-                    "bounds": [
-                        {
-                            "type": "ADD",
-                            "bounds": {
-                                "start": 1565,
-                                "end": 1570
-                            },
-                            "content": "Tāpat"
-                        },
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1571,
-                                "end": 1573
-                            },
-                            "content": "tā"
-                        },
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1574,
-                                "end": 1577
-                            },
-                            "content": "pat"
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 1,
-                    "percentage": 0.0005,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "ccdfdc24-ec51-4aa5-980e-6b415ca15fed",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1647,
-                                "end": 1648
-                            },
-                            "content": ","
-                        },
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1656,
-                                "end": 1657
-                            },
-                            "content": ","
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 478,
-                    "percentage": 0.2274,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "aa3748e3-ba9e-4664-8e3d-0b781fd33128",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1701,
-                                "end": 1705
-                            },
-                            "content": "euro"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "eiro",
-                            "bounds": {
-                                "start": 1705,
-                                "end": 1709
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 64,
-                    "percentage": 0.0304,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "ba3e953e-50d7-4d17-9c28-3c38ac9126d5",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1737,
-                                "end": 1745
-                            },
-                            "content": "tik"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "tikvien",
-                            "bounds": {
-                                "start": 1746,
-                                "end": 1753
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 1200,
-                    "percentage": 0.5709,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "ed507900-97cc-41b8-ba01-73d6dcca650d",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1839,
-                                "end": 1840
-                            },
-                            "content": "!"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": ".",
-                            "bounds": {
-                                "start": 1840,
-                                "end": 1841
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 170,
-                    "percentage": 0.0809,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "f56674c6-e68d-41ea-a410-11240a08d41e",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1891,
-                                "end": 1895
-                            },
-                            "content": "euro"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "eiro",
-                            "bounds": {
-                                "start": 1895,
-                                "end": 1899
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 63,
-                    "percentage": 0.03,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                },
-                {
-                    "id": "f08ff6dc-6689-4f75-9fd7-0e41760df03d",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 1942,
-                                "end": 1943
-                            },
-                            "content": ","
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 201,
-                    "percentage": 0.0956,
-                    "mistakeType": "PUNCT",
-                    "typeCounter": {
-                        "ortho": 0,
-                        "punct": 1
-                    }
-                },
-                {
-                    "id": "674b22c0-b3b1-4d0c-b103-9c409f7d9b5b",
-                    "bounds": [
-                        {
-                            "type": "DEL",
-                            "bounds": {
-                                "start": 2027,
-                                "end": 2031
-                            },
-                            "content": "euro"
-                        },
-                        {
-                            "type": "ADD",
-                            "content": "eiro",
-                            "bounds": {
-                                "start": 2031,
-                                "end": 2035
-                            }
-                        }
-                    ],
-                    "description": "",
-                    "submissionStatistic": 64,
-                    "percentage": 0.0304,
-                    "mistakeType": "ORTHO",
-                    "typeCounter": {
-                        "ortho": 1,
-                        "punct": 0
-                    }
-                }
-            ]
+  "t5z532m": {
+    "id": "9999",
+    "data": {
+      "author": "Anonīms",
+      "text": "Aivars Eipurs\nMazsālīto gurķu blūzs\nNoņēmu salocītos dvielīšus no abām burkām, divlitru un vienlitra. Bijīgi, kā saskāries ar paša radītu brīnumu, izņēmu no katras pa gurķītim, garšoja varen labi. Taču par visu pēc kārtas.\nUz Jāņiem tirgū nopirku itkāit kā mazsālītus gurķus, tomēr tie bija pārāk sāļi. Kad par to darba vietā darbavietāpastāstīju kolēģei, viņa teica, ka ļoti viegli šādus gurķus pagatavot pašam un, ka otrā rītā tos jau varēšot ēst, tikai jānogriežot gurķīšiem abi gali. Burka esot jāizdekorē ar dillēm, mārrutku lapu, upeņu zariņu un ķiploka pusdaiviņām, jāsaliek gurķīši un jāaplej ar verdošu ūdeni, kurā iebērta ēdamkarote cukura un ēdamkarote sāls. Burka jātur bez vāciņa, un tad mazsālītie gurķīši būšot gatavi pa vienu nakti.\nEs gan tos sauktu par viegli skābētiem. Marinētie ir marinētie, tas ir saprotams, bet par robežu starp skābētiem un sālītiem, kur nu vēl mazsālītiem, īstas skaidrības nav.\nNekad nebiju neko konservējis, — ne dārzeņus, ne augļus, — ja nu vienīgi kādreiz palīdzējis atvērt kādu burku. Taču šoreiz nolēmu to izdarīt, lai tur lūztlūst vai plīst, un pamatīgi izbrīnijuizbrīnīju mājiniekus ar savu nodomu, jo pie manis ne viņi, ne es pats, šādu saimniekošanas formu nebijām novērojuši.\nAtcerējies par savu nodomu, pēc pāris dienām devos uz tirgu pirkt ingridientusingredientus. Iegādājies gurķus, devos tālāk un drīz vien pamanīju arī garo diļļu saišķi. Tas maksājot vienu euroeiro. Būdams labs fiziogomistsfiziognomists, konstatēju, ka pārdevēja ir mīlīga, tātad lieta bija droša. Teica, lai es ņemot arī mārrutka lapu. —Tāpat tā pat ķiploku. Ķiploks maksājot septiņdesmit centus. Upeņu zariņa gan viņai, diemžēl, nebija, tomēr par pirkumu paprasīja četrus euroeiro un septiņdesmit centus. Ne tik vien tikviensamaksāju, bet arī pateicos par konsultāciju.\nKāds idiots esmu, aptvēru tikai tramvajā!. Iznāk, ka par mārrutka lapu biju samaksājis trīs euroeiro. Tā lapa bija liela, taču ne jau tik liela, kā palma vai ziloņa auss.\nNākamajā reizē visu garšaugu komplektu nopirku par vienu euroeiro, turklāt ar upeņu zariņu. Mārrutka lapa bija gandrīz kā ziloņa auss.",
+      "isRejected": false,
+      "mistakes": [
+        {
+          "id": "dbd2c499-7108-4773-9288-ae02847452ba",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 247,
+                "end": 251
+              },
+              "content": "itkā"
+            },
+            {
+              "type": "ADD",
+              "content": "it",
+              "bounds": {
+                "start": 251,
+                "end": 256
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 158,
+          "percentage": 0.0752,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "23d8cf6c-a2a6-46b9-8b65-2dddc2997e11",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 314,
+                "end": 325
+              },
+              "content": "darba"
+            },
+            {
+              "type": "ADD",
+              "content": "darbavietā",
+              "bounds": {
+                "start": 326,
+                "end": 336
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 891,
+          "percentage": 0.4239,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "65206bb4-d25c-49a9-a61b-7cbbd77d7f99",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 414,
+                "end": 415
+              },
+              "content": ","
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 599,
+          "percentage": 0.285,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "66063a4e-afb1-4692-8a16-156731f30cd7",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 950,
+                "end": 951
+              },
+              "content": ","
+            },
+            {
+              "type": "ADD",
+              "content": "—",
+              "bounds": {
+                "start": 952,
+                "end": 953
+              }
+            },
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 976,
+                "end": 977
+              },
+              "content": ","
+            },
+            {
+              "type": "ADD",
+              "content": "—",
+              "bounds": {
+                "start": 978,
+                "end": 979
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 644,
+          "percentage": 0.3064,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "9021b3b5-393d-4522-90c2-dab4de5d2335",
+          "bounds": [
+            {
+              "type": "ADD",
+              "bounds": {
+                "start": 1061,
+                "end": 1062
+              },
+              "content": ","
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 209,
+          "percentage": 0.0994,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "ed830e47-093b-4670-981f-00a5c9ba3b73",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1071,
+                "end": 1075
+              },
+              "content": "lūzt"
+            },
+            {
+              "type": "ADD",
+              "content": "lūst",
+              "bounds": {
+                "start": 1075,
+                "end": 1079
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 1008,
+          "percentage": 0.4795,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "9fa44f3a-f440-44bd-ac0a-31cdd8082f2a",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1103,
+                "end": 1112
+              },
+              "content": "izbrīniju"
+            },
+            {
+              "type": "ADD",
+              "content": "izbrīnīju",
+              "bounds": {
+                "start": 1112,
+                "end": 1121
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 59,
+          "percentage": 0.0281,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "65286a70-c83f-4b12-9351-8676b88c8c39",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1181,
+                "end": 1182
+              },
+              "content": ","
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 284,
+          "percentage": 0.1351,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "836eab30-e287-4d7e-a70f-cd2538520f7c",
+          "bounds": [
+            {
+              "type": "ADD",
+              "bounds": {
+                "start": 1255,
+                "end": 1256
+              },
+              "content": ","
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 95,
+          "percentage": 0.0452,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "8f38b021-113a-40a1-a04a-ca5d505fb5c2",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1295,
+                "end": 1307
+              },
+              "content": "ingridientus"
+            },
+            {
+              "type": "ADD",
+              "content": "ingredientus",
+              "bounds": {
+                "start": 1307,
+                "end": 1319
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 23,
+          "percentage": 0.0109,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "31956d48-abd1-4650-9e74-ab774ff189fe",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1416,
+                "end": 1420
+              },
+              "content": "euro"
+            },
+            {
+              "type": "ADD",
+              "content": "eiro",
+              "bounds": {
+                "start": 1420,
+                "end": 1424
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 63,
+          "percentage": 0.03,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "c98abff7-a179-48b5-b9e9-8c50fdc3dc19",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1438,
+                "end": 1450
+              },
+              "content": "fiziogomists"
+            },
+            {
+              "type": "ADD",
+              "content": "fiziognomists",
+              "bounds": {
+                "start": 1450,
+                "end": 1463
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 2,
+          "percentage": 0.001,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "0d838de9-86c8-4e16-aff5-f099bddb067b",
+          "bounds": [
+            {
+              "type": "ADD",
+              "bounds": {
+                "start": 1562,
+                "end": 1563
+              },
+              "content": "."
+            },
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1564,
+                "end": 1565
+              },
+              "content": "—"
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 1,
+          "percentage": 0.0005,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "db7b0415-8d11-4965-b1e2-55d053c2c98c",
+          "bounds": [
+            {
+              "type": "ADD",
+              "bounds": {
+                "start": 1565,
+                "end": 1570
+              },
+              "content": "Tāpat"
+            },
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1571,
+                "end": 1573
+              },
+              "content": "tā"
+            },
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1574,
+                "end": 1577
+              },
+              "content": "pat"
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 1,
+          "percentage": 0.0005,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "ccdfdc24-ec51-4aa5-980e-6b415ca15fed",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1647,
+                "end": 1648
+              },
+              "content": ","
+            },
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1656,
+                "end": 1657
+              },
+              "content": ","
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 478,
+          "percentage": 0.2274,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "aa3748e3-ba9e-4664-8e3d-0b781fd33128",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1701,
+                "end": 1705
+              },
+              "content": "euro"
+            },
+            {
+              "type": "ADD",
+              "content": "eiro",
+              "bounds": {
+                "start": 1705,
+                "end": 1709
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 64,
+          "percentage": 0.0304,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "ba3e953e-50d7-4d17-9c28-3c38ac9126d5",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1737,
+                "end": 1745
+              },
+              "content": "tik"
+            },
+            {
+              "type": "ADD",
+              "content": "tikvien",
+              "bounds": {
+                "start": 1746,
+                "end": 1753
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 1200,
+          "percentage": 0.5709,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "ed507900-97cc-41b8-ba01-73d6dcca650d",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1839,
+                "end": 1840
+              },
+              "content": "!"
+            },
+            {
+              "type": "ADD",
+              "content": ".",
+              "bounds": {
+                "start": 1840,
+                "end": 1841
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 170,
+          "percentage": 0.0809,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "f56674c6-e68d-41ea-a410-11240a08d41e",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1891,
+                "end": 1895
+              },
+              "content": "euro"
+            },
+            {
+              "type": "ADD",
+              "content": "eiro",
+              "bounds": {
+                "start": 1895,
+                "end": 1899
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 63,
+          "percentage": 0.03,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
+        },
+        {
+          "id": "f08ff6dc-6689-4f75-9fd7-0e41760df03d",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 1942,
+                "end": 1943
+              },
+              "content": ","
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 201,
+          "percentage": 0.0956,
+          "mistakeType": "PUNCT",
+          "typeCounter": {
+            "ortho": 0,
+            "punct": 1
+          }
+        },
+        {
+          "id": "674b22c0-b3b1-4d0c-b103-9c409f7d9b5b",
+          "bounds": [
+            {
+              "type": "DEL",
+              "bounds": {
+                "start": 2027,
+                "end": 2031
+              },
+              "content": "euro"
+            },
+            {
+              "type": "ADD",
+              "content": "eiro",
+              "bounds": {
+                "start": 2031,
+                "end": 2035
+              }
+            }
+          ],
+          "description": "",
+          "submissionStatistic": 64,
+          "percentage": 0.0304,
+          "mistakeType": "ORTHO",
+          "typeCounter": {
+            "ortho": 1,
+            "punct": 0
+          }
         }
+      ]
     }
+  }
 }
