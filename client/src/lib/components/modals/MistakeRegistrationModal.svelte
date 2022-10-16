@@ -121,7 +121,7 @@
 			mistakes: isVariation ? [ ...variationMistakes, curMistake ] : [ curMistake ],
 			description: desc,
 			opts: regOpts,
-			action: edit ? "EDIT" : "ADD",
+			action: edit ? "EDIT" : ( isVariation ? "ADD_VARIATION" : "ADD" ),
 		});
 	}
 

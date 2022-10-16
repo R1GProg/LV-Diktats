@@ -105,12 +105,10 @@
 		
 			switch (data.action) {
 				case "ADD":
-					if (data.id) {
-						// Added to existing
-						await $ds.registerUpdate(data, $activeWorkspaceID!);
-					} else {
-						await $ds.registerNew(data, $activeWorkspaceID!);
-					}
+					await $ds.registerNew(data, $activeWorkspaceID!);
+					break;
+				case "ADD_VARIATION":
+					await $ds.registerUpdate(data, $activeWorkspaceID!);
 					break;
 				case "EDIT":
 					await $ds.registerUpdate(data, $activeWorkspaceID!);

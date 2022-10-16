@@ -1,7 +1,7 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
 import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RegisterUpdateEventEntryData, RegisterUpdateEventType, RequestSubmissionEventData, Submission, SubmissionData, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
-import { Mistake, type Bounds, type MistakeHash, type MistakeId } from "@shared/diff-engine";
+import { Mistake, type Bounds, type MistakeData, type MistakeHash, type MistakeId } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
@@ -121,36 +121,51 @@ export default class DiktifySocket {
 			}
 			
 			await Promise.all(mistakeMapPromises);
-			
-			// Merge previously merged mistakes
-			for (const m of mergedMistakes) {
-				let stillMerged = true;
-				
-				// Check if all of the mistakes are still in the diff
-				for (const child of m.children) {
-					if (!(child.hash in hashMistakeMap)) {
-						stillMerged = false;
-						break;
-					}
-				}
-				
-				if (!stillMerged) continue;
-				
+			const splitMerged: MistakeData[] = [];
+
+			const mergeMistake = async (m: MistakeData) => {
 				const mistakesToMerge = m.children.map((child) => hashMistakeMap[child.hash]);
 				const mergedMistake = Mistake.mergeMistakes(...mistakesToMerge);
 				
 				// Remove the mistakes that were merged, add the new merged mistake
 				for (const child of m.children) {
 					delete hashMistakeMap[child.hash];
-					hashMistakeMap[await mergedMistake.genHash()] = mergedMistake;
 				}
+
+				hashMistakeMap[await mergedMistake.genHash()] = mergedMistake;
 			}
-			
-			const mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
+
+			// Merge previously merged mistakes
+			for (const m of mergedMistakes) {
+				let stillMerged = true;
+				let split = false;
+
+				// Check if all of the mistakes are still in the diff
+				for (const child of m.children) {
+					if (!(child.hash in hashMistakeMap)) {
+						stillMerged = false;
+
+						if (child.splitFrom) {
+							split = true;
+						} else {
+							split = false;
+						}
+
+						break;
+					}
+				}
+				
+				if (!stillMerged) {
+					if (split) splitMerged.push(m);
+					continue;
+				}
+				
+				await mergeMistake(m);
+			}
+
+			let mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
 			mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
-			
-			console.log(rawData.data.splitMistakes);
-			
+
 			// Split mistakes
 			for (const hash of (rawData.data.splitMistakes ?? [])) {
 				const mIndex = mistakes.findIndex((cm) => cm.hash === hash);
@@ -178,10 +193,25 @@ export default class DiktifySocket {
 					otherM.boundsDiff.end += offset;
 				}
 
+				const addData = await split.add.exportData();
+				const delData = await split.del.exportData();
+
 				mistakes.splice(mIndex, 1);
-				mistakes.splice(mIndex, 0, await split.add.exportData());
-				mistakes.splice(mIndex, 0, await split.del.exportData());
+				mistakes.splice(mIndex, 0, addData);
+				mistakes.splice(mIndex, 0, delData);
+
+				delete hashMistakeMap[m.hash];
+				hashMistakeMap[addData.hash] = split.add;
+				hashMistakeMap[delData.hash] = split.del;
 			}
+			
+			// Merge split mistakes
+			for (const m of splitMerged) {
+				await mergeMistake(m);
+			}
+
+			mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
+			mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
 			const updatedData: SubmissionData = {
 				...rawData.data,

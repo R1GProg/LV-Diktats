@@ -6,7 +6,7 @@ export type SubmissionID = string;
 export type SubmissionState = "UNGRADED" | "REJECTED" | "WIP" | "DONE";
 export type SettingsType = "STRING" | "NUMBER" | "NESTED";
 export type UserRole = "NONE" | "EDITOR" | "ADMIN";
-export type RegisterUpdateEventType = "ADD" | "EDIT" | "DELETE";
+export type RegisterUpdateEventType = "ADD" | "ADD_VARIATION" | "EDIT" | "DELETE";
 
 export interface Workspace {
 	id: UUID,
