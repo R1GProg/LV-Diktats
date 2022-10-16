@@ -11,14 +11,14 @@ export function processString(text: string) {
 		.replace(/\.[ ]?\.[ ]?\.[ ]?/g, "…")
 		// Add space to punctuation
 		.replace(/\.(?=[^\s])/g, ". ") // Add space after dot, if none
-		.replace(/,(?=[^\s])/g, ", ") // Add space after coma, if none
+		.replace(/,(?=[^\s\"])/g, ", ") // Add space after coma, if none
 		.replace(/(?<=[^\s])[-–—]/g, " -") // Add space before dash, if lacking
 		.replace(/[-–—](?=[^\s\.])/g, "- ") // Add space after dash, if lacking
 		// Turn hyphens and en dashes into em dashes
 		.replace(/[-–]/g, '—')
 		// Title fix
-		.replace(/"[^"]*"/, (x) => x.replace(/"/g, '')) // Remove the title being in quotes
-		.replace(/(?<=[s])( |(, )|( — )|(.[\n ]))(?=[M])/, "\n") // Replace Author, Title with Author
+		.replace(/"Krāsaina saule virs pelēkiem jumtiem"/, (x) => x.replace(/"/g, '')) // Remove the title being in quotes
+		.replace(/(?<=[Zebris])( |(, )|( — )|(.[\n ]))(?=[Krāsaina])/, "\n") // Replace Author, Title with Author
 									   							 //                            Title
 		// Quotation marks
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
