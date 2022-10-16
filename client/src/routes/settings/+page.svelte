@@ -7,6 +7,7 @@
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const localWorkspaceDatabase = store("localWorkspaceDatabase") as Stores["localWorkspaceDatabase"];
+	const workspaceCache = store("cache") as Stores["cache"];
 
 	let fileImports: FileList;
 
@@ -16,10 +17,17 @@
 		downloadText("dati.json", JSON.stringify(await $workspace));
 	}
 
-	async function clearWorkspaceData() {
+	async function clearData(){
 		const db = await $localWorkspaceDatabase;
 		db.clear();
 		localStorage.removeItem("activeSubmissionID");
+
+		const cache = await $workspaceCache;
+		cache.clearEntireCache();
+	}
+
+	async function clearWorkspaceData() {
+		clearData();
 
 		location.replace("/");
 	}
@@ -61,9 +69,7 @@
 			}
 
 			// Clear old data
-			const db = await $localWorkspaceDatabase;
-			await db.clear();
-			localStorage.removeItem("activeSubmissionID");
+			await clearData();
 
 			// Add new data
 			const ws = await parseDebugWorkspace(data);

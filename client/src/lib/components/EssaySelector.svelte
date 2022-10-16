@@ -104,7 +104,7 @@
 
 		submissionState = submissionState === newState ? null : newState;
 
-		$ds.submissionStateChange(newState, $activeSubmissionID, $activeWorkspaceID);
+		$ds.submissionStateChange(submissionState ?? "WIP", $activeSubmissionID, $activeWorkspaceID);
 	}
 
 	async function onActiveSubmissionChange(id: SubmissionID | null) {
