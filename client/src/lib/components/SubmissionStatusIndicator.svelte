@@ -34,8 +34,7 @@
 	@import "../scss/global.scss";
 
 	.indicator {
-		text-align: right;
-		font-size: 1em;
+		font-size: 0.6em;
 		color: $COL_FG_REG;
 		text-transform: uppercase;
 		font-weight: 400;

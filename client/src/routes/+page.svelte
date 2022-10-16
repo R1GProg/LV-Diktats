@@ -123,6 +123,9 @@
 
 			div {
 				width: 100%;
+				display: flex;
+				align-self: flex-end;
+				justify-content: flex-end;
 			}
 
 			h2 {
