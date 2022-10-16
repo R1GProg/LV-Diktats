@@ -42,8 +42,6 @@ async function parseshitdicksv2() {
 		}
 
 		for (const val of records) {
-			logger.info(`Beginning processing of submission #${val.id}...`);
-			// TODO: generate diff and categorise mistakes
 			val.text = processString(val.text);
 			const diff = new DiffONP(val.text, template);
 			diff.calc();
@@ -59,6 +57,7 @@ async function parseshitdicksv2() {
 					text: val.text,
 					ignoreText: [],
 					mistakes: mistakeData,
+					splitMistakes: [],
 					metadata: {
 						email: val.email
 					}

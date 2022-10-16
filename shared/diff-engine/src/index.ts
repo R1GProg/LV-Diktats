@@ -324,3 +324,4 @@ export default class Diff {
 
 export * from "./Mistake";
 export * from "./Action";
+export { default as DiffONP } from "./DiffONP";

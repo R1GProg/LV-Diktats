@@ -141,10 +141,9 @@ export default class DiktifyAPI {
 
 export const api = new DiktifyAPI();
 
-async function loadDebugWorkspace(): Promise<Workspace> {
-	const req = await fetch("/olga.json");
+export async function parseDebugWorkspace(jsonData: any) {
 	const ws: Workspace = {
-		...(await req.json()),
+		...jsonData,
 		id: config.debugWorkspaceId,
 		local: true
 	};
@@ -159,6 +158,12 @@ async function loadDebugWorkspace(): Promise<Workspace> {
 	}
 
 	return ws;
+}
+
+async function loadDebugWorkspace(): Promise<Workspace> {
+	const req = await fetch("/output-prod.json");
+	
+	return parseDebugWorkspace(await req.json());
 }
 
 // function calcAvgRegisteredMistakes(ws: Workspace & { submissions: Record<string, Submission> }) {

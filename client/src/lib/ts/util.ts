@@ -31,16 +31,18 @@ export function readTextFile(file: File) {
 }
 
 export function downloadText(filename: string, text: string) {
-	const element = document.createElement('a');
-	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-	element.setAttribute('download', filename);
-	
-	element.style.display = 'none';
-	document.body.appendChild(element);
-	
-	element.click();
-	
-	document.body.removeChild(element);
+	const blob = new Blob([text], {type: 'application/json'});
+
+    const elem = document.createElement('a');
+	const blobUrl = URL.createObjectURL(blob);
+    elem.href = blobUrl
+    elem.download = filename;
+
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+
+	URL.revokeObjectURL(blobUrl);
 }
 
 export function getAllSubmissionsWithMistakes(submissions: Submission[], mistakes: MistakeHash[]) {

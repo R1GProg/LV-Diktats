@@ -3,9 +3,12 @@
 	import store, { type Stores } from "$lib/ts/stores";
 	import type { ExportedSubmission, Submission } from "@shared/api-types";
 	import { exportSubmission, genURLId } from "$lib/ts/SubmissionExport";
+	import { parseDebugWorkspace } from "$lib/ts/networking/DiktifyAPI";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const localWorkspaceDatabase = store("localWorkspaceDatabase") as Stores["localWorkspaceDatabase"];
+
+	let fileImports: FileList;
 
 	async function exportData() {
 		if (!(await $workspace)) return;
@@ -43,16 +46,55 @@
 		// console.log(output);
 		downloadText("vis_data.json", JSON.stringify(output));
 	}
+
+	async function importData() {
+		const reader = new FileReader();
+
+		reader.onload = async (ev) => {
+			let data: any;
+
+			try {
+				data = JSON.parse(ev.target!.result as string);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			// Clear old data
+			const db = await $localWorkspaceDatabase;
+			await db.clear();
+			localStorage.removeItem("activeSubmissionID");
+
+			// Add new data
+			const ws = await parseDebugWorkspace(data);
+			await db.updateWorkspace(ws);
+
+			setTimeout(() => { location.replace("/"); }, 500);
+		};
+
+		reader.readAsText(fileImports[0]);
+	}
 </script>
 
 <div class="container">
 	<button on:click={exportData} disabled={$workspace === null}>Eksportēt datus</button>
-	<button on:click={clearWorkspaceData} disabled={$workspace === null}>Dzēst datus</button>
 	<button on:click={exportVis} disabled={$workspace === null}>Eksportēt vizualizāciju</button>
+	<hr>
+	<div>
+		<label for="fileImport">Importēt datus</label>
+		<input type="file" accept=".json" id="fileImport" bind:files={fileImports} on:change={importData}>
+	</div>
+
+	<br><br><br><br><br><br><br><br><br><br>
+	<hr>
+	<button on:click={clearWorkspaceData} disabled={$workspace === null}>Dzēst datus</button>
 </div>
 
 <style lang="scss">
+	@import "../../lib/scss/global.scss";
+
 	.container {
+		color: $COL_FG_REG;
 		display: flex;
 		justify-content: center;
 		padding: 10vh;

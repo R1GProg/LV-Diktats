@@ -18,7 +18,7 @@ export function processString(text: string) {
 		.replace(/[-–]/g, '—')
 		// Title fix
 		.replace(/"Krāsaina saule virs pelēkiem jumtiem"/, (x) => x.replace(/"/g, '')) // Remove the title being in quotes
-		.replace(/(?<=[Zebris])( |(, )|( — )|(.[\n ]))(?=[Krāsaina])/, "\n") // Replace Author, Title with Author
+		.replace(/(?<=Zebris)( |(, )|( — )|(.[\n ]))(?=Krāsaina)/, "\n") // Replace Author, Title with Author
 									   							 //                            Title
 		// Quotation marks
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
