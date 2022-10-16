@@ -20,7 +20,10 @@
 	$: onSubmChange($activeSubmission, $workspace);
 </script>
 
-<h2 class="indicator ind-{status}" class:hidden={$workspace === null}>
+{#if $workspace !== null}
+{#await $activeSubmission then subm}
+{#if subm !== null}
+<h2 class="indicator ind-{status}" class:hidden={subm.state === "REJECTED"}>
 	{#if status === 0}
 		{"Nav labots"}
 	{:else if status === 1}
@@ -29,6 +32,9 @@
 		{"Pabeigts"}
 	{/if}
 </h2>
+{/if}
+{/await}
+{/if}
 
 <style lang="scss">
 	@import "../scss/global.scss";
