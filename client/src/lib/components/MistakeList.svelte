@@ -14,6 +14,7 @@
 	const hoveredMistake = store("hoveredMistake") as Stores["hoveredMistake"];
 	const ds = store("ds") as Stores["ds"];
 	const activeWorkspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
+	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 	const workspace = store("workspace") as Stores["workspace"];
 	const selectedMistakes = store("selectedMistakes") as Stores["selectedMistakes"];
 	
@@ -39,10 +40,29 @@
 	}
 
 	async function onMistakeClick(ev: Event) {
-		if ($mode !== ToolbarMode.REGISTER) return;
+		if ($mode !== ToolbarMode.REGISTER && $mode !== ToolbarMode.RESUB) return;
 
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		$selectedMistakes.toggle(id);
+	}
+
+	function splitMistake(id: MistakeId) {
+		if (!$activeSubmissionID || !$activeWorkspaceID) return;
+
+		const m = mistakes.find((cm) => cm.id === id);
+		
+		if (!m) return;
+		if (m.subtype === "MERGED") return;
+
+		if (m.type !== "MIXED") {
+			if (m.splitFrom) {
+				$ds.unsplitMixedMistaked(m.splitFrom, $activeSubmissionID, $activeWorkspaceID);
+			}
+			
+			return;
+		}
+
+		$ds.splitMixedMistake(id, $activeSubmissionID, $activeWorkspaceID);
 	}
 
 	function onMistakeSelectionChange(selection: MistakeSelection) {
@@ -53,7 +73,14 @@
 			targetScrollEl.scrollIntoView({ behavior: "smooth" });
 		}
 
-		if (selection.size() !== 1) return;
+		if (selection.size() === 1 && $mode === ToolbarMode.RESUB) {
+			splitMistake(selection.get()[0]);
+			selection.clear();
+
+			return;
+		} else if (selection.size() !== 1) {
+			return;
+		}
 		
 		const selID = selection.get()[0];
 		const selMistake = mistakes.find((m) => m.id === selID)!;
@@ -195,7 +222,7 @@
 	$: onMistakeSelectionChange($selectedMistakes);
 	$: onSubmissionChange($activeSubmission);
 	$: onWorkspaceChange($workspace);
-	$: if ($mode !== ToolbarMode.REGISTER) $selectedMistakes.clear();
+	$: if ($mode !== ToolbarMode.REGISTER && $mode !== ToolbarMode.RESUB) $selectedMistakes.clear();
 </script>
 
 <svelte:body on:keydown={onBodyKeypress}/>
@@ -208,6 +235,7 @@
 			<div
 				data-id={m.id}
 				class="mistake {m.type} {m.subtype}"
+				class:split={m.splitFrom}
 				class:hover={$hoveredMistake === m.id}
 				class:merging={$selectedMistakes.has(m.id)}
 				class:registered={mInReg}
@@ -225,7 +253,8 @@
 					mType: m.subtype,
 					hash: m.hash,
 					word: m.word,
-					wordCorrect: m.wordCorrect
+					wordCorrect: m.wordCorrect,
+					splitFrom: m.splitFrom
 				}, null, 2)}
 			>
 				
@@ -234,7 +263,9 @@
 				</span>
 
 				{#if m.subtype === "MERGED"}
-					<div class="mistake-merged-icon"></div>
+					<div class="mistake-icon mistake-icon-merged"></div>
+				{:else if m.splitFrom}
+					<div class="mistake-icon mistake-icon-split"></div>
 				{/if}
 			</div>
 		{/each}
@@ -263,7 +294,7 @@
 		position: relative;
 	}
 
-	.mistake-merged-icon {
+	.mistake-icon {
 		-webkit-mask-repeat: no-repeat;
 		-webkit-mask-size: cover;
 		mask-repeat: no-repeat;
@@ -272,16 +303,26 @@
 		mask-position: 50% 50%;
 		-webkit-mask-position: 50% 50%;
 
-		-webkit-mask-image: url(/icons/icon-merge.svg);
-		mask-image: url(/icons/icon-merge.svg);
-
-		-webkit-mask-size: 75%;
-		mask-size: 75%;
-
 		background-color: $COL_BG_LIGHT;
 		opacity: 0.35;
 		width: 100%;
 		height: 100%;
+
+		&.mistake-icon-merged {
+			-webkit-mask-image: url(/icons/icon-merge.svg);
+			mask-image: url(/icons/icon-merge.svg);
+
+			-webkit-mask-size: 75%;
+			mask-size: 75%;
+		}
+
+		&.mistake-icon-split {
+			-webkit-mask-image: url(/icons/icon-resub.svg);
+			mask-image: url(/icons/icon-resub.svg);
+
+			-webkit-mask-size: 75%;
+			mask-size: 75%;
+		}
 	}
 
 	.list-footer {
@@ -393,7 +434,7 @@
 			display: none !important;
 		}
 
-		&.MERGED {
+		&.MERGED, &.split {
 			display: grid;
 			grid-template-columns: 80% 20%;
 			text-align: center;

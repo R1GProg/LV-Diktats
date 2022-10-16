@@ -143,6 +143,7 @@ export interface SubmissionData {
 	text: string,
 	ignoreText: Bounds[],
 	mistakes: MistakeData[],
+	splitMistakes: MistakeHash[],
 	metadata: {
 		age?: number,
 		language?: string,

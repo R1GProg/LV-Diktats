@@ -1,13 +1,13 @@
 import io, { Socket as SocketIO } from "socket.io-client";
 import config from "$lib/config.json";
-import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RegisterUpdateEventEntryData, RegisterUpdateEventType, RequestSubmissionEventData, Submission, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
-import { Mistake, type Bounds, type MistakeHash } from "@shared/diff-engine";
+import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEventData, RegisterEditEventData, RegisterEntry, RegisterEntryData, RegisterNewEventData, RegisterUpdateEventData, RegisterUpdateEventEntryData, RegisterUpdateEventType, RequestSubmissionEventData, Submission, SubmissionData, SubmissionDataEventData, SubmissionID, SubmissionRegenEventData, SubmissionState, SubmissionStateChangeEventData, TextIgnoreEventData, UUID } from "@shared/api-types";
+import { Mistake, type Bounds, type MistakeHash, type MistakeId } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
-import { getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
+import { deleteFirstMatching, getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
 import { v4 as uuidv4 } from "uuid";
 
 // Here temporarily
@@ -149,8 +149,43 @@ export default class DiktifySocket {
 			const mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
 			mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 			
-			const updatedData = {
+			console.log(rawData.data.splitMistakes);
+			
+			// Split mistakes
+			for (const hash of (rawData.data.splitMistakes ?? [])) {
+				const mIndex = mistakes.findIndex((cm) => cm.hash === hash);
+				const m = mistakes[mIndex];
+				
+				if (!m) {
+					rawData.data.splitMistakes.splice(rawData.data.splitMistakes.findIndex((v) => v === hash), 1);
+					continue;
+				}
+
+				const split = Mistake.splitMixed(m);
+				
+				if (!split) {
+					console.warn(`Failed to split mixed! (${hash})`);
+					rawData.data.splitMistakes.splice(rawData.data.splitMistakes.findIndex((v) => v === hash), 1);
+					continue;
+				}
+
+				// Add an offset to boundsDiff for all mistakes after this one
+				const offset = Math.abs(split.add.word.length + split.del.word.length - (m.boundsDiff.end - m.boundsDiff.start));
+
+				for (let i = mIndex + 1; i < mistakes.length; i++) {
+					const otherM = mistakes[i];
+					otherM.boundsDiff.start += offset;
+					otherM.boundsDiff.end += offset;
+				}
+
+				mistakes.splice(mIndex, 1);
+				mistakes.splice(mIndex, 0, await split.add.exportData());
+				mistakes.splice(mIndex, 0, await split.del.exportData());
+			}
+
+			const updatedData: SubmissionData = {
 				...rawData.data,
+				splitMistakes: rawData.data.splitMistakes ?? [],
 				mistakes,
 			};
 			
@@ -432,6 +467,55 @@ export default class DiktifySocket {
 				this.socket.emit("submissionStateChange", request);
 			}
 		}
+	}
+
+	async splitMixedMistake(id: MistakeId, submission: SubmissionID, workspace: UUID) {
+		if (config.debug) {
+			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
+			const m = subData[submission].data.mistakes.find((cm) => cm.id === id);
+
+			if (!m) return null;
+
+			subData[submission].data.splitMistakes.push(m.hash);
+
+			return this.setRegenPromise(() => {
+				this.onSubmissionRegen({ workspace, ids: [ submission ] });
+			});
+		} else if (this.socket) {
+			// const request: MistakeMergeEventData = {
+			// 	mistakes,
+			// 	workspace
+			// }
+
+			// this.socket.emit("mistakeMerge", request);
+			// return this.setRegenPromise();
+			throw "NYI";
+		}
+
+		return null;
+	}
+
+	async unsplitMixedMistaked(hash: MistakeHash, submission: SubmissionID, workspace: UUID) {
+		if (config.debug) {
+			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
+
+			deleteFirstMatching(subData[submission].data.splitMistakes, (h) => h === hash);
+
+			return this.setRegenPromise(() => {
+				this.onSubmissionRegen({ workspace, ids: [ submission ] });
+			});
+		} else if (this.socket) {
+			// const request: MistakeMergeEventData = {
+			// 	mistakes,
+			// 	workspace
+			// }
+
+			// this.socket.emit("mistakeMerge", request);
+			// return this.setRegenPromise();
+			throw "NYI";
+		}
+
+		return null;
 	}
 
 	private async onSubmissionData(data: SubmissionDataEventData) {

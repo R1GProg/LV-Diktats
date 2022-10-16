@@ -345,7 +345,8 @@ describe("Mistake", () => {
 					word: "Hello",
 					wordCorrect: undefined,
 					children: [],
-					mergedId: "0111a33f-80c3-4f92-92f1-4fc3ccb55d7e"
+					mergedId: "0111a33f-80c3-4f92-92f1-4fc3ccb55d7e",
+					splitFrom: null
 			  	},
 			  	{
 					id: "802199c0-6fb3-47cd-a374-46eb402102ae",
@@ -359,7 +360,8 @@ describe("Mistake", () => {
 					word: " ",
 					wordCorrect: undefined,
 					children: [],
-					mergedId: "0111a33f-80c3-4f92-92f1-4fc3ccb55d7e"
+					mergedId: "0111a33f-80c3-4f92-92f1-4fc3ccb55d7e",
+					splitFrom: null
 			  	},
 			  	{
 					id: "eb196a14-7dc3-4577-84e6-8d98c8f0bc5a",
@@ -373,7 +375,8 @@ describe("Mistake", () => {
 					word: "World",
 					wordCorrect: undefined,
 					children: [],
-					mergedId: "0111a33f-80c3-4f92-92f1-4fc3ccb55d7e"
+					mergedId: "0111a33f-80c3-4f92-92f1-4fc3ccb55d7e",
+					splitFrom: null
 			  	}
 			],
 			mergedId: null

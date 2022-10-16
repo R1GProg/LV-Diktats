@@ -7,7 +7,7 @@ export enum ToolbarMode {
 	IGNORE,
 	// MERGE,
 	REGISTER,
-	// RESUB
+	RESUB
 }
 
 export interface ToolbarModeEvent {

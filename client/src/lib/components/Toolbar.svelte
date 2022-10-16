@@ -55,6 +55,12 @@
 		></button>
 		<span class:active={$mode === ToolbarMode.MERGE}>Apvienot kļūdas</span> -->
 		<button
+			class="btn-resub"
+			class:active={$mode === ToolbarMode.RESUB}
+			on:click={() => { onBtnClick(ToolbarMode.RESUB); }}
+		></button>
+		<span class:active={$mode === ToolbarMode.RESUB}>Sadalīt kļūdu</span>
+		<button
 			class="btn-register"
 			class:active={$mode === ToolbarMode.REGISTER}
 			on:click={() => { onBtnClick(ToolbarMode.REGISTER); }}
@@ -158,13 +164,13 @@
 				mask-size: 100%;
 			}
 
-			&.btn-edit {
-				-webkit-mask-image: url(/icons/icon-edit.svg);
-				mask-image: url(/icons/icon-edit.svg);
+			// &.btn-edit {
+			// 	-webkit-mask-image: url(/icons/icon-edit.svg);
+			// 	mask-image: url(/icons/icon-edit.svg);
 
-				-webkit-mask-size: 80%;
-				mask-size: 80%;
-			}
+			// 	-webkit-mask-size: 80%;
+			// 	mask-size: 80%;
+			// }
 
 			&.btn-ignore {
 				-webkit-mask-image: url(/icons/icon-ignore.svg);
@@ -190,13 +196,13 @@
 				mask-size: 95%;
 			}
 
-			// &.btn-resub {
-			// 	-webkit-mask-image: url(/icons/icon-resub.svg);
-			// 	mask-image: url(/icons/icon-resub.svg);
+			&.btn-resub {
+				-webkit-mask-image: url(/icons/icon-resub.svg);
+				mask-image: url(/icons/icon-resub.svg);
 
-			// 	-webkit-mask-size: 105%;
-			// 	mask-size: 105%;
-			// }
+				-webkit-mask-size: 105%;
+				mask-size: 105%;
+			}
 		}
 	}
 </style>

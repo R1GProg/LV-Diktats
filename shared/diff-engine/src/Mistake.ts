@@ -32,6 +32,7 @@ export interface MistakeData {
 	wordCorrect?: string,
 	children: MistakeData[],
 	mergedId: MistakeId | null,
+	splitFrom?: MistakeHash | null,
 }
 
 export type MistakeHash = string;
@@ -58,6 +59,8 @@ export class Mistake {
 	children: Mistake[] = []; // Populated only for subtype=MERGED
 
 	mergedId: MistakeId | null = null; // Used only for children of a merged mistake
+
+	splitFrom: MistakeHash | null = null; // Used when a mistake is split
 
 	private cachedHash: string | null = null;
 
@@ -111,6 +114,7 @@ export class Mistake {
 			wordCorrect: this.wordCorrect,
 			children: await Promise.all(this.children.map((m) => m.exportData())),
 			mergedId: this.mergedId,
+			splitFrom: this.splitFrom
 		}
 	}
 
@@ -199,8 +203,94 @@ export class Mistake {
 			children: data.subtype === "MERGED" ? data.children.map((m) => Mistake.fromData(m)) : []
 		});
 
+		m.splitFrom = data.splitFrom ?? null;
 		m.id = data.id;
 
 		return m;
 	}
+
+	static splitMixed(m: MistakeData): { add: Mistake, del: Mistake } | null {
+		if (m.type !== "MIXED") return null;
+
+		const delBoundsDiff = {
+			start: m.boundsDiff.start,
+			end: m.boundsDiff.start + m.word.length
+		}
+
+		const addBoundsDiff = {
+			start: delBoundsDiff.end,
+			end: delBoundsDiff.end + m.wordCorrect!.length
+		}
+
+		const add = new Mistake({
+			type: "ADD",
+			subtype: m.subtype,
+			word: m.wordCorrect!,
+			actions: [],
+			boundsCheck: { start: m.boundsCheck.start, end: m.boundsCheck.end },
+			boundsCorrect: {...m.boundsCorrect},
+			boundsDiff: addBoundsDiff
+		});
+
+		const del = new Mistake({
+			type: "DEL",
+			subtype: m.subtype,
+			word: m.word,
+			actions: [],
+			boundsCheck: {...m.boundsCheck},
+			boundsCorrect: { start: m.boundsCorrect.start, end: m.boundsCorrect.end },
+			boundsDiff: delBoundsDiff
+		});
+
+		add.splitFrom = m.hash;
+		del.splitFrom = m.hash;
+
+		return { del, add };
+	}
 }
+
+/*
+{
+    "id": "499db4a8-c38c-42d7-829f-31bffe0022cc",
+    "hash": "e19c93e274efd9b7",
+    "type": "MIXED",
+    "subtype": "WORD",
+    "actions": [
+        {
+            "id": "b6971be5-ecfe-4ea7-a0c4-abfde81ec4fe",
+            "type": "ADD",
+            "subtype": "ORTHO",
+            "indexCheck": 2,
+            "indexCorrect": 2,
+            "indexDiff": 2,
+            "char": "s"
+        },
+        {
+            "id": "4ac18d63-6d9c-4dbf-93d8-9e94593e043a",
+            "type": "DEL",
+            "subtype": "ORTHO",
+            "indexCheck": 2,
+            "indexCorrect": 3,
+            "indexDiff": 3,
+            "char": "z"
+        }
+    ],
+    "boundsCheck": {
+        "start": 1255,
+        "end": 1260
+    },
+    "boundsCorrect": {
+        "start": 1270,
+        "end": 1275
+    },
+    "boundsDiff": {
+        "start": 1291,
+        "end": 1297
+    },
+    "word": "Lūzti",
+    "wordCorrect": "Lūsti",
+    "children": [],
+    "mergedId": null
+}
+
+*/

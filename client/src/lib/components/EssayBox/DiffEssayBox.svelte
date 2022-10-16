@@ -174,7 +174,7 @@
 	}
 
 	async function onMistakeClick(ev: CustomEvent) {
-		if ($mode !== ToolbarMode.REGISTER) return;
+		if ($mode !== ToolbarMode.REGISTER && $mode !== ToolbarMode.RESUB) return;
 
 		const highlightId = ev.detail.id;
 		const mistakeId = highlightMap[highlightId] ?? null;
