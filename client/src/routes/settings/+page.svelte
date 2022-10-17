@@ -73,7 +73,7 @@
 
 			// Add new data
 			const ws = await parseDebugWorkspace(data);
-			await db.updateWorkspace(ws);
+			await (await $localWorkspaceDatabase).updateWorkspace(ws);
 
 			setTimeout(() => { location.replace("/"); }, 500);
 		};

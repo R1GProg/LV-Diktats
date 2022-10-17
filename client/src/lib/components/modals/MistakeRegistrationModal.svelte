@@ -141,10 +141,11 @@
 		});
 	}
 
-	async function onVariationSelect() {
+	async function onVariationSelect(ev: Event) {
 		const ws = await $workspace;
 		if (ws === null) return;
-
+		
+		variation = (ev.target as HTMLSelectElement).value;
 		const entry = ws.register.find((e) => e.id === variation);
 
 		if (!entry) return;
@@ -179,11 +180,7 @@
 		{#if isVariation}
 		<label for="regVariationSelect">Esošais ieraksts</label>
 		<div class="selectContainer">
-			<select
-				id="regVariationSelect"
-				on:change={onVariationSelect}
-				bind:value={variation}
-			>
+			<select id="regVariationSelect" on:change={onVariationSelect}>
 				<option value="">- Izvēlēties ierakstu -</option>
 				{#await $workspace then ws}
 					{#if ws !== null}
