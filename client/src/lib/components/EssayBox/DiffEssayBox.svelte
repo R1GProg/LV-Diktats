@@ -2,7 +2,7 @@
 	import type { RegisterEntry, Submission } from "@shared/api-types";
 	import EssayBox from "./EssayBox.svelte";
 	import store, { type Stores } from "$lib/ts/stores";
-	import type { Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
+	import type { ActionType, Bounds, MistakeData, MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
 	import { mistakeInRegister } from "$lib/ts/util";
 	import { ToolbarMode } from "$lib/ts/toolbar";
@@ -129,9 +129,30 @@
 		}
 
 		for (const m of parsedMistakes.filter((m) => m.type === "MIXED")) {
-			for (const a of m.actions) {
+			// Consolidate subsequent actions
+			const actionHighlights: { start: number, len: number, type: ActionType }[] = [];
+			let activeHighlight: { start: number, len: number, type: ActionType } = {
+				start: m.actions[0].indexDiff,
+				len: 1,
+				type: m.actions[0].type
+			}; 
+
+			for (let i = 1; i < m.actions.length; i++) {
+				const a = m.actions[i];
+
+				if (a.type === activeHighlight.type) {
+					activeHighlight.len++;
+				} else {
+					actionHighlights.push(activeHighlight);
+					activeHighlight = { start: a.indexDiff, type: a.type, len: 1 };
+				}
+			}
+
+			actionHighlights.push(activeHighlight);
+
+			for (const a of actionHighlights) {
 				const actionType = a.type === "DEL" ? 0 : 1;
-				const id = essayEl.highlightText(m.boundsDiff.start + a.indexDiff!, 1, `hl-2${actionType}`);
+				const id = essayEl.highlightText(m.boundsDiff.start + a.start, a.len, `hl-2${actionType}`);
 				
 				if (id) {
 					addHighlightToMap(id, m.mergedId ?? m.id);
