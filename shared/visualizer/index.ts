@@ -72,8 +72,9 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 		const end = boundsMistakeSet.bounds.bounds.end;
 		const mistake = boundsMistakeSet.mistake;
 		const original = jsonData.text.substring(start, end);
+		// console.log(jsonData.text.charAt(end));
 		// console.log(original);
-		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.mistakeType}', '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span> `;
+		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.mistakeType}', '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span>${jsonData.text.charAt(end).match(/(\.|,|!|\?)/) ? "" : " "}`;
 		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
 		// console.log(boundsMistakeSet.bounds);
 		// console.log(original);
