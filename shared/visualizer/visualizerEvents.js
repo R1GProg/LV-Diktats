@@ -44,73 +44,88 @@ function setTooltipText(description, count, percentage, mistakeType) {
 	tooltip.getElementsByClassName("type")[0].innerHTML = `Kļūdas tips: ${typeStr}`;
 }
 
-function onEnterMistake(ev, parent, description, count, percentage, mistakeType, id) {
-	Array.prototype.forEach.call(getCont().getElementsByClassName(id), (element) =>
-		element.classList.add("mistakeHovered")
-	);
-	if (hold) return;
-	if (timeout !== null) clearTimeout(timeout);
-	setTooltipText(description, count, percentage, mistakeType);
-	let tooltip = document.getElementById("tooltip");
-	const rect = parent.getBoundingClientRect();
-	const containerRect = getCont().getBoundingClientRect();
-	const rootRect = tooltip.parentNode.parentNode;
-	const scroll = getScrollXY(parent);
+function onEnterMistake(
+  ev,
+  parent,
+  description,
+  count,
+  percentage,
+  mistakeType,
+  id
+) {
+  Array.prototype.forEach.call(
+    getCont().getElementsByClassName(id),
+    (element) => element.classList.add("mistakeHovered")
+  );
+  if (hold) return;
+  if (timeout !== null) clearTimeout(timeout);
+  setTooltipText(description, count, percentage, mistakeType);
+  let tooltip = document.getElementById("tooltip");
+  const rect = parent.getBoundingClientRect();
+  const containerRect = getCont().getBoundingClientRect();
+  // const rootRect = tooltip.parentNode.parentNode;
+  // const scroll = getScrollXY(parent);
 
-	tooltip.style.top = `${rect.y - tooltip.offsetHeight + yOffset + scroll[1] - containerRect.top}px`;
-	tooltip.style.left = `${ev.clientX + scroll[0] - containerRect.left}px`;
-	tooltip.classList.remove("hiddenTooltip");
+  tooltip.style.top = `${
+    rect.y - tooltip.offsetHeight + yOffset - containerRect.top
+  }px`;
+  tooltip.style.left = `${ev.clientX - containerRect.left}px`;
+  tooltip.classList.remove("hiddenTooltip");
 }
 
 function onLeaveMistake(id) {
-	Array.prototype.forEach.call(getCont().getElementsByClassName(id), (element) =>
-		element.classList.remove("mistakeHovered")
-	);
-	if (hold) return;
-	let tooltip = document.getElementById("tooltip");
-	tooltip.classList.add("hiddenTooltip");
-	if (timeout !== null) clearTimeout(timeout);
-	timeout = setTimeout(() => {
-		tooltip.style.top = "-420vh";
-		tooltip.style.left = "-69vw";
-	}, 250);
+  Array.prototype.forEach.call(
+    getCont().getElementsByClassName(id),
+    (element) => element.classList.remove("mistakeHovered")
+  );
+  if (hold) return;
+  let tooltip = document.getElementById("tooltip");
+  tooltip.classList.add("hiddenTooltip");
+  if (timeout !== null) clearTimeout(timeout);
+  timeout = setTimeout(() => {
+    tooltip.style.top = "-420vh";
+    tooltip.style.left = "-69vw";
+  }, 250);
 }
 
 let lastElem = null;
 function onClickMistake(elem, id, ev) {
-	if (is_touch_enabled()) {
-		if (lastElem !== null) {
-			const evt = new Event("mouseleave");
-			evt.clientX = ev.clientX;
-			evt.clientY = ev.clientY;
-			lastElem.dispatchEvent(evt);
-		}
-		const evt = new Event("mouseenter");
-		evt.clientX = ev.clientX;
-		evt.clientY = ev.clientY;
-		elem.dispatchEvent(evt);
-		lastElem = elem;
-	} else {
-		hold = !hold;
-		if (hold) {
-			// elem.style.background = "#FFB74D55";
-			Array.prototype.forEach.call(
-				getCont().getElementsByClassName(id),
-				(element) => (element.style.background = "#FFB74D55")
-			);
-		}
-		if (!hold) {
-			let tooltip = document.getElementById("tooltip");
-			tooltip.classList.add("hiddenTooltip");
-			Array.prototype.forEach.call(getCont().getElementsByClassName("mistake"), (el) => {
-				el.style.background = "#F8606055";
-			});
-			const evt = new Event("mouseenter");
-			evt.clientX = ev.clientX;
-			evt.clientY = ev.clientY;
-			elem.dispatchEvent(evt);
-		}
-	}
+  if (is_touch_enabled()) {
+    if (lastElem !== null) {
+      const evt = new Event("mouseleave");
+      evt.clientX = ev.clientX;
+      evt.clientY = ev.clientY;
+      lastElem.dispatchEvent(evt);
+    }
+    const evt = new Event("mouseenter");
+    evt.clientX = ev.clientX;
+    evt.clientY = ev.clientY;
+    elem.dispatchEvent(evt);
+    lastElem = elem;
+  } else {
+    hold = !hold;
+    if (hold) {
+      // elem.style.background = "#FFB74D55";
+      Array.prototype.forEach.call(
+        getCont().getElementsByClassName(id),
+        (element) => (element.style.background = "#FFB74D55")
+      );
+    }
+    if (!hold) {
+      let tooltip = document.getElementById("tooltip");
+      tooltip.classList.add("hiddenTooltip");
+      Array.prototype.forEach.call(
+        getCont().getElementsByClassName("mistake"),
+        (el) => {
+          el.style.background = "#F8606000";
+        }
+      );
+      const evt = new Event("mouseenter");
+      evt.clientX = ev.clientX;
+      evt.clientY = ev.clientY;
+      elem.dispatchEvent(evt);
+    }
+  }
 }
 
 function onClickAnythingElse(ev) {
