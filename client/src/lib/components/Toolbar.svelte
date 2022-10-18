@@ -73,12 +73,13 @@
 	@import "../scss/global.scss";
 
 	$TOOLBAR_ICON_SIZE: clamp(35px, 2.5vw, 200px);
+	$TOOLBAR_HEIGHT: calc(#{$TOOLBAR_ICON_SIZE} * 6.5);
 
 	.outer-container {
 		position: relative;
 		top: 20px;
 
-		height: fit-content;
+		height: $TOOLBAR_HEIGHT;
 		width: 0;
 		transition-timing-function: ease-in;
 		transition: width 0.5s;
@@ -101,7 +102,7 @@
 		border-left: none;
 		background-color: $COL_BG_DARK;
 		grid-area: "toolbar";
-		height: fit-content;
+		height: $TOOLBAR_HEIGHT;
 		padding: 10%;
 
 		display: grid;
