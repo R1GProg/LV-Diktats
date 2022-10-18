@@ -118,6 +118,10 @@
 			);
 
 			if (id) {
+				if (m.type === "ADD" && m.word === "\n") {
+					essayEl.setHighlightClass(id, "hl-newline");
+				}
+
 				addHighlightToMap(id, m.mergedId ?? m.id);
 
 				const mHash = m.mergedId ? mistakes.find((parentM) => parentM.id === m.mergedId)!.hash : m.hash;

@@ -9,6 +9,13 @@ export interface WordItem {
 	type: "WORD" | "PUNCT"
 }
 
+export interface DiffOpts {
+	printSubAddCharacters: boolean,
+	// printNewLineCharacters: boolean
+}
+
+// const NEWLINE_CHAR = "⏎";
+
 export default class Diff {
 	// Edit script tracking
 	private checkText: string = "";
@@ -19,11 +26,15 @@ export default class Diff {
 	private checkSequence: WordItem[] | null = null;
 	private correctSequence: WordItem[] | null = null;
 	private printSubAddCharacters = true;
+	private opts: DiffOpts = {
+		printSubAddCharacters: true,
+		// printNewLineCharacters: true
+	};
 
 	private rawSequence: DiffAction<WordItem>[] | null = null;
 
-	constructor(check: string, correct: string, printSubAddCharacters = true) {
-		this.printSubAddCharacters = printSubAddCharacters;
+	constructor(check: string, correct: string, opts?: Partial<DiffOpts>) {
+		this.opts = { ...this.opts, ...(opts ?? {}) };
 		this.setData(check, correct);
 
 		this.diffAlg = new DiffONP<WordItem>(
@@ -88,6 +99,8 @@ export default class Diff {
 	}
 
 	postprocess(diffData: DiffAction<WordItem>[]) {
+		// const parsedDiff = this.opts.printNewLineCharacters ? Diff.parseNewLineChars(diffData) : diffData;
+
 		this.mistakes = Diff.parseMistakes(diffData);
 		this.mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
@@ -136,6 +149,8 @@ export default class Diff {
 
 		return mistakes;
 	}
+
+	
 
 	consolidatePunctWhitespace() {
 		const punctMistakes = this.mistakes.filter((mistake) => mistake.subtype === "OTHER");
@@ -282,13 +297,13 @@ export default class Diff {
 			this.mistakes.splice(i, 1, subMistake);
 			this.mistakes.splice(nextWordIndex, 1);
 
-			const adjIndex = this.printSubAddCharacters ? actions.filter((a) => a.type === "ADD").length : 0;
+			const adjIndex = this.opts.printSubAddCharacters ? actions.filter((a) => a.type === "ADD").length : 0;
 
 			// Adjust boundsDiff of all punctuation in the middle of the sub
 			// to compensate for the possible difference in length of the previous
 			// leftmost ADD mistake
 			if (m.type === "ADD") {
-				for (let j = i + 1; j < i + punctMistakesInMiddle; j++) {
+				for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
 					const mistake = this.mistakes[j];
 					const deltaIndex = delMistake.word.length - addMistake.word.length + adjIndex;
 
