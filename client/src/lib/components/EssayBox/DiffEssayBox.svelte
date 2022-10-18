@@ -141,15 +141,19 @@
 				type: m.actions[0].type
 			}; 
 
+			let prevIndex = m.actions[0].indexDiff;
+
 			for (let i = 1; i < m.actions.length; i++) {
 				const a = m.actions[i];
 
-				if (a.type === activeHighlight.type) {
+				if (a.type === activeHighlight.type && a.indexDiff === prevIndex + 1) {
 					activeHighlight.len++;
 				} else {
 					actionHighlights.push(activeHighlight);
 					activeHighlight = { start: a.indexDiff, type: a.type, len: 1 };
 				}
+
+				prevIndex  = a.indexDiff;
 			}
 
 			actionHighlights.push(activeHighlight);
