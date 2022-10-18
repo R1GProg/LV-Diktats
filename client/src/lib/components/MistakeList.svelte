@@ -122,10 +122,9 @@
 		}
 	}
 
-	async function onMistakeRightClick(ev: Event) {
+	async function mistakeUnmergeHandler(id: MistakeId) {
 		if ($mode !== ToolbarMode.REGISTER) return;
 
-		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		const mistake = mistakes.find((m) => m.id === id);
 
 		if (!mistake || mistake.subtype !== "MERGED") return;
@@ -243,7 +242,6 @@
 				on:mouseleave={onMistakeHoverOut}
 				on:blur={onMistakeHoverOut}
 				on:click={onMistakeClick}
-				on:contextmenu|preventDefault={onMistakeRightClick}
 				title={JSON.stringify({
 					boundsCheck: m.boundsCheck,
 					boundsCorrect: m.boundsCorrect,
@@ -261,7 +259,7 @@
 				</span>
 
 				{#if m.subtype === "MERGED"}
-					<div class="mistake-icon mistake-icon-merged"></div>
+					<div class="mistake-icon mistake-icon-merged" on:click|stopPropagation={() => { mistakeUnmergeHandler(m.id); }}></div>
 				{:else if m.splitFrom}
 					<div class="mistake-icon mistake-icon-split"></div>
 				{/if}
@@ -310,8 +308,15 @@
 			-webkit-mask-image: url(/icons/icon-merge.svg);
 			mask-image: url(/icons/icon-merge.svg);
 
-			-webkit-mask-size: 75%;
-			mask-size: 75%;
+			-webkit-mask-size: 50%;
+			mask-size: 50%;
+
+			transition: background-color 0.3s, opacity 0.3s;
+
+			&:hover {
+				background-color: $COL_SUBM_REJECTED;
+				opacity: 1;
+			}
 		}
 
 		&.mistake-icon-split {
@@ -392,6 +397,11 @@
 
 		&.hover {
 			filter: brightness(70%);
+
+			.mistake-icon-merged {
+				-webkit-mask-image: url(/icons/icon-merge-cancel.svg);
+				mask-image: url(/icons/icon-merge-cancel.svg);
+			}
 		}
 
 		span {

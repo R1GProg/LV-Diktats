@@ -38,18 +38,24 @@
 
 		for (const b of ignoredText) {
 			try {
-				const id = essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored")!;
-				const els = essayEl.getHighlightEls(id);
-
-				for (const el of els) {
-					el.addEventListener("contextmenu", (ev) => {
-						ev.preventDefault();
-						onHighlightRightClick(id);
-					});
-				}
+				essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored")!;
 			} catch (err) {
 				console.warn(err);
 			}
+		}
+		
+		const els = essayEl.getTextContainer().querySelectorAll<HTMLElement>(".hl-status-ignored");
+		
+		for (const el of els) {
+			el.addEventListener("contextmenu", (ev) => {
+				ev.preventDefault();
+				onHighlightRightClick(el.dataset.highlightId!);
+			});
+			
+			el.addEventListener("click", (ev) => {
+				ev.preventDefault();
+				onHighlightRightClick(el.dataset.highlightId!);
+			});
 		}
 	}
 
@@ -75,6 +81,11 @@
 
 		for (const el of els) {
 			el.addEventListener("contextmenu", (ev) => {
+				ev.preventDefault();
+				onHighlightRightClick(id);
+			});
+
+			el.addEventListener("click", (ev) => {
 				ev.preventDefault();
 				onHighlightRightClick(id);
 			});
