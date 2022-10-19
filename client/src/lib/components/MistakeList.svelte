@@ -94,11 +94,13 @@
 		if ($mode !== ToolbarMode.REGISTER) return;
 
 		const activeSubm = await $activeSubmission;
+		const ws = await $workspace;
 
-		if (activeSubm === null) return;
+		if (activeSubm === null || ws === null) return;
 
 		const mHash = activeSubm.data.mistakes.find((m) => m.id === id)!.hash;
 		const regId = getRegisterId(mHash, register);
+		const regEntry = ws.register.find((r) => r.id === regId)!;
 
 		try {
 			const data = await regModal.open(mHash, regId ? "EDIT" : "ADD", regId);
@@ -114,7 +116,20 @@
 					await $ds.registerUpdate(data, $activeWorkspaceID!);
 					break;
 				case "DELETE":
-					await $ds.registerDelete(data, $activeWorkspaceID!);
+					if (regEntry.mistakes.length === 1) {
+						await $ds.registerDelete(data, $activeWorkspaceID!);
+					} else {
+						const regMistakes = [...regEntry.mistakes];
+						regMistakes.splice(regMistakes.findIndex((m) => m === mHash), 1);
+
+						await $ds.registerUpdate({
+							id: regEntry.id,
+							mistakes: regMistakes,
+							description: regEntry.description,
+							opts: regEntry.opts,
+							action: "EDIT",
+						}, $activeWorkspaceID!);
+					}
 					break;
 			}
 		} catch(err) {

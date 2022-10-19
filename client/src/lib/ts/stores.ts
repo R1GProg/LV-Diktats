@@ -109,8 +109,6 @@ export function initStores() {
 			$workspace.then((ws) => {
 				const submArr = Object.values(ws.submissions);
 
-				console.log("resort");
-
 				if (ws.id === "debugworkspaceid") {
 					for (const subm of submArr) {
 						subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
