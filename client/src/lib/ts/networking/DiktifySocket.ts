@@ -4,7 +4,7 @@ import type { MistakeMergeEventData, MistakeUnmergeEventData, RegisterDeleteEven
 import { Mistake, type Bounds, type MistakeData, type MistakeHash, type MistakeId } from "@shared/diff-engine";
 import Diff from "@shared/diff-engine";
 import { get } from "svelte/store";
-import type { Stores } from "$lib/ts/stores";
+import { reSort, type Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
 import { countRegisteredMistakes, deleteFirstMatching, getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
@@ -685,6 +685,7 @@ export default class DiktifySocket {
 		await this.cache!.removeSubmissionsFromCache(data.ids, data.workspace);
 
 		const activeID = get(this.activeSubmissionID);
+		reSort((await get(this.workspace))!);
 
 		// If the active submission was regenerated, trigger a reload
 		if (activeID !== null && data.ids.includes(activeID)) {
@@ -707,6 +708,7 @@ export default class DiktifySocket {
 	
 		const activeID = get(this.activeSubmissionID);
 		if (data.id === activeID) this.reloadActiveSubmission(); // kinda stupid
+		reSort(ws);
 
 		if (ws.local) {
 			(await get(this.localWorkspaceDb)).updateActive();

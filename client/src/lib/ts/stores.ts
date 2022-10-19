@@ -37,6 +37,34 @@ export default function store(store: keyof Stores) {
 	return ctx[store];
 }
 
+// Incredibly hacky
+let sortModeSetFunc: (val: SubmissionPreview[] | null) => void;
+export async function reSort(ws: Workspace) {
+	const submArr = Object.values(ws.submissions);
+	
+	if (ws.id === "debugworkspaceid") {
+		for (const subm of submArr) {
+			subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
+			// const submMistakes = (subm as unknown as Submission).data.mistakes;
+			// const rawMistakes = submMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+			// subm.mistakeCount = rawMistakes.length;
+		}
+	}
+	
+	submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
+
+	// switch (sort) {
+	// 	case SortMode.ID:
+	// 		submArr.sort((a, b) => Number(a.id.substring(2)) - Number(b.id.substring(2)));
+	// 		break;
+	// 	case SortMode.MISTAKE:
+	// 		submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
+	// 		break;
+	// }
+	
+	sortModeSetFunc(submArr);
+}
+
 export function initStores() {
 	const mode = writable<ToolbarMode>(ToolbarMode.READ);
 	const hideRegistered = writable<boolean>(false);
@@ -98,9 +126,11 @@ export function initStores() {
 		set(sel);
 	});
 
-	const sortedSubmissions = derived<[Stores["workspace"], Stores["sort"], Stores["activeSubmission"]], SubmissionPreview[] | null>(
-		[workspace, sort, activeSubmission],
+	const sortedSubmissions = derived<[Stores["workspace"], Stores["sort"]], SubmissionPreview[] | null>(
+		[workspace, sort],
 		([$workspace, $sort], set) => {
+			sortModeSetFunc = set;
+
 			if ($workspace === null) {
 				set(null);
 				return;
