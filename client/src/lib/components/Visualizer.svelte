@@ -13,12 +13,14 @@
 	let visContainer: HTMLElement;
 
 	async function loadVisualization() {
+		if (!visContainer) return;
+
 		const ws = await $workspace;
 		const subm = await $activeSubmission;
 		
 		if ($activeSubmission === null) return;
 		if (ws === null || subm === null) return;
-		
+
 		visContainer.innerHTML = "";
 		renderCorrect("visContainer", exportSubmission(subm, ws), false);
 	}

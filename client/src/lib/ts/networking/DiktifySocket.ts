@@ -7,7 +7,7 @@ import { get } from "svelte/store";
 import type { Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
-import { deleteFirstMatching, getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
+import { countRegisteredMistakes, deleteFirstMatching, getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
 import { v4 as uuidv4 } from "uuid";
 
 // Here temporarily
@@ -637,6 +637,16 @@ export default class DiktifySocket {
 			const activeID = get(this.activeSubmissionID);
 			const curSub = activeID ? ws.submissions[activeID] as unknown as Submission : null;
 
+			// Update the state of other submissions
+			for (const sub of Object.values(ws.submissions) as unknown as Submission[]) {
+				const mCount = sub.data.mistakes.length;
+				const regMistakes = countRegisteredMistakes(sub, ws.register);
+
+				if (mCount === regMistakes && sub.state !== "DONE") {
+					this.submissionStateChange("DONE", sub.id, ws.id);
+				}
+			}
+			
 			this.execRegisterChangeCallbacks(data.data);
 
 			if (curSub === null) continue;
@@ -653,9 +663,11 @@ export default class DiktifySocket {
 			if (reloadCurrent) {
 				const gradingStatus = getSubmissionGradingStatus(curSub, ws);
 
-				if (gradingStatus === 1) {
+				if (gradingStatus === 2) {
+					console.log("set done");
 					this.submissionStateChange("DONE", curSub.id, ws.id);
 				} else if (curSub.state === "DONE") {
+					console.log("set wip");
 					this.submissionStateChange("WIP", curSub.id, ws.id);
 				}
 				
@@ -693,6 +705,9 @@ export default class DiktifySocket {
 		existingData.state = data.state;
 		await this.cache.updateSubmissionInCache(existingData, data.workspace);
 	
+		const activeID = get(this.activeSubmissionID);
+		if (data.id === activeID) this.reloadActiveSubmission(); // kinda stupid
+
 		if (ws.local) {
 			(await get(this.localWorkspaceDb)).updateActive();
 		}

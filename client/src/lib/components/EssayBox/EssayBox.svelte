@@ -285,7 +285,7 @@
 
 	.container {
 		width: 100%;
-		white-space: pre-line;
+		white-space: pre-wrap;
 		display: inline-block;
 	}
 

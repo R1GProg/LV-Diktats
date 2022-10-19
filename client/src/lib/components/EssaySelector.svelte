@@ -1,7 +1,7 @@
 <script lang="ts">
 	import store, { type Stores } from "$lib/ts/stores";
 	import SubmissionModal from "./modals/SubmissionModal.svelte";
-	import type { SubmissionID, SubmissionState } from "@shared/api-types";
+	import type { Submission, SubmissionID, SubmissionState } from "@shared/api-types";
 	import type { MistakeId } from "@shared/diff-engine";
 	import config from "$lib/config.json";
 	import { exportSubmission } from "$lib/ts/SubmissionExport";
@@ -19,9 +19,11 @@
 	let submissionModal: SubmissionModal;
 
 	let submissionState: SubmissionState | null = null;
-	$: (async () => {
-		submissionState = (await $activeSubmission)?.state ?? null;
-	})();
+	$: onSubStateChange($activeSubmission);
+
+	async function onSubStateChange(subm: Promise<Submission | null> | null) {
+		submissionState = (await subm)?.state ?? null;
+	}
 
 	function selectID(id: MistakeId) {
 		if ($sortedSubmissions === null) return;

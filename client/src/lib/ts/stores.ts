@@ -98,8 +98,8 @@ export function initStores() {
 		set(sel);
 	});
 
-	const sortedSubmissions = derived<[Readable<Promise<Workspace> | null>, Readable<SortMode>], SubmissionPreview[] | null>(
-		[workspace, sort],
+	const sortedSubmissions = derived<[Stores["workspace"], Stores["sort"], Stores["activeSubmission"]], SubmissionPreview[] | null>(
+		[workspace, sort, activeSubmission],
 		([$workspace, $sort], set) => {
 			if ($workspace === null) {
 				set(null);
@@ -108,7 +108,9 @@ export function initStores() {
 
 			$workspace.then((ws) => {
 				const submArr = Object.values(ws.submissions);
-				
+
+				console.log("resort");
+
 				if (ws.id === "debugworkspaceid") {
 					for (const subm of submArr) {
 						subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
