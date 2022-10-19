@@ -156,6 +156,8 @@ export default class DiktifySocket {
 				let stillMerged = true;
 				let split = false;
 
+				if (m.children.length === 0) continue;
+
 				// Check if all of the mistakes are still in the diff
 				for (const child of m.children) {
 					if (!(child.hash in hashMistakeMap)) {

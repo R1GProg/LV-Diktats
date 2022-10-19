@@ -125,7 +125,7 @@
 			{#each mistakes as m (m.hash)}
 			<tr>
 				<td class="mistake-word" title={m.word}>
-					{m.word.length > 50 ? `${m.word.substring(0, 50)}...` : m.word}
+					{m && m.word.length > 50 ? `${m.word.substring(0, 50)}...` : m?.word}
 				</td>
 				<td>{m.submissions.length}</td>
 				<td class="mistake-subm" title={m.submissions.join(", ")}>
