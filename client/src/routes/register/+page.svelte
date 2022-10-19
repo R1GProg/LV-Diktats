@@ -50,8 +50,8 @@
 			<tr data-id={entry.id} on:click={onEntryClick}>
 				<td class="entry-words">
 					{#each Object.values(entry._mistakeWords ?? {}) as word}
-					{@const adjWord = word.replace(/\.\./g, "")}
-					<span>{adjWord.length > 30 ? `${adjWord.substring(0, 30).trim()}...` : adjWord}</span>
+					{@const adjWord = word?.replace(/\.\./g, "")}
+					<span>{adjWord && adjWord?.length > 30 ? `${adjWord.substring(0, 30).trim()}...` : adjWord}</span>
 					{/each}
 				</td>
 				<td class="desc"><span>{entry.description}</span></td>
