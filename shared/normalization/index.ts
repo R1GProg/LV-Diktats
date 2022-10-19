@@ -7,6 +7,7 @@ export function processString(text: string) {
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
+		.replace(/\s+$/g, "")
 		// Clean up newlines
 		.replace(/((\r\n)|(\n))+/g, "\n") // Turn \n\r -> \n and remove any extra newlines (we only need one)
 		// Ellipses
