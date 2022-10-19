@@ -12,8 +12,8 @@ browserify({ standalone: "visualizer" })
 	.transform("brfs")
     .bundle()
     .on('error', function (error) { console.error(error.toString()); })
-    .pipe(fs.createWriteStream(outFile))
-	.on("finish", () => {
-		const eventScript = fs.readFileSync(visualizerEventsPath, "utf-8");
-		fs.appendFileSync(outFile, eventScript);
-	});
+    .pipe(fs.createWriteStream(outFile));
+// 	.on("finish", () => {
+//     const eventScript = fs.readFileSync(visualizerEventsPath, "utf-8");
+//     fs.appendFileSync(outFile, eventScript);
+//   });

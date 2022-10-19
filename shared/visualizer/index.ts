@@ -35,8 +35,9 @@ interface BoundsMistakeSet {
 	mistake: SubmissionMistake
 }
 
-export function renderCorrect(containerId: string, jsonData: GradedSubmission, embedCSS = true) {
+export function renderCorrect(containerId: string, jsonData: GradedSubmission, embedCSS = true, embedJS = true) {
 	if (embedCSS) injectCSS();
+	if (embedJS) injectJS();
 
 	if (jsonData.isRejected) {
 		const element = `<div class="visualisation">
@@ -149,4 +150,12 @@ function injectCSS() {
 	styleEl.innerHTML = css;
 
 	document.getElementsByTagName("head")[0].appendChild(styleEl);
+}
+
+function injectJS() {
+	const js = require("fs").readFileSync("./visualizerEvents.js", 'utf8');
+	const scriptEl = document.createElement("script");
+	scriptEl.innerHTML = js;
+
+	document.getElementsByTagName("body")[0].appendChild(scriptEl);
 }
