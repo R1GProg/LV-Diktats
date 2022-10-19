@@ -20,7 +20,7 @@
 		if (ws === null || subm === null) return;
 		
 		visContainer.innerHTML = "";
-		renderCorrect("visContainer", exportSubmission(subm, ws), false, false);
+		renderCorrect("visContainer", exportSubmission(subm, ws), false);
 	}
 
 	onMount(async () => {

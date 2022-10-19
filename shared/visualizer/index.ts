@@ -1,3 +1,5 @@
+import { onClickMistake, onEnterMistake, onLeaveMistake, onResize, registerClickHandler } from "./visualizerEvents";
+
 export type Bounds = {
 	start: number;
 	end: number;
@@ -35,9 +37,8 @@ interface BoundsMistakeSet {
 	mistake: SubmissionMistake
 }
 
-export function renderCorrect(containerId: string, jsonData: GradedSubmission, embedCSS = true, embedJS = true) {
+export function renderCorrect(containerId: string, jsonData: GradedSubmission, embedCSS = true) {
 	if (embedCSS) injectCSS();
-	if (embedJS) injectJS();
 
 	if (jsonData.isRejected) {
 		const element = `<div class="visualisation">
@@ -75,7 +76,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 		const original = jsonData.text.substring(start, end);
 		// console.log(jsonData.text.charAt(end));
 		// console.log(original);
-		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.mistakeType}', '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')">${original}</span>${jsonData.text.charAt(end).match(/(\.|,|!|\?)/) ? "" : " "}`;
+		const modified = `<span class="mistake bound${boundsMistakeSet.bounds.type} ${mistake.id}" data-mid="${mistake.id}" data-description="${mistake.description.replace(/\"/g, "&quot;")}" data-stat="${mistake.submissionStatistic}" data-percent="${mistake.percentage}" data-type="${mistake.mistakeType}">${original}</span>${jsonData.text.charAt(end).match(/(\.|,|!|\?)/) ? "" : " "}`;
 		resultingText = resultingText.substring(0, start + offset) + modified + resultingText.substring(end + offset);
 		// console.log(boundsMistakeSet.bounds);
 		// console.log(original);
@@ -111,29 +112,25 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 	</div>
 </div>`;
 
-	// Script that generates mistake rectangles once the entire div is generated (approx. 50ms after, which should be more than enough time for the innerHTML to set)
-	const script = `setTimeout(() => {
-		const mistakes = document.getElementsByClassName("submission")[0].getElementsByClassName("mistake");
-		const doneYLevels = [];
-		Array.prototype.forEach.call(mistakes, (el) => {
-			const rect = el.getBoundingClientRect();
-			if(doneYLevels.includes(rect.y)) return;
-			document
-			.getElementsByClassName("text")[0]
-			.insertAdjacentHTML(
-				"afterend",
-				'<div class="mistakeLine" style="top:' +
-				(el.offsetTop + el.parentNode.offsetTop) +
-				"px; height:" +
-				rect.height +
-				'px;"></div>'
-			);
-			doneYLevels.push(rect.y);
-		});
-		}, 50);`;
-
 	document.getElementById(containerId)!.innerHTML = element; // Set container's innerHTML to the visualisation document
-	eval(script); // Evaluate the line indicator generation code.
+	// Script that generates mistake rectangles once the entire div is generated (approx. 50ms after, which should be more than enough time for the innerHTML to set)
+	setTimeout(() => {
+		onResize();
+		const mistakes = document.getElementById(containerId)!.getElementsByClassName("mistake");
+		Array.prototype.forEach.call(mistakes, (mistakeElement: HTMLElement) => {
+			// onclick="onClickMistake(this, '${mistake.id}', event)" onmouseenter="onEnterMistake(event, this, '${mistake.description.replace(/\"/g, "&quot;")}', ${mistake.submissionStatistic}, ${mistake.percentage}, '${mistake.mistakeType}', '${mistake.id}')" onmouseleave="onLeaveMistake('${mistake.id}')"
+			mistakeElement.addEventListener("click", (ev) => {
+				onClickMistake(mistakeElement, mistakeElement.dataset["mid"]!, ev as MouseEvent);
+			});
+			mistakeElement.addEventListener("mouseenter", (ev) => {
+				onEnterMistake(ev as MouseEvent, mistakeElement, mistakeElement.dataset["description"]!, parseInt(mistakeElement.dataset["stat"]!), parseFloat(mistakeElement.dataset["percent"]!), mistakeElement.dataset["type"]! as MistakeType, mistakeElement.dataset["mid"]!)
+			});
+			mistakeElement.addEventListener("mouseleave", (ev) => {
+				onLeaveMistake(mistakeElement.dataset["mid"]!)
+			});
+		});
+		registerClickHandler();
+	}, 0);
 }
 
 /**
@@ -150,12 +147,4 @@ function injectCSS() {
 	styleEl.innerHTML = css;
 
 	document.getElementsByTagName("head")[0].appendChild(styleEl);
-}
-
-function injectJS() {
-	const js = require("fs").readFileSync("./visualizerEvents.js", 'utf8');
-	const scriptEl = document.createElement("script");
-	scriptEl.innerHTML = js;
-
-	document.getElementsByTagName("body")[0].appendChild(scriptEl);
 }
