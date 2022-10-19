@@ -135,8 +135,11 @@ export default class DiktifySocket {
 			const splitMerged: MistakeData[] = [];
 
 			const mergeMistake = async (m: MistakeData) => {
-				const mistakesToMerge = m.children.map((child) => hashMistakeMap[child.hash]);
-				const mergedMistake = Mistake.mergeMistakes(...mistakesToMerge);
+				const mistakesToMerge = m.children.map((child) => hashMistakeMap[child.hash]) as (Mistake | undefined)[];
+
+				if (mistakesToMerge.includes(undefined)) return false;
+
+				const mergedMistake = Mistake.mergeMistakes(...mistakesToMerge as Mistake[]);
 				
 				// Remove the mistakes that were merged, add the new merged mistake
 				for (const child of m.children) {
@@ -144,6 +147,8 @@ export default class DiktifySocket {
 				}
 
 				hashMistakeMap[await mergedMistake.genHash()] = mergedMistake;
+
+				return true;
 			}
 
 			// Merge previously merged mistakes
@@ -218,7 +223,9 @@ export default class DiktifySocket {
 			
 			// Merge split mistakes
 			for (const m of splitMerged) {
-				await mergeMistake(m);
+				if (!await mergeMistake(m)) {
+					console.warn(`Failed to remerge mistake (${m.hash}, ${m.word})`);
+				}
 			}
 
 			mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
