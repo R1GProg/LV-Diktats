@@ -104,6 +104,17 @@ export default class DiktifySocket {
 			const rawData = ws.submissions[id] as unknown as Submission;
 			const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
 			
+			// Make sure the ignoreBounds are valid (Required on some platforms for some reason)
+			for (const b of rawData.data.ignoreText) {
+				if (b.start > b.end) {
+					const correctStart = b.end;
+					const correctEnd = b.start;
+
+					b.start = correctStart;
+					b.end = correctEnd;
+				}
+			}
+
 			const diff = new Diff(parseIgnoreBounds(rawData.data.text, rawData.data.ignoreText), ws.template);
 			diff.calc();
 			
@@ -355,7 +366,9 @@ export default class DiktifySocket {
 			for (const m of data.mistakes!) {
 				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
 				count += submArr.length;
-				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
+
+				// Safe to do it like this because there must be at least one submission (The active one)
+				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission)?.data.mistakes.find((sm) => sm.hash === m)!.word;
 			}
 
 			const serverData: RegisterEntry = {
@@ -397,7 +410,9 @@ export default class DiktifySocket {
 			for (const m of data.mistakes!) {
 				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
 				count += submArr.length;
-				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
+
+				// Safe to do it like this because there must be at least one submission (The active one)
+				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission)?.data.mistakes.find((sm) => sm.hash === m)!.word;
 			}
 
 			const serverData: RegisterEntry = {

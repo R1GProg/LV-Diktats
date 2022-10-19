@@ -110,6 +110,8 @@
 		essayEl.setPlainText(addMissingWordsToText(rawText, parsedMistakes));
 
 		for (const m of parsedMistakes) {
+			if (m.type === "MIXED") continue;
+
 			const highlightClassType = m.type === "DEL" ? 0 : (m.type === "ADD" ? 1 : 2);
 			const id = essayEl.highlightText(
 				m.boundsDiff.start,

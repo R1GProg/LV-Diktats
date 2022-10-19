@@ -117,7 +117,9 @@
 					await $ds.registerDelete(data, $activeWorkspaceID!);
 					break;
 			}
-		} catch(err) {} finally {
+		} catch(err) {
+			console.warn(err);
+		} finally {
 			$selectedMistakes.clear();
 		}
 	}

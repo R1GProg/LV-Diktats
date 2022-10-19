@@ -119,7 +119,7 @@
 
 			curOffset += textLen;
 		}
-
+		
 		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, bounds);
 	}
 
