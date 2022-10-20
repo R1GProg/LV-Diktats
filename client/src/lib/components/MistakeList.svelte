@@ -56,7 +56,7 @@
 
 		if (m.type !== "MIXED") {
 			if (m.splitFrom) {
-				$ds.unsplitMixedMistaked(m.splitFrom, $activeSubmissionID, $activeWorkspaceID);
+				$ds.unsplitMixedMistake(m.splitFrom, $activeSubmissionID, $activeWorkspaceID);
 			}
 			
 			return;

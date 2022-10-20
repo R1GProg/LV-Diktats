@@ -3,6 +3,7 @@
 	import store, { type Stores } from "$lib/ts/stores";
 	import type { RegisterEntry, Workspace } from "@shared/api-types";
 	import { onMount } from "svelte";
+	import { space } from "svelte/internal";
 
 	const workspace = store("workspace") as Stores["workspace"];
 	const ds = store("ds") as Stores["ds"];
