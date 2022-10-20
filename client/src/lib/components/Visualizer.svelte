@@ -33,6 +33,8 @@
 
 		if ($mode === ToolbarMode.VIEW) loadVisualization();
 	});
+
+	$: if ($activeSubmission && $mode === ToolbarMode.VIEW) loadVisualization();
 </script>
 
 <div class="main-container">
