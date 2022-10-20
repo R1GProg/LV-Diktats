@@ -51,13 +51,16 @@ export default class DiktifySocket {
 
 	private localWorkspaceDb: Stores["localWorkspaceDatabase"];
 
+	private sort: Stores["sort"];
+
 	private cbs: RegisterChangeCallback[] = [];
 
 	constructor(
 		url: string,
 		workspace: Stores["workspace"],
 		activeSubmissionID: Stores["activeSubmissionID"],
-		localWorkspaceDb: Stores["localWorkspaceDatabase"]
+		localWorkspaceDb: Stores["localWorkspaceDatabase"],
+		sort: Stores["sort"]
 	) {
 		this.connectPromise = new Promise(async (res) => {
 			if (await APP_ONLINE) {
@@ -70,6 +73,7 @@ export default class DiktifySocket {
 		this.workspace = workspace;
 		this.activeSubmissionID = activeSubmissionID;
 		this.localWorkspaceDb = localWorkspaceDb;
+		this.sort = sort;
 
 		// TODO: Maybe have some sort of subscribe-to-workspace feature
 		// so the server would know which clients specifically should receive
@@ -740,7 +744,7 @@ export default class DiktifySocket {
 		await this.cache!.removeSubmissionsFromCache(data.ids, data.workspace);
 
 		const activeID = get(this.activeSubmissionID);
-		reSort((await get(this.workspace))!);
+		reSort((await get(this.workspace))!, get(this.sort));
 
 		// If the active submission was regenerated, trigger a reload
 		if (activeID !== null && data.ids.includes(activeID)) {
@@ -763,7 +767,7 @@ export default class DiktifySocket {
 	
 		const activeID = get(this.activeSubmissionID);
 		if (data.id === activeID) this.reloadActiveSubmission(); // kinda stupid
-		reSort(ws);
+		reSort(ws, get(this.sort));
 
 		if (ws.local) {
 			(await get(this.localWorkspaceDb)).updateActive();
