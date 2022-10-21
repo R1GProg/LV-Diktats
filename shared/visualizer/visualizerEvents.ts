@@ -140,11 +140,7 @@ export function onResize() {
 	const mistakes = getCont()
 		.getElementsByClassName("submission")[0]
 		.getElementsByClassName("mistake");
-	let mistakeLines = getCont().querySelector(".mistakeLine");
-	while (mistakeLines) {
-		mistakeLines?.remove();
-		mistakeLines = getCont().querySelector(".mistakeLine");
-	}
+	for (const el of Array.from(getCont().querySelectorAll(".mistakeLine"))) { el.remove() }
 	const doneYLevels: number[] = [];
 	Array.prototype.forEach.call(mistakes, (el: HTMLElement) => {
 		const rect = el.getBoundingClientRect();
