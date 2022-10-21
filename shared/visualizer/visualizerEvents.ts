@@ -163,7 +163,6 @@ export function onResize() {
 	});
 }
 
-let resizeInterval: NodeJS.Timer | null = null;
 export function registerClickHandler() {
 	getCont().addEventListener("click", function (evt) {
 		//   if (!is_touch_enabled()) return;
