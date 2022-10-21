@@ -17,7 +17,7 @@
 	let regOpts: RegisterOptions = {
 		ignore: false,
 		mistakeType: "ORTHO",
-		countType: "TOTAL"
+		countType: "VARIATION"
 	};
 	
 	let edit = false;
@@ -45,7 +45,7 @@
 
 			if (mode === "ADD") {
 				desc = "";
-				regOpts = { ignore: false, mistakeType: "ORTHO", countType: "TOTAL" };
+				regOpts = { ignore: false, mistakeType: "ORTHO", countType: "VARIATION" };
 				edit = false;
 				isVariation = false;
 				variation = "";
@@ -101,10 +101,10 @@
 
 		switch(regOpts.mistakeType) {
 			case "ORTHO":
-				regOpts.countType = "TOTAL";
+				regOpts.countType = "VARIATION";
 				break;
 			case "PUNCT":
-				regOpts.countType = "TOTAL";
+				regOpts.countType = "VARIATION";
 				break;
 			case "TEXT":
 				regOpts.countType = "NONE";

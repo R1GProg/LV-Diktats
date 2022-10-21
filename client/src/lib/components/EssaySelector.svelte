@@ -34,8 +34,8 @@
 	async function selectIndex(index: number) {
 		if ($sortedSubmissions === null) return;
 
-		activeIndex = index;
-		$activeSubmissionID = $sortedSubmissions[index].id;
+		activeIndex = index === -1 ? 0 : index;
+		$activeSubmissionID = $sortedSubmissions[activeIndex].id;
 	}
 
 	export async function getNextUngradedIndex(direction: number, minDelta: number = 0): Promise<number | null> {

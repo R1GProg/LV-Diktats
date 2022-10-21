@@ -31,7 +31,8 @@ export interface Submission {
 export interface SubmissionPreview {
 	id: SubmissionID,
 	state: SubmissionState,
-	mistakeCount: number
+	mistakeCount: number,
+	regMistakeCount?: number,
 }
 
 export interface RegisterEntry {

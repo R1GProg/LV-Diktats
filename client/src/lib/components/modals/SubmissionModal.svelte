@@ -53,6 +53,7 @@
 	<div class="sortSelect">
 		<select bind:value={$sort}>
 			<option value={SortMode.MISTAKE}>Kārtot pēc kļūdu skaita</option>
+			<option value={SortMode.UNREG_MISTAKE}>Kārtot pēc nereģistrēto kļūdu skaita</option>
 			<option value={SortMode.ID}>Kārtot pēc ID</option>
 		</select>
 	</div>
@@ -67,7 +68,7 @@
 				on:click={onEntryClick}
 			>
 				<h3 class="id">ID{entry.id}</h3>
-				<span class="errnr">{entry?.mistakeCount ?? entry.data.mistakes.length} kļūdas</span>
+				<span class="errnr">{entry?.mistakeCount ?? entry.data.mistakes.length} ({entry?.regMistakeCount}) kļūdas</span>
 				<span class="open">Atvērt</span>
 			</div>
 		{/each}
