@@ -447,14 +447,14 @@ export default class DiktifySocket {
 				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
 				count += submArr.length;
 
-				if (count === 0) {
+				if (submArr.length === 0) {
 					// If the mistake was unmerged or unsplit
 					emptyMistakes.push(m);
 					continue;
 				}
 
 				// Safe to do it like this because there must be at least one submission (The active one)
-				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission).data.mistakes.find((sm) => sm.hash === m)!.word;
+				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission)?.data.mistakes.find((sm) => sm.hash === m)!.word;
 			}
 
 			for (const m of emptyMistakes) {

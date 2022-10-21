@@ -2,7 +2,7 @@ import config from "$lib/config.json";
 import type { RegisterEntry, Setting, Submission, SubmissionID, User, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
 import { get } from "svelte/store";
 import type { Stores } from "../stores";
-import { mistakeInRegister } from "../util";
+import { countRegisteredMistakes, mistakeInRegister } from "../util";
 
 type HTTPMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE";
 
@@ -154,6 +154,26 @@ export async function parseDebugWorkspace(jsonData: any) {
 		if (sub.data.text.length < ws.template.length * config.incompleteFraction) {
 			// delete ws.submissions[id];
 			ws.submissions[id].state = "REJECTED";
+			continue;
+		}
+
+		const mistakeArr = [...sub.data.mistakes];
+
+		for (const m of sub.data.mistakes) {
+			if (m.subtype === "MERGED" && m.children.length === 0) {
+				mistakeArr.splice(mistakeArr.findIndex((cm) => cm === m), 1);
+			}
+		}
+
+		sub.data.mistakes = mistakeArr;
+
+		const registeredCount = countRegisteredMistakes(sub, ws.register);
+		if (registeredCount === sub.data.mistakes.length) {
+			ws.submissions[id].state = "DONE";
+		} else if (registeredCount === 0) {
+			ws.submissions[id].state = "UNGRADED";
+		} else {
+			ws.submissions[id].state = "WIP";
 		}
 	}
 
