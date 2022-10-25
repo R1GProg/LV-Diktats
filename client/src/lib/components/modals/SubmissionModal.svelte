@@ -26,6 +26,12 @@
 		modal.close();
 	}
 
+	function countDone() {
+		if (filteredSubmissions === null) return;
+
+		return filteredSubmissions.filter((s) => s.state === "DONE").length;
+	}
+
 	$: if (searchQuery === "") {
 		noSearchResults = false;
 		filteredSubmissions = $sortedSubmissions;
@@ -46,7 +52,11 @@
 	});
 </script>
 
-<Modal title="Visi iesūtījumi" userClose={true} bind:this={modal}>
+<Modal
+	title="Visi iesūtījumi (izlaboti {countDone()}/{filteredSubmissions?.length})"
+	userClose={true}
+	bind:this={modal}
+>
 	<input type="text" placeholder="Meklēt" bind:value={searchQuery} class="subm-search">
 	<span class="no-search-res" class:enabled={noSearchResults}>ID netika atrasts</span>
 
