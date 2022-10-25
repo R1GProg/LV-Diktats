@@ -1,5 +1,6 @@
 <script>
 	import { page } from "$app/stores";
+	import VariationSelector from "./VariationSelector.svelte";
 	import WorkspaceSelector from "./WorkspaceSelector.svelte";
 </script>
 
@@ -10,6 +11,7 @@
 		<a href="/settings" class:active={$page.url.pathname === "/settings"}>Iestatījumi</a>
 	</nav>
 
+	<VariationSelector/>
 	<WorkspaceSelector/>
 </header>
 
@@ -24,8 +26,8 @@
 		height: $HEADER_HEIGHT;
 
 		display: grid;
-		grid-template-areas: "nav workspace";
-		grid-template-columns: 1fr auto;
+		grid-template-areas: "nav variation workspace";
+		grid-template-columns: 1fr auto auto;
 
 		padding-left: 1vw;
 		padding-right: 1vw;

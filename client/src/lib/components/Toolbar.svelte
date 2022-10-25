@@ -66,14 +66,21 @@
 			on:click={() => { onBtnClick(ToolbarMode.REGISTER); }}
 		></button>
 		<span class:active={$mode === ToolbarMode.REGISTER}>Reģistrēt kļūdas</span>
+		<button
+			class="btn-register-multi"
+			class:active={$mode === ToolbarMode.REGISTER_MULTI}
+			on:click={() => { onBtnClick(ToolbarMode.REGISTER_MULTI); }}
+		></button>
+		<span class:active={$mode === ToolbarMode.REGISTER_MULTI}>Reģistrēt vairākas</span>
 	</div>
 </div>
 
 <style lang="scss">
 	@import "../scss/global.scss";
 
+	$ICON_COUNT: 6;
 	$TOOLBAR_ICON_SIZE: clamp(35px, 2.5vw, 200px);
-	$TOOLBAR_HEIGHT: calc(#{$TOOLBAR_ICON_SIZE} * 6.5);
+	$TOOLBAR_HEIGHT: calc(#{$TOOLBAR_ICON_SIZE} * #{$ICON_COUNT} * 1.35);
 
 	.outer-container {
 		position: relative;
@@ -200,6 +207,14 @@
 			&.btn-resub {
 				-webkit-mask-image: url(/icons/icon-resub.svg);
 				mask-image: url(/icons/icon-resub.svg);
+
+				-webkit-mask-size: 105%;
+				mask-size: 105%;
+			}
+
+			&.btn-register-multi {
+				-webkit-mask-image: url(/icons/icon-register-multi.svg);
+				mask-image: url(/icons/icon-register-multi.svg);
 
 				-webkit-mask-size: 105%;
 				mask-size: 105%;

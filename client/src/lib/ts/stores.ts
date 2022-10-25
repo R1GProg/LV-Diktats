@@ -24,7 +24,8 @@ export interface Stores {
 	ds: Readable<DiktifySocket>,
 	selectedMistakes: Readable<MistakeSelection>,
 	localWorkspaceDatabase: Readable<Promise<LocalWorkspaceDatabase>>,
-	sortedSubmissions: Readable<SubmissionPreview[] | null>
+	sortedSubmissions: Readable<SubmissionPreview[] | null>,
+	selectedMultiVariation: Writable<UUID | null>
 }
 
 export enum SortMode {
@@ -173,6 +174,8 @@ export function initStores() {
 			});
 	});
 
+	const selectedMultiVariation = writable<UUID | null>(null);
+
 	setContext("stores", {
 		mode,
 		hideRegistered,
@@ -186,6 +189,7 @@ export function initStores() {
 		ds,
 		selectedMistakes,
 		localWorkspaceDatabase,
-		sortedSubmissions
+		sortedSubmissions,
+		selectedMultiVariation
 	} as Stores);
 }
