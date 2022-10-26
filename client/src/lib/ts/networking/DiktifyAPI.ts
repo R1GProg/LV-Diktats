@@ -167,6 +167,11 @@ export async function parseDebugWorkspace(jsonData: any) {
 
 		sub.data.mistakes = mistakeArr;
 
+		if (sub.data.mistakes.length > config.rejectedMistakeThreshold) {
+			ws.submissions[id].state = "REJECTED";
+			continue;
+		}
+
 		const registeredCount = countRegisteredMistakes(sub, ws.register);
 		if (registeredCount === sub.data.mistakes.length) {
 			ws.submissions[id].state = "DONE";

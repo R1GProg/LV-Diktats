@@ -67,7 +67,8 @@
 		const ws = await $workspace;
 		if (ws === null) return;
 
-		selectIndex((await getNextUngradedIndex(Math.sign(delta), delta))!);
+		selectIndex(activeIndex + delta);
+		// selectIndex((await getNextUngradedIndex(Math.sign(delta), delta))!);
 	}
 
 	function onEntryOpen(ev: CustomEvent) {

@@ -102,7 +102,7 @@
 		grid-template-columns: 1fr auto;
 		column-gap: 1rem;
 		border-bottom: 1px solid $COL_BG_LIGHT;
-		margin-bottom: 5%;
+		margin-bottom: 1em;
 		padding-bottom: 1.5%;
 
 		h4 {

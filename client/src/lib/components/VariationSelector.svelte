@@ -6,8 +6,9 @@
 	const workspaceID = store("activeWorkspaceID") as Stores["activeWorkspaceID"];
 	const workspace = store("workspace") as Stores["workspace"];
 	const mode = store("mode") as Stores["mode"];
-	const selectedMultiVariation = store("selectedMultiVariation") as Stores["selectedMultiVariation"];
 
+	export let selected: UUID | null;
+	export let hidden: boolean = false;
 	let variationID: UUID;
 	let variations: { id: UUID, desc: string }[] = [];
 
@@ -24,10 +25,10 @@
 	}
 
 	$: setVariations($workspace);
-	$: $selectedMultiVariation = variationID === "" ? null : variationID;
+	$: selected = variationID === "" ? null : variationID;
 </script>
 
-<div class="selector" class:hidden={$mode !== ToolbarMode.REGISTER_MULTI}>
+<div class="selector" class:hidden={hidden}>
 	<select
 		bind:value={variationID}
 		disabled={workspaceID === null}

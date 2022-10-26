@@ -1,7 +1,12 @@
-<script>
+<script lang="ts">
 	import { page } from "$app/stores";
+	import store, { type Stores } from "$lib/ts/stores";
+	import { ToolbarMode } from "$lib/ts/toolbar";
 	import VariationSelector from "./VariationSelector.svelte";
 	import WorkspaceSelector from "./WorkspaceSelector.svelte";
+
+	const selectedMultiVariation = store("selectedMultiVariation") as Stores["selectedMultiVariation"];
+	const mode = store("mode") as Stores["mode"];	
 </script>
 
 <header>
@@ -11,7 +16,10 @@
 		<a href="/settings" class:active={$page.url.pathname === "/settings"}>Iestatījumi</a>
 	</nav>
 
-	<VariationSelector/>
+	<VariationSelector
+		bind:selected={$selectedMultiVariation}
+		hidden={$mode !== ToolbarMode.REGISTER_MULTI || $page.url.pathname !== "/"}
+	/>
 	<WorkspaceSelector/>
 </header>
 

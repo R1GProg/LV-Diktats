@@ -244,8 +244,11 @@ export default class DiktifySocket {
 			};
 			
 			let state: SubmissionState = "UNGRADED";
-			
-			if (rawData.data.text.length < ws.template.length * config.incompleteFraction) {
+
+			if (
+				rawData.state === "REJECTED"
+				|| rawData.data.text.length < ws.template.length * config.incompleteFraction
+			) {
 				state = "REJECTED";
 			} else {
 				const gradingStatus = getSubmissionGradingStatus({ data: updatedData } as Submission, ws);
