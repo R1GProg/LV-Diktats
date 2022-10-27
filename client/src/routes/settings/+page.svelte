@@ -186,7 +186,7 @@
 			ortho: Object.values(wordMistakes),
 			space: Object.values(spaceMistakes),
 			newline: Object.values(newlineMistakes),
-		});
+		}, regVariations as { ortho: UUID, space: UUID, newline: UUID });
 	}
 </script>
 
