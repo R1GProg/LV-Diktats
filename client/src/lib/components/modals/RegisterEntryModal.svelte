@@ -122,7 +122,7 @@
 				<th><span>Kļūdu skaits</span></th>
 				<th><span>Iesūtījumu ID</span></th>
 			</tr>
-			{#each mistakes as m (m.hash)}
+			{#each mistakes as m}
 			<tr>
 				<td class="mistake-word" title={m.word}>
 					{m?.word && m?.word?.length > 50 ? `${m.word.substring(0, 50)}...` : m.word}

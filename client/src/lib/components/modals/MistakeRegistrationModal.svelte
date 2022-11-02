@@ -60,6 +60,8 @@
 				desc = existingEntry.description;
 				regOpts = {...existingEntry.opts};
 				edit = true;
+
+				if (existingEntry.mistakes.length > 2) selectVariation(existingEntry.id);
 			}
 
 			curRegisterEntry = registerId;
@@ -141,19 +143,30 @@
 		});
 	}
 
-	async function onVariationSelect(ev: Event) {
+	async function selectVariation(varID: UUID) {
 		const ws = await $workspace;
 		if (ws === null) return;
-		
-		variation = (ev.target as HTMLSelectElement).value;
-		const entry = ws.register.find((e) => e.id === variation);
+
+		variation = varID;
+		const entry = ws.register.find((e) => e.id === varID);
 
 		if (!entry) return;
+		if (!isVariation) isVariation = true;
+
+		// Do it in the next event loop to make sure the select element is loaded
+		setTimeout(() => {
+			const selEl = document.querySelector<HTMLSelectElement>("#regVariationSelect")!;
+			if (selEl.value !== varID) selEl.value = varID;
+		}, 0);
 
 		desc = entry.description;
 		regOpts = {...entry.opts};
 		curRegisterEntry = variation;
 		variationMistakes = entry.mistakes;
+	}
+
+	async function onVariationSelect(ev: Event) {
+		selectVariation((ev.target as HTMLSelectElement).value);
 	}
 
 	function getSortedRegister(reg: RegisterEntry[]) {
