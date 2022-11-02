@@ -29,7 +29,7 @@
 	function countDone() {
 		if (filteredSubmissions === null) return;
 
-		return filteredSubmissions.filter((s) => s.state === "DONE").length;
+		return filteredSubmissions.filter((s) => s.state === "DONE" || s.state === "REJECTED").length;
 	}
 
 	$: if (searchQuery === "") {
@@ -65,6 +65,7 @@
 			<option value={SortMode.MISTAKE}>Kārtot pēc kļūdu skaita</option>
 			<option value={SortMode.UNREG_MISTAKE}>Kārtot pēc nereģistrēto kļūdu skaita</option>
 			<option value={SortMode.ID}>Kārtot pēc ID</option>
+			<option value={SortMode.STATE}>Kārtot pēc labošanas statusa</option>
 		</select>
 	</div>
 
