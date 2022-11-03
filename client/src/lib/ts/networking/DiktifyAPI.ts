@@ -163,26 +163,39 @@ export async function parseDebugWorkspace(jsonData: any) {
 
 		const mistakeArr = [...sub.data.mistakes];
 
-		// const diff = new Diff(sub.data.text, ws.template);
-		// diff.calc();
-		// const subRediff = diff.getMistakes();
+		const diff = new Diff(sub.data.text, ws.template);
+		diff.calc();
+		const subRediff = diff.getMistakes();
+
+		let regMistakeCountOffset = 0;
 
 		for (const m of sub.data.mistakes) {
 			if (m.subtype === "MERGED" && m.children.length === 0) {
 				mistakeArr.splice(mistakeArr.findIndex((cm) => cm === m), 1);
 			}
 
-			// if (m.subtype === "MERGED") {
-			// 	for (const child of m.children) {
-			// 		let has = false;
+			if (m.subtype === "MERGED") {
+				let unmerge = false;
 
-			// 		for (const reM of subRediff) {
-			// 			if (await reM.genHash() === child.hash) has = true; 
-			// 		}
+				for (const child of m.children) {
+					let has = false;
 
-			// 		if (!has) sub.state = "WIP";
-			// 	}
-			// }
+					for (const reM of subRediff) {
+						if (await reM.genHash() === child.hash) has = true; 
+					}
+
+					if (!has) {
+						unmerge = true;
+						break;
+					}
+				}
+
+				if (unmerge) {
+					if (mistakeInRegister(m.hash, ws.register)) {
+						regMistakeCountOffset++;
+					}
+				}
+			}
 		}
 
 		sub.data.mistakes = mistakeArr;
@@ -192,7 +205,7 @@ export async function parseDebugWorkspace(jsonData: any) {
 			continue;
 		}
 
-		const registeredCount = countRegisteredMistakes(sub, ws.register);
+		const registeredCount = countRegisteredMistakes(sub, ws.register) - regMistakeCountOffset;
 		if (registeredCount === sub.data.mistakes.length) {
 			ws.submissions[id].state = "DONE";
 		} else if (registeredCount === 0) {

@@ -295,18 +295,37 @@ export default class Diff {
 			this.mistakes.splice(i, 1, subMistake);
 			this.mistakes.splice(nextWordIndex, 1);
 
-			const adjIndex = this.opts.printSubAddCharacters ? actions.filter((a) => a.type === "ADD").length : 0;
+			const adjIndex = this.opts.printSubAddCharacters
+				? actions.filter((a) => a.type !== m.type).map((a) => a.char).join("").length
+				: 0;
 
 			// Adjust boundsDiff of all punctuation in the middle of the sub
 			// to compensate for the difference in word length of the sub mistake
+
+			const deltaIndexAfterWord = adjIndex;
+			const deltaIndexBeforeWord = -m.word.length;
+
+			// Check if there are punct mistakes around the sub mistakes
+			const punctBefore = this.mistakes[i - 1]?.subtype === "OTHER";
+			const punctAfter = this.mistakes[nextWordIndex]?.subtype === "OTHER";
+
 			for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
 				const punctMistake = this.mistakes[j];
 				let deltaIndex;
 
-				if (m.type === "DEL") {
-					deltaIndex = adjIndex;
+				if (punctBefore !== punctAfter) {
+					deltaIndex = punctBefore ? deltaIndexBeforeWord : deltaIndexAfterWord;
 				} else {
-					deltaIndex = delMistake.word.length - addMistake.word.length + adjIndex;
+					if (m.type === punctMistake.type) {
+						deltaIndex = deltaIndexAfterWord;
+					} else {
+						deltaIndex = deltaIndexBeforeWord;
+
+						// Adjust the bounds of the submistake to compensate
+						// for the change in punct location
+						subMistake.boundsDiff.start += 1;
+						subMistake.boundsDiff.end += 1;
+					}
 				}
 
 				punctMistake.boundsDiff.start += deltaIndex;
@@ -315,9 +334,13 @@ export default class Diff {
 
 			// Decrement boundsDiff of all subsequent words
 			// to compensate for the removal of the ADD mistake
+			const addChars = this.opts.printSubAddCharacters
+				? actions.filter((a) => a.type === "ADD").length
+				: 0;
+
 			for (let j = nextWordIndex; j < this.mistakes.length; j++) {
 				const mistake = this.mistakes[j];
-				const deltaIndex = addMistake.word.length - adjIndex;
+				const deltaIndex = addMistake.word.length - addChars;
 
 				mistake.boundsDiff.start -= deltaIndex;
 				mistake.boundsDiff.end -= deltaIndex;
