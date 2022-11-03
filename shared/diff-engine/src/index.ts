@@ -226,7 +226,13 @@ export default class Diff {
 
 			// If the next word doesnt start right after all punctuation mistakes,
 			// it is not a valid substitution mistake
-			if (m.boundsDiff.end + punctMistakeLength !== nextM.boundsDiff.start) continue;
+			if (
+				(m.subtype === "WORD"
+					&& m.boundsDiff.end + punctMistakeLength !== nextM.boundsDiff.start
+				)|| (m.subtype === "OTHER"
+					&& m.boundsDiff.end !== nextM.boundsDiff.start
+				)
+			) continue;
 
 			// Assume valid substitution mistake past this point
 
@@ -302,11 +308,21 @@ export default class Diff {
 			// Adjust boundsDiff of all punctuation in the middle of the sub
 			// to compensate for the difference in word length of the sub mistake
 
+			// If there are other punct mistakes on either side of the sub mistake,
+			// move the punctuation in that direction.
+			// If there are no other punct mistakes or mistakes on both sides,
+			// move the punctuation according to the truth table
+			// ADD punct, ADD first mistake - punct after
+			// ADD punct, DEL first mistake - punct before
+			// DEL punct, ADD first mistake - punct before
+			// DEL punct, DEL first mistake - punct after
+
 			const deltaIndexAfterWord = adjIndex;
 			const deltaIndexBeforeWord = -m.word.length;
 
 			// Check if there are punct mistakes around the sub mistakes
-			const punctBefore = this.mistakes[i - 1]?.subtype === "OTHER";
+			const punctBefore = this.mistakes[i - 1]?.subtype === "OTHER"
+				&& !this.mistakes[i - 1]?.word?.includes("\"");
 			const punctAfter = this.mistakes[nextWordIndex]?.subtype === "OTHER";
 
 			for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
@@ -314,7 +330,16 @@ export default class Diff {
 				let deltaIndex;
 
 				if (punctBefore !== punctAfter) {
-					deltaIndex = punctBefore ? deltaIndexBeforeWord : deltaIndexAfterWord;
+					if (punctAfter) {
+						deltaIndex = deltaIndexAfterWord;
+					} else {
+						deltaIndex = deltaIndexBeforeWord;
+
+						// Adjust the bounds of the submistake to compensate
+						// for the change in punct location
+						subMistake.boundsDiff.start += 1;
+						subMistake.boundsDiff.end += 1;
+					}
 				} else {
 					if (m.type === punctMistake.type) {
 						deltaIndex = deltaIndexAfterWord;
