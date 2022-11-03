@@ -29,5 +29,7 @@ export function processString(text: string) {
 		// Space Quotation Marks
 		.replace(/(?<="[^\s]{0})"(?=[^"\n])/g, " \"")
 		// Space characters after closing quotation mark
-		.replace(/(?<=(\.|\?|!|,)"[^\s]{0})[^\s](?=[^"\n])/g, x => ' ' + x);
+		.replace(/(?<=(\.|\?|!|,)"[^\s]{0})[^\s](?=[^"\n])/g, x => ' ' + x)
+		// De-duplicate quotation marks
+		.replace(/(?:\" \"|\")([^\"]*)(?:\" \"|\")/g, "\"$1\"");
 }
