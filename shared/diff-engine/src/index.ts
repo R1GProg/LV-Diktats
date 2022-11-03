@@ -298,14 +298,19 @@ export default class Diff {
 			const adjIndex = this.opts.printSubAddCharacters ? actions.filter((a) => a.type === "ADD").length : 0;
 
 			// Adjust boundsDiff of all punctuation in the middle of the sub
-			// to compensate for the possible difference in length of the previous
-			// leftmost ADD mistake
+			// to compensate for the difference in word length of the sub mistake
 			for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
-				const mistake = this.mistakes[j];
-				const deltaIndex = Math.abs(delMistake.word.length - addMistake.word.length);
+				const punctMistake = this.mistakes[j];
+				let deltaIndex;
 
-				mistake.boundsDiff.start += deltaIndex;
-				mistake.boundsDiff.end += deltaIndex;
+				if (m.type === "DEL") {
+					deltaIndex = adjIndex;
+				} else {
+					deltaIndex = delMistake.word.length - addMistake.word.length + adjIndex;
+				}
+
+				punctMistake.boundsDiff.start += deltaIndex;
+				punctMistake.boundsDiff.end += deltaIndex;
 			}
 
 			// Decrement boundsDiff of all subsequent words
