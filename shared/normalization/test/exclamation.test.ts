@@ -29,3 +29,9 @@ test("Exclamation marks followed by the start of a quote should be spaced", () =
 	const resultString = "Test! \"test\""
 	expect(processString(testString)).toBe(resultString);
 });
+
+test("Exclamation mark ending sentence should have spaces in front of them removed", () => {
+	const testString = "Test !";
+	const resultString = "Test!"
+	expect(processString(testString)).toBe(resultString);
+});

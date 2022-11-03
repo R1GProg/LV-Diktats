@@ -29,3 +29,15 @@ test("Comas followed by the start of a quote should be spaced", () => {
 	const resultString = "Test, \"test\""
 	expect(processString(testString)).toBe(resultString);
 });
+
+test("Double comas not intended as quotation mark should be normalised into one", () => {
+	const testString = "Test,, test!";
+	const resultString = "Test, test!"
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Double comas intended as quotation mark should not be normalised into one", () => {
+	const testString = "Test: ,,test!\"";
+	const resultString = "Test: \"test!\""
+	expect(processString(testString)).toBe(resultString);
+});
