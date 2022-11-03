@@ -8,7 +8,7 @@ export function processString(text: string) {
 		// De-duplicate quotation marks
 		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" || x == "\"\"" ? "\"" : x)		
 		// Turn ,,Quote" into "Quote"
-		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!]?)(?:")/g, "\"$1\"")
+		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!]?)(?:\s*")/g, "\"$1\"")
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
