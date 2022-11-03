@@ -107,7 +107,7 @@ export default class DiktifySocket {
 			// includes the submission data
 			const rawData = ws.submissions[id] as unknown as Submission;
 			const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
-			
+
 			// Make sure the ignoreBounds are valid (Required on some platforms for some reason)
 			for (const b of rawData.data.ignoreText) {
 				if (b.start > b.end) {

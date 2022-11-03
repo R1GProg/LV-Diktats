@@ -3,6 +3,7 @@ export function processString(text: string) {
 		// Debug
 		// .replace(/[A-z]/g, "^")
 		// Quotation marks
+		.replace(new RegExp(String.fromCharCode(160), "g"), " ")
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines

@@ -239,6 +239,9 @@ function trimBounds(parsedText: string, mistakes: ExportedSubmissionMistake[]) {
 	for (const m of mistakes) {
 		for (const b of m.bounds) {
 			const content = parsedText.substring(b.bounds.start, b.bounds.end);
+
+			if (content === " ") continue;
+
 			const spacesBefore = content.length - content.trimStart().length;
 			const spacesAfter = content.length - content.trimEnd().length;
 
@@ -289,9 +292,11 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 	const parsedText = parseText(subm, adjBounds);
 
+	console.log(mistakes);
+
 	// Modifies mistakes by reference
-	consolidateSpaceSeparatedBounds(parsedText, mistakes);
-	trimBounds(parsedText, mistakes);
+	// consolidateSpaceSeparatedBounds(parsedText, mistakes);
+	// trimBounds(parsedText, mistakes);
 
 	return {
 		author: "Anonīms",

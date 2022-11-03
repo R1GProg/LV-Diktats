@@ -31,7 +31,8 @@ export interface Stores {
 export enum SortMode {
 	MISTAKE,
 	ID,
-	UNREG_MISTAKE
+	UNREG_MISTAKE,
+	STATE
 }
 
 export default function store(store: keyof Stores) {
@@ -66,6 +67,9 @@ export async function reSort(ws: Workspace, sort: SortMode) {
 		case SortMode.UNREG_MISTAKE:
 			submArr.sort((a, b) => b.mistakeCount - a.mistakeCount); // Make sure it's mistake count ordered, if equal unregistered count
 			submArr.sort((a, b) => (b.mistakeCount - b.regMistakeCount!) - (a.mistakeCount - a.regMistakeCount!));
+			break;
+		case SortMode.STATE:
+			submArr.sort((a, b) => a.state.localeCompare(b.state));
 			break;
 	}
 	
@@ -167,6 +171,9 @@ export function initStores() {
 					case SortMode.UNREG_MISTAKE:
 						submArr.sort((a, b) => b.mistakeCount - a.mistakeCount); // Make sure it's mistake count ordered, if equal unregistered count
 						submArr.sort((a, b) => (b.mistakeCount - b.regMistakeCount!) - (a.mistakeCount - a.regMistakeCount!));
+						break;
+					case SortMode.STATE:
+						submArr.sort((a, b) => a.state.localeCompare(b.state));
 						break;
 				}
 

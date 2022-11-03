@@ -3,5 +3,5 @@ export function charIsPunctuation(char: string): boolean {
 }
 
 export function charIsWordDelimeter(char: string): boolean {
-	return charIsPunctuation(char) || char === " " || char === "\n";
+	return charIsPunctuation(char) || char.match(/^\s$/g) !== null || char === "\n";
 }

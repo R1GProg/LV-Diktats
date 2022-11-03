@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "jest",
-    "clean": "rimraf build",
+    "clean": "",
     "build": "run-s clean build:*",
     "build:esm": "tsc",
     "build:commonjs": "tsc --project tsconfig-commonjs.json",

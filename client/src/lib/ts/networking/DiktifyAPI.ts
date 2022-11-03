@@ -1,8 +1,10 @@
 import config from "$lib/config.json";
 import type { RegisterEntry, Setting, Submission, SubmissionID, User, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
+import Diff from "@shared/diff-engine";
+import { processString } from "@shared/normalization";
 import { get } from "svelte/store";
 import type { Stores } from "../stores";
-import { countRegisteredMistakes, mistakeInRegister } from "../util";
+import { countRegisteredMistakes, mistakeInRegister, submissionContainsMistake } from "../util";
 
 type HTTPMethod = "GET" | "POST" | "PUT" | "HEAD" | "DELETE";
 
@@ -151,6 +153,8 @@ export async function parseDebugWorkspace(jsonData: any) {
 	for (const id of Object.keys(ws.submissions)) {
 		const sub = ws.submissions[id] as unknown as Submission;
 
+		sub.data.text = processString(sub.data.text);
+
 		if (sub.data.text.length < ws.template.length * config.incompleteFraction) {
 			// delete ws.submissions[id];
 			ws.submissions[id].state = "REJECTED";
@@ -159,10 +163,26 @@ export async function parseDebugWorkspace(jsonData: any) {
 
 		const mistakeArr = [...sub.data.mistakes];
 
+		// const diff = new Diff(sub.data.text, ws.template);
+		// diff.calc();
+		// const subRediff = diff.getMistakes();
+
 		for (const m of sub.data.mistakes) {
 			if (m.subtype === "MERGED" && m.children.length === 0) {
 				mistakeArr.splice(mistakeArr.findIndex((cm) => cm === m), 1);
 			}
+
+			// if (m.subtype === "MERGED") {
+			// 	for (const child of m.children) {
+			// 		let has = false;
+
+			// 		for (const reM of subRediff) {
+			// 			if (await reM.genHash() === child.hash) has = true; 
+			// 		}
+
+			// 		if (!has) sub.state = "WIP";
+			// 	}
+			// }
 		}
 
 		sub.data.mistakes = mistakeArr;

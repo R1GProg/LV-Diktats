@@ -150,8 +150,6 @@ export default class Diff {
 		return mistakes;
 	}
 
-	
-
 	consolidatePunctWhitespace() {
 		const punctMistakes = this.mistakes.filter((mistake) => mistake.subtype === "OTHER");
 
@@ -302,14 +300,12 @@ export default class Diff {
 			// Adjust boundsDiff of all punctuation in the middle of the sub
 			// to compensate for the possible difference in length of the previous
 			// leftmost ADD mistake
-			if (m.type === "ADD") {
-				for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
-					const mistake = this.mistakes[j];
-					const deltaIndex = delMistake.word.length - addMistake.word.length + adjIndex;
+			for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
+				const mistake = this.mistakes[j];
+				const deltaIndex = Math.abs(delMistake.word.length - addMistake.word.length);
 
-					mistake.boundsDiff.start += deltaIndex;
-					mistake.boundsDiff.end += deltaIndex;
-				}
+				mistake.boundsDiff.start += deltaIndex;
+				mistake.boundsDiff.end += deltaIndex;
 			}
 
 			// Decrement boundsDiff of all subsequent words
