@@ -1,7 +1,7 @@
 import { processString } from "../index";
 
 test("Title should not be quotation marks", () => {
-	const testString = "\"Krāsaina saule virs pelēkiem jumtiem\"";
+	const testString = "\"Krāsaina saule virs pelēkiem jumtiem\".";
 	const resultString = "Krāsaina saule virs pelēkiem jumtiem";
 	expect(processString(testString)).toBe(resultString);
 });

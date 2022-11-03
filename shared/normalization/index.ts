@@ -6,7 +6,7 @@ export function processString(text: string) {
 		.replace(new RegExp(String.fromCharCode(160), "g"), " ")
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
 		// De-duplicate quotation marks
-		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" || x == "\"\"" ? "\"" : x)		
+		.replace(/(?:\"+|\" *\")([^\"]*[\.\?,!]+)(?:\"+|\" *\")(?! \"( |$))/gm, "\"$1\"")		
 		// Turn ,,Quote" into "Quote"
 		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!,]+)(?:\s*")/g, "\"$1\"")
 		// Clean up whitespaces
@@ -35,7 +35,7 @@ export function processString(text: string) {
 		// Turn hyphens and en dashes into em dashes
 		.replace(/[-–]/g, '—')
 		// Title fix
-		.replace(/"?Krāsaina saule virs pelēkiem jumtiem"?/, (x) => x.replace(/"/g, '')) // Remove the title being in quotes
+		.replace(/"?Krāsaina saule virs pelēkiem jumtiem"?\.?/, (x) => x.replace(/"/g, '').replace('.', '')) // Remove the title being in quotes
 		.replace(/(?<=Zebris)((\.\s)|(,\s)|(\s—\s)|\s)+(?=Krāsaina)/, "\n") // Replace Author, Title with Author
 									   							 		  //                            Title
 		.replace(/ {2,}/g, " ")

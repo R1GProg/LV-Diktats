@@ -49,6 +49,12 @@ test("Quotes should be de-duplicated", () => {
 });
 
 test("Quotes should be de-duplicated", () => {
+	const testString = "\" \"Blah...,\" said Blah: \" \"Blah?\"\"";
+	const resultString = "\"Blah…,\" said Blah: \"Blah?\""
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Quotes should be de-duplicated", () => {
 	const testString = "\"\"Blah,\"\" said Blah.";
 	const resultString = "\"Blah,\" said Blah."
 	expect(processString(testString)).toBe(resultString);
