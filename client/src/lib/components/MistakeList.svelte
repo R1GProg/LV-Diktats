@@ -3,7 +3,7 @@
 	import { ToolbarMode } from "$lib/ts/toolbar";
 	import type { MistakeId, MistakeData } from "@shared/diff-engine";
 	import MistakeRegistrationModal from "$lib/components/modals/MistakeRegistrationModal.svelte";
-	import type { RegisterEntry, Submission, Workspace } from "@shared/api-types";
+	import type { RegisterEntry, RegisterUpdateEventType, Submission, Workspace } from "@shared/api-types";
 	import { getRegisterId, mistakeInRegister } from "$lib/ts/util";
 	import type MistakeSelection from "$lib/ts/MistakeSelection";
 	import ProcessingStatus from "./modals/status/ProcessingStatus.svelte";
@@ -17,6 +17,7 @@
 	const activeSubmissionID = store("activeSubmissionID") as Stores["activeSubmissionID"];
 	const workspace = store("workspace") as Stores["workspace"];
 	const selectedMistakes = store("selectedMistakes") as Stores["selectedMistakes"];
+	const selectedMultiVariation = store("selectedMultiVariation") as Stores["selectedMultiVariation"];
 	
 	let mistakes: MistakeData[] = [];
 	let register: RegisterEntry[] = [];
@@ -40,7 +41,11 @@
 	}
 
 	async function onMistakeClick(ev: Event) {
-		if ($mode !== ToolbarMode.REGISTER && $mode !== ToolbarMode.RESUB) return;
+		if (
+			$mode !== ToolbarMode.REGISTER
+			&& $mode !== ToolbarMode.RESUB
+			&& $mode !== ToolbarMode.REGISTER_MULTI
+		) return;
 
 		const id = (ev.currentTarget as HTMLElement).dataset.id!;
 		$selectedMistakes.toggle(id);
@@ -56,7 +61,7 @@
 
 		if (m.type !== "MIXED") {
 			if (m.splitFrom) {
-				$ds.unsplitMixedMistaked(m.splitFrom, $activeSubmissionID, $activeWorkspaceID);
+				$ds.unsplitMixedMistake(m.splitFrom, $activeSubmissionID, $activeWorkspaceID);
 			}
 			
 			return;
@@ -81,6 +86,8 @@
 		} else if (selection.size() !== 1) {
 			return;
 		}
+
+		if ($mode === ToolbarMode.REGISTER_MULTI) return;
 		
 		const selID = selection.get()[0];
 		const selMistake = mistakes.find((m) => m.id === selID)!;
@@ -151,6 +158,35 @@
 	}
 
 	async function onBodyKeypress(ev: KeyboardEvent) {
+		if ($mode === ToolbarMode.REGISTER_MULTI) {
+			if (ev.key === "Enter") {
+				const ws = await $workspace;
+				const subm = await $activeSubmission;
+
+				if (ws === null) return;
+				if (subm === null) return;
+				if ($selectedMultiVariation === null) return;
+
+				const mistakes = $selectedMistakes.get();
+				const hashes = mistakes.map((mID) =>
+					subm.data.mistakes.find((m) => m.id === mID)!.hash
+				);
+				const reg = ws.register.find((r) => r.id === $selectedMultiVariation)!;
+				const editData = {
+					id: reg.id,
+					mistakes: [ ...reg.mistakes, ...hashes ],
+					description: reg.description,
+					opts: reg.opts,
+					action: "ADD_VARIATION" as RegisterUpdateEventType,
+				};
+
+				await $ds.registerUpdate(editData, $activeWorkspaceID!);
+				$selectedMistakes.clear();
+			}
+
+			return;
+		}
+
 		if ($mode !== ToolbarMode.REGISTER) return;
 		if ($selectedMistakes.size() === 0) return;
 
@@ -236,7 +272,11 @@
 	$: onMistakeSelectionChange($selectedMistakes);
 	$: onSubmissionChange($activeSubmission);
 	$: onWorkspaceChange($workspace);
-	$: if ($mode !== ToolbarMode.REGISTER && $mode !== ToolbarMode.RESUB) $selectedMistakes.clear();
+	$: if (
+		$mode !== ToolbarMode.REGISTER
+		&& $mode !== ToolbarMode.RESUB
+		&& $mode !== ToolbarMode.REGISTER_MULTI
+	) $selectedMistakes.clear();
 </script>
 
 <svelte:body on:keydown={onBodyKeypress}/>

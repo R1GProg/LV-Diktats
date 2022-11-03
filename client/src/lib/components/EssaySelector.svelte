@@ -34,8 +34,8 @@
 	async function selectIndex(index: number) {
 		if ($sortedSubmissions === null) return;
 
-		activeIndex = index;
-		$activeSubmissionID = $sortedSubmissions[index].id;
+		activeIndex = index === -1 ? 0 : index;
+		$activeSubmissionID = $sortedSubmissions[activeIndex].id;
 	}
 
 	export async function getNextUngradedIndex(direction: number, minDelta: number = 0): Promise<number | null> {
@@ -67,7 +67,8 @@
 		const ws = await $workspace;
 		if (ws === null) return;
 
-		selectIndex((await getNextUngradedIndex(Math.sign(delta), delta))!);
+		selectIndex(activeIndex + delta);
+		// selectIndex((await getNextUngradedIndex(Math.sign(delta), delta))!);
 	}
 
 	function onEntryOpen(ev: CustomEvent) {

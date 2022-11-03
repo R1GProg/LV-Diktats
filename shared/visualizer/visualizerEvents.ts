@@ -137,15 +137,12 @@ function onClickAnythingElse(ev: MouseEvent) {
 }
 
 export function onResize() {
-	const mistakeLines = getCont().getElementsByClassName("mistakeLine");
-	Array.prototype.forEach.call(mistakeLines, (el) => {
-		el.remove();
-	});
 	const mistakes = getCont()
 		.getElementsByClassName("submission")[0]
 		.getElementsByClassName("mistake");
+	for (const el of Array.from(getCont().querySelectorAll(".mistakeLine"))) { el.remove() }
 	const doneYLevels: number[] = [];
-	Array.prototype.forEach.call(mistakes, (el) => {
+	Array.prototype.forEach.call(mistakes, (el: HTMLElement) => {
 		const rect = el.getBoundingClientRect();
 		if (doneYLevels.includes(rect.y)) return;
 		getCont()
@@ -153,7 +150,7 @@ export function onResize() {
 			.insertAdjacentHTML(
 				"afterend",
 				'<div class="mistakeLine" style="top:' +
-				(el.offsetTop + el.parentNode.offsetTop) +
+				(el.offsetTop + el.parentElement!.offsetTop) +
 				"px; height:" +
 				rect.height +
 				'px;"></div>'
@@ -175,6 +172,8 @@ export function registerClickHandler() {
 		onClickAnythingElse(evt as MouseEvent);
 	});
 
-	window.addEventListener("resize", () => onResize());
-	new ResizeObserver(onResize);
+	// window.addEventListener("resize", () => onResize());
+	const observer = new ResizeObserver(onResize);
+	observer.observe(getCont());
+	// if (!resizeInterval) resizeInterval = setInterval(() => onResize(), 100);
 }

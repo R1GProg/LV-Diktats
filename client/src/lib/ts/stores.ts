@@ -9,6 +9,7 @@ import DiktifySocket from "./networking/DiktifySocket";
 import config from "$lib/config.json";
 import MistakeSelection from "./MistakeSelection";
 import LocalWorkspaceDatabase from "./LocalWorkspaceDatabase";
+import { countRegisteredMistakes } from "./util";
 
 export interface Stores {
 	mode: Writable<ToolbarMode>,
@@ -23,12 +24,14 @@ export interface Stores {
 	ds: Readable<DiktifySocket>,
 	selectedMistakes: Readable<MistakeSelection>,
 	localWorkspaceDatabase: Readable<Promise<LocalWorkspaceDatabase>>,
-	sortedSubmissions: Readable<SubmissionPreview[] | null>
+	sortedSubmissions: Readable<SubmissionPreview[] | null>,
+	selectedMultiVariation: Writable<UUID | null>
 }
 
 export enum SortMode {
 	MISTAKE,
-	ID
+	ID,
+	UNREG_MISTAKE
 }
 
 export default function store(store: keyof Stores) {
@@ -39,28 +42,32 @@ export default function store(store: keyof Stores) {
 
 // Incredibly hacky
 let sortModeSetFunc: (val: SubmissionPreview[] | null) => void;
-export async function reSort(ws: Workspace) {
+export async function reSort(ws: Workspace, sort: SortMode) {
 	const submArr = Object.values(ws.submissions);
 	
 	if (ws.id === "debugworkspaceid") {
 		for (const subm of submArr) {
-			subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
+			const submData = (subm as unknown as Submission).data;
+			subm.mistakeCount = submData.mistakes.length;
+			subm.regMistakeCount = countRegisteredMistakes(subm as unknown as Submission, ws.register);
 			// const submMistakes = (subm as unknown as Submission).data.mistakes;
 			// const rawMistakes = submMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
 			// subm.mistakeCount = rawMistakes.length;
 		}
 	}
-	
-	submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
 
-	// switch (sort) {
-	// 	case SortMode.ID:
-	// 		submArr.sort((a, b) => Number(a.id.substring(2)) - Number(b.id.substring(2)));
-	// 		break;
-	// 	case SortMode.MISTAKE:
-	// 		submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
-	// 		break;
-	// }
+	switch (sort) {
+		case SortMode.ID:
+			submArr.sort((a, b) => Number(a.id.substring(2)) - Number(b.id.substring(2)));
+			break;
+		case SortMode.MISTAKE:
+			submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
+			break;
+		case SortMode.UNREG_MISTAKE:
+			submArr.sort((a, b) => b.mistakeCount - a.mistakeCount); // Make sure it's mistake count ordered, if equal unregistered count
+			submArr.sort((a, b) => (b.mistakeCount - b.regMistakeCount!) - (a.mistakeCount - a.regMistakeCount!));
+			break;
+	}
 	
 	sortModeSetFunc(submArr);
 }
@@ -96,7 +103,7 @@ export function initStores() {
 		});
 	}));
 
-	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID, localWorkspaceDatabase))
+	const ds = readable<DiktifySocket>(new DiktifySocket(config.socketUrl, workspace, activeSubmissionID, localWorkspaceDatabase, sort))
 
 	const cache = readable<Promise<WorkspaceCache>>(new Promise<WorkspaceCache>((res) => {
 		onMount(async () => {
@@ -141,7 +148,9 @@ export function initStores() {
 
 				if (ws.id === "debugworkspaceid") {
 					for (const subm of submArr) {
-						subm.mistakeCount = (subm as unknown as Submission).data.mistakes.length;
+						const submData = (subm as unknown as Submission).data;
+						subm.mistakeCount = submData.mistakes.length;
+						subm.regMistakeCount = countRegisteredMistakes(subm as unknown as Submission, ws.register);
 						// const submMistakes = (subm as unknown as Submission).data.mistakes;
 						// const rawMistakes = submMistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
 						// subm.mistakeCount = rawMistakes.length;
@@ -155,11 +164,17 @@ export function initStores() {
 					case SortMode.MISTAKE:
 						submArr.sort((a, b) => b.mistakeCount - a.mistakeCount);
 						break;
+					case SortMode.UNREG_MISTAKE:
+						submArr.sort((a, b) => b.mistakeCount - a.mistakeCount); // Make sure it's mistake count ordered, if equal unregistered count
+						submArr.sort((a, b) => (b.mistakeCount - b.regMistakeCount!) - (a.mistakeCount - a.regMistakeCount!));
+						break;
 				}
 
 				set(submArr);
 			});
 	});
+
+	const selectedMultiVariation = writable<UUID | null>(null);
 
 	setContext("stores", {
 		mode,
@@ -174,6 +189,7 @@ export function initStores() {
 		ds,
 		selectedMistakes,
 		localWorkspaceDatabase,
-		sortedSubmissions
+		sortedSubmissions,
+		selectedMultiVariation
 	} as Stores);
 }

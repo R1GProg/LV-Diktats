@@ -7,7 +7,7 @@ import { get } from "svelte/store";
 import { reSort, type Stores } from "$lib/ts/stores";
 import { APP_ONLINE } from "./networking";
 import type WorkspaceCache from "../WorkspaceCache";
-import { countRegisteredMistakes, deleteFirstMatching, getAllSubmissionsWithMistakes, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
+import { countRegisteredMistakes, deleteFirstMatching, getAllSubmissionsWithMistakes, getRegisterEntry, getSubmissionGradingStatus, submissionContainsMistake } from "../util";
 import { v4 as uuidv4 } from "uuid";
 
 // Here temporarily
@@ -51,13 +51,16 @@ export default class DiktifySocket {
 
 	private localWorkspaceDb: Stores["localWorkspaceDatabase"];
 
+	private sort: Stores["sort"];
+
 	private cbs: RegisterChangeCallback[] = [];
 
 	constructor(
 		url: string,
 		workspace: Stores["workspace"],
 		activeSubmissionID: Stores["activeSubmissionID"],
-		localWorkspaceDb: Stores["localWorkspaceDatabase"]
+		localWorkspaceDb: Stores["localWorkspaceDatabase"],
+		sort: Stores["sort"]
 	) {
 		this.connectPromise = new Promise(async (res) => {
 			if (await APP_ONLINE) {
@@ -70,6 +73,7 @@ export default class DiktifySocket {
 		this.workspace = workspace;
 		this.activeSubmissionID = activeSubmissionID;
 		this.localWorkspaceDb = localWorkspaceDb;
+		this.sort = sort;
 
 		// TODO: Maybe have some sort of subscribe-to-workspace feature
 		// so the server would know which clients specifically should receive
@@ -240,8 +244,11 @@ export default class DiktifySocket {
 			};
 			
 			let state: SubmissionState = "UNGRADED";
-			
-			if (rawData.data.text.length < ws.template.length * config.incompleteFraction) {
+
+			if (
+				rawData.state === "REJECTED"
+				|| rawData.data.text.length < ws.template.length * config.incompleteFraction
+			) {
 				state = "REJECTED";
 			} else {
 				const gradingStatus = getSubmissionGradingStatus({ data: updatedData } as Submission, ws);
@@ -324,7 +331,9 @@ export default class DiktifySocket {
 	
 	async mistakeUnmerge(targetMistake: MistakeHash, workspace: UUID) {
 		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
+			const ws = await get(this.workspace)!;
+
+			const subData = ws.submissions as unknown as Record<SubmissionID, Submission>;
 			const targetSubmissions = Object.values(subData)
 				.filter((s) => s.data.mistakes.map((m) => m.hash).includes(targetMistake));
 			
@@ -346,6 +355,26 @@ export default class DiktifySocket {
 			}
 			
 			await Promise.all(parsePromises);
+
+			const mRegEntry = getRegisterEntry(targetMistake, ws.register);
+
+			if (mRegEntry) {
+				if (mRegEntry.mistakes.length === 1) {
+					this.registerDelete({
+						...mRegEntry,
+						action: "DELETE"
+					}, ws.id);
+				} else {
+					const regMistakes = [...mRegEntry.mistakes];
+					regMistakes.splice(regMistakes.findIndex((m) => m === targetMistake), 1);
+					
+					await this.registerUpdate({
+						...mRegEntry,
+						mistakes: regMistakes,
+						action: "EDIT",
+					}, ws.id);
+				}
+			}
 
 			this.setRegenPromise(() => {
 				this.onSubmissionRegen({ workspace, ids: targetSubmissions.map((s) => s.id) });
@@ -415,13 +444,24 @@ export default class DiktifySocket {
 
 			let count = 0;
 			const _mistakeWords: Record<MistakeHash, string> = {};
+			const emptyMistakes: MistakeHash[] = [];
 
 			for (const m of data.mistakes!) {
 				const submArr = getAllSubmissionsWithMistakes(Object.values(ws.submissions) as unknown as Submission[], [ m ]);
 				count += submArr.length;
 
+				if (submArr.length === 0) {
+					// If the mistake was unmerged or unsplit
+					emptyMistakes.push(m);
+					continue;
+				}
+
 				// Safe to do it like this because there must be at least one submission (The active one)
 				_mistakeWords[m] = (ws.submissions[submArr[0]] as unknown as Submission)?.data.mistakes.find((sm) => sm.hash === m)!.word;
+			}
+
+			for (const m of emptyMistakes) {
+				data.mistakes!.splice(data.mistakes!.findIndex((cm) => cm === m), 1);
 			}
 
 			const serverData: RegisterEntry = {
@@ -525,12 +565,33 @@ export default class DiktifySocket {
 
 	async splitMixedMistake(id: MistakeId, submission: SubmissionID, workspace: UUID) {
 		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
+			const ws = await get(this.workspace)!;
+			const subData = ws.submissions as unknown as Record<SubmissionID, Submission>;
 			const m = subData[submission].data.mistakes.find((cm) => cm.id === id);
 
 			if (!m) return null;
 
 			subData[submission].data.splitMistakes.push(m.hash);
+
+			const mRegEntry = getRegisterEntry(m.hash, ws.register);
+
+			if (mRegEntry) {
+				if (mRegEntry.mistakes.length === 1) {
+					this.registerDelete({
+						...mRegEntry,
+						action: "DELETE"
+					}, ws.id);
+				} else {
+					const regMistakes = [...mRegEntry.mistakes];
+					regMistakes.splice(regMistakes.findIndex((cm) => cm === m.hash), 1);
+					
+					await this.registerUpdate({
+						...mRegEntry,
+						mistakes: regMistakes,
+						action: "EDIT",
+					}, ws.id);
+				}
+			}
 
 			return this.setRegenPromise(() => {
 				this.onSubmissionRegen({ workspace, ids: [ submission ] });
@@ -549,9 +610,10 @@ export default class DiktifySocket {
 		return null;
 	}
 
-	async unsplitMixedMistaked(hash: MistakeHash, submission: SubmissionID, workspace: UUID) {
+	async unsplitMixedMistake(hash: MistakeHash, submission: SubmissionID, workspace: UUID) {
 		if (config.debug) {
-			const subData = (await get(this.workspace)!).submissions as unknown as Record<SubmissionID, Submission>;
+			const ws = await get(this.workspace)!;
+			const subData = ws.submissions as unknown as Record<SubmissionID, Submission>;
 
 			deleteFirstMatching(subData[submission].data.splitMistakes, (h) => h === hash);
 
@@ -685,7 +747,7 @@ export default class DiktifySocket {
 		await this.cache!.removeSubmissionsFromCache(data.ids, data.workspace);
 
 		const activeID = get(this.activeSubmissionID);
-		reSort((await get(this.workspace))!);
+		reSort((await get(this.workspace))!, get(this.sort));
 
 		// If the active submission was regenerated, trigger a reload
 		if (activeID !== null && data.ids.includes(activeID)) {
@@ -708,7 +770,7 @@ export default class DiktifySocket {
 	
 		const activeID = get(this.activeSubmissionID);
 		if (data.id === activeID) this.reloadActiveSubmission(); // kinda stupid
-		reSort(ws);
+		reSort(ws, get(this.sort));
 
 		if (ws.local) {
 			(await get(this.localWorkspaceDb)).updateActive();

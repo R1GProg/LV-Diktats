@@ -3,6 +3,7 @@
 	"socketUrl": "ws://localhost:3001",
 	"pilotMode": true,
 	"incompleteFraction": 0.75,
+	"rejectedMistakeThreshold": 100,
 	"cacheSingleSession": true,
 	"localWorkspacesSingleSession": false,
 	"highlightDelay": 200,

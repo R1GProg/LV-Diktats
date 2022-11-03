@@ -47,12 +47,16 @@
 		</tr>
 		{#if register.length > 0}
 			{#each register as entry}
+			{@const wordArr = Object.values(entry._mistakeWords ?? {}).slice(0, 25)}
 			<tr data-id={entry.id} on:click={onEntryClick}>
 				<td class="entry-words">
-					{#each Object.values(entry._mistakeWords ?? {}) as word}
+					{#each wordArr as word}
 					{@const adjWord = word?.replace(/\.\./g, "")}
 					<span>{adjWord && adjWord?.length > 30 ? `${adjWord.substring(0, 30).trim()}...` : adjWord}</span>
 					{/each}
+					{#if wordArr.length !== Object.values(entry._mistakeWords ?? {}).length}
+					<span style="font-size: 1.5em; font-weight: 700; position: relative; top: -0.25em;">...</span>
+					{/if}
 				</td>
 				<td class="desc"><span>{entry.description}</span></td>
 				<td><span>{entry?.opts?.ignore ? "X" : "+"}</span></td>
