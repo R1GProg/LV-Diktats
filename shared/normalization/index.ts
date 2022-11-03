@@ -4,6 +4,10 @@ export function processString(text: string) {
 		// .replace(/[A-z]/g, "^")
 		// Quotation marks
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
+		// De-duplicate quotation marks
+		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" ? "\"" : x)		
+		// Turn ,,Quote" into "Quote"
+		.replace(/(?:,,)([^\"]*)(?:")/g, "\"$1\"")
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
@@ -29,7 +33,5 @@ export function processString(text: string) {
 		// Space Quotation Marks
 		.replace(/(?<="[^\s]{0})"(?=[^"\n])/g, " \"")
 		// Space characters after closing quotation mark
-		.replace(/(?<=(\.|\?|!|,)"[^\s]{0})[^\s](?=[^"\n])/g, x => ' ' + x)
-		// De-duplicate quotation marks
-		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" ? "\"" : x);
+		.replace(/(?<=(\.|\?|!|,)"[^\s]{0})[^\s](?=[^"\n])/g, x => ' ' + x);
 }

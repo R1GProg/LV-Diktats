@@ -41,3 +41,9 @@ test("Quote followed by quote should not have its quotes de-duplicated", () => {
 	const resultString = "McBlah said: \"Blah!\" \"Blah,\" responded Blah."
 	expect(processString(testString)).toBe(resultString);
 });
+
+test("Makeshift bottom quote made with comas should be normalised to regular quote", () => {
+	const testString = ",,Blah,\" said Blah.";
+	const resultString = "\"Blah,\" said Blah."
+	expect(processString(testString)).toBe(resultString);
+});
