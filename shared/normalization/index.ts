@@ -8,7 +8,7 @@ export function processString(text: string) {
 		// De-duplicate quotation marks
 		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" ? "\"" : x)		
 		// Turn ,,Quote" into "Quote"
-		.replace(/(?:,,)([^\"]*)(?:")/g, "\"$1\"")
+		.replace(/(?:,,)([^\"\.\?!]*[\.\?!]?)(?:")/g, "\"$1\"")
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
@@ -17,6 +17,8 @@ export function processString(text: string) {
 		.replace(/((\r\n)|(\n))+/g, "\n") // Turn \n\r -> \n and remove any extra newlines (we only need one)
 		// Ellipses
 		.replace(/\.[ ]?\.[ ]?\.[ ]?/g, "…")
+		// Clean up double comas
+		.replace(/,+/g, ',')
 		// Add space to punctuation
 		.replace(/((?<!"[^"]*?)\.(?![\.\s]?$))|(\.(?![\.\s\"]?))|((?<=^[^"]*)\.(?![\.\s]?$))/gm, ". ") // Add space after dot, if none
 		.replace(/((?<!"[^"]*?),(?![\s]?$))|(,(?![\s\"]?))|((?<=^[^"]*),(?![\s]?$))/gm, ", ") // Add space after coma, if none
@@ -24,6 +26,8 @@ export function processString(text: string) {
 		.replace(/((?<!"[^"]*?)!(?![\s]?$))|(!(?![\s\"]?))|((?<=^[^"]*)!(?![\s]?$))/gm, "! ") // Add space after exclamation mark, if none
 		.replace(/(?<=[^\s])[-–—]/g, " -") // Add space before dash, if lacking
 		.replace(/[-–—](?=[^\s\.])/g, "- ") // Add space after dash, if lacking
+		// Remove space before stops
+		.replace(/\s+([\.\?!…])/g, '$1')
 		// Turn hyphens and en dashes into em dashes
 		.replace(/[-–]/g, '—')
 		// Title fix

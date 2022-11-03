@@ -47,3 +47,21 @@ test("Makeshift bottom quote made with comas should be normalised to regular quo
 	const resultString = "\"Blah,\" said Blah."
 	expect(processString(testString)).toBe(resultString);
 });
+
+test("Makeshift bottom quote made with comas should be normalised to regular quote", () => {
+	const testString = "Blah exclaimed: ,,Blah!\"";
+	const resultString = "Blah exclaimed: \"Blah!\""
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Double coma typos should not be normalised to regular quote", () => {
+	const testString = "Blah,, blah.";
+	const resultString = "Blah, blah.";
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Double coma typos should not be normalised to regular quote, even if the next sentence has a quote", () => {
+	const testString = "Blah,, blah. Blah: \"Blah!\"";
+	const resultString = "Blah, blah. Blah: \"Blah!\"";
+	expect(processString(testString)).toBe(resultString);
+});
