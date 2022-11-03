@@ -2,7 +2,7 @@ import { processString } from "../index";
 
 test("All quotation marks should be normalised into \"", () => {
 	const testString = "' and ` and ´ and < and > and “ and ” and ‘ and ’ and « and » and ‟ and ‹ and › and „ are all quotation marks!";
-	const resultString = "\" and \" and \" and \" and \" and \" and \" and \" and \" and \" and \" and \" and \" and \" and \" are all quotation marks!"
+	const resultString = "\"and\" and \"and\" and \"and\" and \"and\" and \"and\" and \"and\" and \"and\" and \" are all quotation marks!"
 	expect(processString(testString)).toBe(resultString);
 });
 
@@ -33,6 +33,18 @@ test("Text after beginning quote should not be spaced", () => {
 test("Quotes should be de-duplicated", () => {
 	const testString = "\" \"Blah,\" \" said Blah.";
 	const resultString = "\"Blah,\" said Blah."
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Quotes should be de-duplicated", () => {
+	const testString = "\" \"Blah,\" \" said Blah: \" \"Blah.\" \"";
+	const resultString = "\"Blah,\" said Blah: \"Blah.\""
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Quotes should be de-duplicated", () => {
+	const testString = "\" \"Blah...,\" \" said Blah: \" \"Blah.\" \"";
+	const resultString = "\"Blah…,\" said Blah: \"Blah.\""
 	expect(processString(testString)).toBe(resultString);
 });
 
@@ -87,5 +99,11 @@ test("Double coma typos should not be normalised to regular quote", () => {
 test("Double coma typos should not be normalised to regular quote, even if the next sentence has a quote", () => {
 	const testString = "Blah,, blah. Blah: \"Blah!\"";
 	const resultString = "Blah, blah. Blah: \"Blah!\"";
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Spaced quotes should be cleaned up", () => {
+	const testString = "Blah: \" Blah! \"";
+	const resultString = "Blah: \"Blah!\"";
 	expect(processString(testString)).toBe(resultString);
 });

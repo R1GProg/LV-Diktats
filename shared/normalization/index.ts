@@ -8,11 +8,15 @@ export function processString(text: string) {
 		// De-duplicate quotation marks
 		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" || x == "\"\"" ? "\"" : x)		
 		// Turn ,,Quote" into "Quote"
-		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!]?)(?:\s*")/g, "\"$1\"")
+		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!,]+)(?:\s*")/g, "\"$1\"")
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
 		.replace(/\s+$/g, "")
+		.replace(/\" +([^\"]+) +\"/g, "\"$1\"") // Remove excess whitespace
+		// Space quotes
+		.replace(/(?:(?<!^) *(\"[^\"]*\") *(?!$))|(?:(?<!^) *(\"[^\"]*\") *)|(?: *(\"[^\"]*\") *(?!$))/gm,
+			(match, g1, g2, g3) => g1 !== undefined ? ` ${g1} ` : (g2 !== undefined ? ` ${g2}` : `${g3} `)) // Depending on which matching group is defined, add spaces accordingly
 		// Clean up newlines
 		.replace(/((\r\n)|(\n))+/g, "\n") // Turn \n\r -> \n and remove any extra newlines (we only need one)
 		// Ellipses
