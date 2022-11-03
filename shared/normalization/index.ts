@@ -6,7 +6,7 @@ export function processString(text: string) {
 		.replace(new RegExp(String.fromCharCode(160), "g"), " ")
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
 		// De-duplicate quotation marks
-		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" ? "\"" : x)		
+		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" || x == "\"\"" ? "\"" : x)		
 		// Turn ,,Quote" into "Quote"
 		.replace(/(?:,,)([^\"\.\?!]*[\.\?!]?)(?:")/g, "\"$1\"")
 		// Clean up whitespaces
