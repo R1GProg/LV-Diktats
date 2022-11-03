@@ -6,6 +6,12 @@ test("Triple ellipses should be converted to …", () => {
 	expect(processString(testString)).toBe(resultString);
 });
 
+test("Double ellipses should be converted to …", () => {
+	const testString = "Test..";
+	const resultString = "Test…"
+	expect(processString(testString)).toBe(resultString);
+});
+
 test("Triple ellipses with space in-between should be converted to …", () => {
 	const testString = "Test. . .";
 	const resultString = "Test…"

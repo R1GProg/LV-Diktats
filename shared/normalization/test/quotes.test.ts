@@ -60,6 +60,18 @@ test("Makeshift bottom quote made with comas should be normalised to regular quo
 	expect(processString(testString)).toBe(resultString);
 });
 
+test("Makeshift bottom quote made with comas should be normalised to regular quote", () => {
+	const testString = "Blah exclaimed: , ,Blah!\"";
+	const resultString = "Blah exclaimed: \"Blah!\""
+	expect(processString(testString)).toBe(resultString);
+});
+
+test("Makeshift bottom quote made with comas should be normalised to regular quote", () => {
+	const testString = "Blah exclaimed: , , Blah!\"";
+	const resultString = "Blah exclaimed: \"Blah!\""
+	expect(processString(testString)).toBe(resultString);
+});
+
 test("Double coma typos should not be normalised to regular quote", () => {
 	const testString = "Blah,, blah.";
 	const resultString = "Blah, blah.";
