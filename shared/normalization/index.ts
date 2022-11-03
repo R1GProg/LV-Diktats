@@ -31,5 +31,5 @@ export function processString(text: string) {
 		// Space characters after closing quotation mark
 		.replace(/(?<=(\.|\?|!|,)"[^\s]{0})[^\s](?=[^"\n])/g, x => ' ' + x)
 		// De-duplicate quotation marks
-		.replace(/(?:\" \"|\")([^\"]*)(?:\" \"|\")/g, "\"$1\"");
+		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" ? "\"" : x);
 }
