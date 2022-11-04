@@ -51,5 +51,6 @@
 		overflow-y: auto;
 		overflow-x: hidden;
 		height: 100%;
+		// font-size: 0.75rem;
 	}
 </style>

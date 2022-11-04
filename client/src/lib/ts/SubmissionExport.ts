@@ -105,95 +105,95 @@ function parseExportOptions(m: MistakeData, regEntry: RegisterEntry, submissions
 // Readjust indices for separating MIXED mistakes
 function genDiffBounds(subm: Submission, exportedMistakeIDs: string[]) {
 	const adjBounds: Record<MistakeId, ExportedSubmissionMistakeBounds[]> = {};
+	const flatMistakes = subm.data.mistakes.flatMap((m) => m.subtype === "MERGED" ? m.children : m);
+	flatMistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
 	let offset = 0;
 
-	for (const m of subm.data.mistakes) {
-		if (!exportedMistakeIDs.includes(m.id)) {
+	for (const m of flatMistakes) {
+		const curID = m.mergedId ?? m.id;
+
+		if (!exportedMistakeIDs.includes(curID)) {
 			if (m.type === "ADD") {
-				const wordLen = m.subtype === "MERGED" ? m.children.map((c) => c.word).join("").length : m.word.length;
-				offset += wordLen;
+				offset += m.word.length;
 			} else if (m.type === "MIXED") {
-				const actions = m.subtype === "MERGED" ? m.children.flatMap((c) => c.actions) : m.actions;
-				offset += actions.filter((a) => a.type === "ADD").length;
+				offset += m.actions.filter((a) => a.type === "ADD").length;
 			}
 			
 			continue;
 		}
 
-		const children = m.subtype === "MERGED" ? m.children : [ m ];
-		const bounds: ExportedSubmissionMistakeBounds[] = [];
+		if (!(curID in adjBounds)) adjBounds[curID] = [];
+		
+		if (m.type === "MIXED") {
+			const charOffset = m.actions.filter((a) => a.type === "ADD").length;
 
-		for (const c of children) {
-			if (c.type === "MIXED") {
-				const charOffset = c.actions.filter((a) => a.type === "ADD").length;
+			const adjDelBounds = {
+				start: m.boundsDiff.start - offset,
+				end: m.boundsDiff.end - offset - charOffset
+			};
 
-				const adjDelBounds = {
-					start: c.boundsDiff.start - offset,
-					end: c.boundsDiff.end - offset - charOffset
-				};
+			adjBounds[curID].push({
+				type: "DEL",
+				bounds: adjDelBounds,
+				content: m.word
+			});
 
-				bounds.push({
-					type: "DEL",
-					bounds: adjDelBounds,
-					content: c.word	
-				});
-
-				const addStart = adjDelBounds.end;
-				
-				bounds.push({
-					type: "ADD",
-					content: c.wordCorrect!,
-					bounds: {
-						start: addStart,
-						end: addStart + c.wordCorrect!.length,
-					}
-				});
-
-				// Adjust for the char difference when separating
-				offset += charOffset - c.wordCorrect!.length;
-			} else {
-				bounds.push({
-					type: c.type,
-					bounds: addBoundOffset(c.boundsDiff, -offset),
-					content: c.word
-				});
-			}
-		}
-
-		// Special case bound repositioning for words that have an unnecessary space in the middle
-		// quite hacky
-		if (children.length === 2) {
-			const mixedMistake = children.find((c) => c.type === "MIXED");
-			const delMistake = children.find((c) => c.type === "DEL");
-
-			if (
-				mixedMistake
-				&& delMistake
-				&& mixedMistake.wordCorrect!.includes(delMistake.word.trim())
-			) {
-				const addBoundIndex = bounds.findIndex((b) => b.type === "ADD");
-
-				// If the add is in the middle
-				if (addBoundIndex === 1) {
-					const otherDelBound = bounds[2];
-					const addBound = bounds[1];
-
-					otherDelBound.bounds = {
-						start: addBound.bounds.start + 1,
-						end: addBound.bounds.start + 1 + otherDelBound.content.length,
-					};
-					
-					addBound.bounds = {
-						start: otherDelBound.bounds.end,
-						end: otherDelBound.bounds.end + addBound.content.length,
-					}
+			const addStart = adjDelBounds.end;
+			
+			adjBounds[curID].push({
+				type: "ADD",
+				content: m.wordCorrect!,
+				bounds: {
+					start: addStart,
+					end: addStart + m.wordCorrect!.length,
 				}
-			}
-		}
+			});
 
-		bounds.sort((a, b) => a.bounds.start - b.bounds.start);
-		adjBounds[m.id] = bounds;
+			// Adjust for the char difference when separating
+			offset += charOffset - m.wordCorrect!.length;
+		} else {
+			adjBounds[curID].push({
+				type: m.type,
+				bounds: addBoundOffset(m.boundsDiff, -offset),
+				content: m.word
+			});
+		}
+	}
+
+	// Special case bound repositioning for words that have an unnecessary space in the middle
+	// quite hacky
+	for (const m of subm.data.mistakes.filter((m) => m.subtype === "MERGED")) {
+		if (!exportedMistakeIDs.includes(m.id)) continue;
+		if (m.children.length !== 2) continue;
+
+		const mixedMistake = m.children.find((c) => c.type === "MIXED");
+		const delMistake = m.children.find((c) => c.type === "DEL");
+
+		if (!mixedMistake) continue;
+		if (!delMistake) continue;
+		if (!mixedMistake.wordCorrect!.includes(delMistake.word.trim())) continue;
+
+		const mBounds = adjBounds[m.id];
+		const addBoundIndex = mBounds.findIndex((b) => b.type === "ADD");
+
+		// If the add is in the middle
+		if (addBoundIndex === 1) {
+			const otherDelBound = mBounds[2];
+			const addBound = mBounds[1];
+
+			otherDelBound.bounds = {
+				start: addBound.bounds.start + 1,
+				end: addBound.bounds.start + 1 + otherDelBound.content.length,
+			};
+			
+			addBound.bounds = {
+				start: otherDelBound.bounds.end,
+				end: otherDelBound.bounds.end + addBound.content.length,
+			}
+
+			mBounds.sort((a, b) => a.bounds.start - b.bounds.start);
+		}
 	}
 
 	return adjBounds;
@@ -292,11 +292,9 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 
 	const parsedText = parseText(subm, adjBounds);
 
-	console.log(mistakes);
-
 	// Modifies mistakes by reference
-	// consolidateSpaceSeparatedBounds(parsedText, mistakes);
-	// trimBounds(parsedText, mistakes);
+	consolidateSpaceSeparatedBounds(parsedText, mistakes);
+	trimBounds(parsedText, mistakes);
 
 	return {
 		author: "Anonīms",
