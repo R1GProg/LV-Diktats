@@ -160,7 +160,7 @@ export default class DiktifySocket {
 				let stillMerged = true;
 				let split = false;
 
-				if (m.children.length === 0) continue;
+				if (m.children.length < 2) continue;
 
 				// Check if all of the mistakes are still in the diff
 				for (const child of m.children) {

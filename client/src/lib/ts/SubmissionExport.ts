@@ -163,7 +163,11 @@ function genDiffBounds(subm: Submission, exportedMistakeIDs: string[]) {
 
 	// Special case bound repositioning for words that have an unnecessary space in the middle
 	// quite hacky
-	for (const m of subm.data.mistakes.filter((m) => m.subtype === "MERGED")) {
+
+	for (let i = 0; i < subm.data.mistakes.length; i++) {
+		const m = subm.data.mistakes[i];
+
+		if (m.subtype !== "MERGED") continue;
 		if (!exportedMistakeIDs.includes(m.id)) continue;
 		if (m.children.length !== 2) continue;
 
@@ -193,6 +197,20 @@ function genDiffBounds(subm: Submission, exportedMistakeIDs: string[]) {
 			}
 
 			mBounds.sort((a, b) => a.bounds.start - b.bounds.start);
+
+			// Add an offset to any other ADD mistake bounds right after this one
+			for (let j = i + 1; j < subm.data.mistakes.length; j++) {
+				const otherM = subm.data.mistakes[j];
+
+				if (otherM.type !== "ADD") break;
+				if (otherM.subtype === "MERGED") continue; // WIP
+
+				const len = otherM.boundsDiff.end - otherM.boundsDiff.start;
+				const otherBounds = adjBounds[otherM.id][0].bounds;
+
+				otherBounds.start = addBound.bounds.end;
+				otherBounds.end = addBound.bounds.end + len;
+			}
 		}
 	}
 
