@@ -6,13 +6,17 @@ export function processString(text: string) {
 		.replace(new RegExp(String.fromCharCode(160), "g"), " ")
 		.replace(/['`´<>“”‘’«»‟‹›„]/g, "\"")
 		// De-duplicate quotation marks
-		.replace(/(?:\"|\" \")([^\"]*)(?:\"|\" \")/g, x => x == "\" \"" || x == "\"\"" ? "\"" : x)		
+		.replace(/(?:\"+|\" *\")([^\"]*[\.\?,!]+)(?:\"+|\" *\")(?! \"( |$))/gm, "\"$1\"")		
 		// Turn ,,Quote" into "Quote"
-		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!]?)(?:")/g, "\"$1\"")
+		.replace(/(?:,\s?,\s?)([^\"\.\?!]*[\.\?!,]+)(?:\s*")/g, "\"$1\"")
 		// Clean up whitespaces
 		.replace(/\n\s+/g, "\n") // remove any whitespace after newlines
 		.replace(/\s+\n/g, "\n") // remove any spaces before newlines
 		.replace(/\s+$/g, "")
+		.replace(/\" +([^\"]+) +\"/g, "\"$1\"") // Remove excess whitespace
+		// Space quotes
+		.replace(/(?:(?<!^) *(\"[^\"]*\") *(?!$))|(?:(?<!^) *(\"[^\"]*\") *)|(?: *(\"[^\"]*\") *(?!$))/gm,
+			(match, g1, g2, g3) => g1 !== undefined ? ` ${g1} ` : (g2 !== undefined ? ` ${g2}` : `${g3} `)) // Depending on which matching group is defined, add spaces accordingly
 		// Clean up newlines
 		.replace(/((\r\n)|(\n))+/g, "\n") // Turn \n\r -> \n and remove any extra newlines (we only need one)
 		// Ellipses
@@ -31,7 +35,7 @@ export function processString(text: string) {
 		// Turn hyphens and en dashes into em dashes
 		.replace(/[-–]/g, '—')
 		// Title fix
-		.replace(/"?Krāsaina saule virs pelēkiem jumtiem"?/, (x) => x.replace(/"/g, '')) // Remove the title being in quotes
+		.replace(/"?Krāsaina saule virs pelēkiem jumtiem"?\.?/, (x) => x.replace(/"/g, '').replace('.', '')) // Remove the title being in quotes
 		.replace(/(?<=Zebris)((\.\s)|(,\s)|(\s—\s)|\s)+(?=Krāsaina)/, "\n") // Replace Author, Title with Author
 									   							 		  //                            Title
 		.replace(/ {2,}/g, " ")
