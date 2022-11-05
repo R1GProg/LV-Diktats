@@ -113,3 +113,9 @@ test("Spaced quotes should be cleaned up", () => {
 	const resultString = "Blah: \"Blah!\"";
 	expect(processString(testString)).toBe(resultString);
 });
+
+test("Spaced quotes should be cleaned up", () => {
+	const testString = "Blah : \"Blah!\"";
+	const resultString = "Blah: \"Blah!\"";
+	expect(processString(testString)).toBe(resultString);
+});
