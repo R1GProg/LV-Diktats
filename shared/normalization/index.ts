@@ -28,6 +28,7 @@ export function processString(text: string) {
 		.replace(/((?<!"[^"]*?),(?![\s]?$))|(,(?![\s\"]?))|((?<=^[^"]*),(?![\s]?$))/gm, ", ") // Add space after coma, if none
 		.replace(/((?<!"[^"]*?)\?(?![\s]?$))|(\?(?![\s\"]?))|((?<=^[^"]*)\?(?![\s]?$))/gm, "? ") // Add space after question mark, if none
 		.replace(/((?<!"[^"]*?)!(?![\s]?$))|(!(?![\s\"]?))|((?<=^[^"]*)!(?![\s]?$))/gm, "! ") // Add space after exclamation mark, if none
+		.replace(/\s+,/g, ",")
 		.replace(/(?<=[^\s])[-–—]/g, " -") // Add space before dash, if lacking
 		.replace(/[-–—](?=[^\s\.])/g, "- ") // Add space after dash, if lacking
 		// Remove space before stops

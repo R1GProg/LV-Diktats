@@ -12,6 +12,12 @@ test("Comas with a space after them should not have an another space added", () 
 	expect(processString(testString)).toBe(resultString);
 });
 
+test("Comas should not have a space before them", () => {
+	const testString = "Test , test";
+	const resultString = "Test, test"
+	expect(processString(testString)).toBe(resultString);
+});
+
 test("Comas followed by a quotation mark should not have a space added", () => {
 	const testString = "\"Test,\" test";
 	const resultString = "\"Test,\" test"
