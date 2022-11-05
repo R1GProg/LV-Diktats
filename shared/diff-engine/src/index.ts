@@ -115,7 +115,6 @@ export default class Diff {
 	}
 
 	static parseMistakes(diffData: DiffAction<WordItem>[]) {
-		// const sortedDiff = diffData.sort((a, b) => a.indexCheck - b.indexCheck);
 		let delOffset = 0;
 		let addOffset = 0;
 		const mistakes: Mistake[] = [];
@@ -130,8 +129,8 @@ export default class Diff {
 			} else {
 				addOffset += len;
 			}
-			
-			mistakes.push(new Mistake({
+
+			const m = new Mistake({
 				type: a.type,
 				subtype: a.item.type === "PUNCT" ? "OTHER" : "WORD",
 				boundsDiff: { start: indexStart, end: indexStart + len },
@@ -144,7 +143,9 @@ export default class Diff {
 					end: a.type === "ADD" ? (a.item.index + len) : a.indexCorrect
 				},
 				word: a.item.content
-			}));
+			});
+
+			mistakes.push(m);
 		}
 
 		return mistakes;

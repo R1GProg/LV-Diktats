@@ -207,12 +207,21 @@ export default class DiktifySocket {
 				}
 
 				// Add an offset to boundsDiff for all mistakes after this one
-				const offset = Math.abs(split.add.word.length + split.del.word.length - (m.boundsDiff.end - m.boundsDiff.start));
+				const curMistakeLen = m.boundsDiff.end - m.boundsDiff.start;
+				const newMistakeLen = split.add.word.length + split.del.word.length;
+				const offset = newMistakeLen - curMistakeLen;
 
 				for (let i = mIndex + 1; i < mistakes.length; i++) {
 					const otherM = mistakes[i];
 					otherM.boundsDiff.start += offset;
 					otherM.boundsDiff.end += offset;
+
+					if (otherM.subtype === "MERGED") {
+						for (const c of otherM.children) {
+							c.boundsDiff.start += offset;
+							c.boundsDiff.end += offset;
+						}
+					}
 				}
 
 				const addData = await split.add.exportData();
