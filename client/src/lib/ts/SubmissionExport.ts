@@ -240,7 +240,7 @@ function trimBounds(parsedText: string, mistakes: ExportedSubmissionMistake[]) {
 		for (const b of m.bounds) {
 			const content = parsedText.substring(b.bounds.start, b.bounds.end);
 
-			if (content === " ") continue;
+			if (content === " " || content === "\n") continue;
 
 			const spacesBefore = content.length - content.trimStart().length;
 			const spacesAfter = content.length - content.trimEnd().length;
