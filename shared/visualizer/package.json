@@ -13,6 +13,7 @@
   "dependencies": {
     "brfs": "^2.0.2",
     "rimraf": "^3.0.2",
-    "tsify": "^5.0.4"
+    "tsify": "^5.0.4",
+    "uglifyify": "^5.0.2"
   }
 }
