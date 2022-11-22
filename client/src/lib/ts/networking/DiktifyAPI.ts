@@ -1,6 +1,6 @@
 import config from "$lib/config.json";
 import type { RegisterEntry, Setting, Submission, SubmissionID, User, UUID, Workspace, WorkspacePreview } from "@shared/api-types";
-import Diff from "@shared/diff-engine";
+import Diff, { Mistake, type Bounds, type MistakeData, type MistakeHash } from "@shared/diff-engine";
 import { processString } from "@shared/normalization";
 import { get } from "svelte/store";
 import type { Stores } from "../stores";
@@ -143,6 +143,21 @@ export default class DiktifyAPI {
 
 export const api = new DiktifyAPI();
 
+function parseIgnoreBounds(rawText: string, ignoreBounds: Bounds[]) {
+	let text = rawText;
+	let offset = 0;
+
+	for (const bounds of ignoreBounds) {
+		const sub1 = text.substring(0, bounds.start - offset);
+		const sub2 = text.substring(bounds.end - offset);
+		text = (sub1 + sub2).trim();
+
+		offset += bounds.end - bounds.start;
+	}
+
+	return text;
+}
+
 export async function parseDebugWorkspace(jsonData: any) {
 	const ws: Workspace = {
 		...jsonData,
@@ -163,49 +178,53 @@ export async function parseDebugWorkspace(jsonData: any) {
 
 		const mistakeArr = [...sub.data.mistakes];
 
-		const diff = new Diff(sub.data.text, ws.template);
+		const diff = new Diff(parseIgnoreBounds(sub.data.text, sub.data.ignoreText), ws.template);
 		diff.calc();
 		const subRediff = diff.getMistakes();
 
-		let regMistakeCountOffset = 0;
+		// let regMistakeCountOffset = 0;
 
 		for (const m of sub.data.mistakes) {
 			if (m.subtype === "MERGED" && m.children.length === 0) {
 				mistakeArr.splice(mistakeArr.findIndex((cm) => cm === m), 1);
 			}
 
-			if (m.subtype === "MERGED") {
-				let unmerge = false;
+			// if (m.subtype === "MERGED") {
+			// 	let unmerge = false;
 
-				for (const child of m.children) {
-					let has = false;
+			// 	for (const child of m.children) {
+			// 		let has = false;
 
-					for (const reM of subRediff) {
-						if (await reM.genHash() === child.hash) has = true; 
-					}
+			// 		for (const reM of subRediff) {
+			// 			if (await reM.genHash() === child.hash) has = true; 
+			// 		}
 
-					if (!has) {
-						unmerge = true;
-						break;
-					}
-				}
+			// 		if (!has) {
+			// 			unmerge = true;
+			// 			break;
+			// 		}
+			// 	}
 
-				if (unmerge) {
-					if (mistakeInRegister(m.hash, ws.register)) {
-						regMistakeCountOffset++;
-					}
-				}
-			}
+			// 	if (unmerge) {
+			// 		if (mistakeInRegister(m.hash, ws.register)) {
+			// 			regMistakeCountOffset++;
+			// 		}
+			// 	}
+			// }
 		}
 
 		sub.data.mistakes = mistakeArr;
+
+		const newMistakes = await reprocessDiff(sub, subRediff);
+
+		sub.data.mistakes = newMistakes;
 
 		if (sub.data.mistakes.length > config.rejectedMistakeThreshold) {
 			ws.submissions[id].state = "REJECTED";
 			continue;
 		}
 
-		const registeredCount = countRegisteredMistakes(sub, ws.register) - regMistakeCountOffset;
+		const registeredCount = countRegisteredMistakes(sub, ws.register);
 		if (registeredCount === sub.data.mistakes.length) {
 			ws.submissions[id].state = "DONE";
 		} else if (registeredCount === 0) {
@@ -216,6 +235,133 @@ export async function parseDebugWorkspace(jsonData: any) {
 	}
 
 	return ws;
+}
+
+async function reprocessDiff(rawData: Submission, rawMistakes: Mistake[]) {
+	const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
+	const hashMistakeMap: Record<MistakeHash, Mistake> = {};
+	const mistakeMapPromises: Promise<void>[] = [];
+	
+	// Pregenerate the hashes of all mistakes
+	for (const m of rawMistakes) {
+		mistakeMapPromises.push(new Promise<void>(async (res) => {
+			hashMistakeMap[await m.genHash()] = m;
+			res();
+		}));
+	}
+	
+	await Promise.all(mistakeMapPromises);
+	const splitMerged: MistakeData[] = [];
+	
+	const mergeMistake = async (m: MistakeData) => {
+		const mistakesToMerge = m.children.map((child) => hashMistakeMap[child.hash]) as (Mistake | undefined)[];
+		
+		if (mistakesToMerge.includes(undefined)) return false;
+		
+		const mergedMistake = Mistake.mergeMistakes(...mistakesToMerge as Mistake[]);
+		
+		// Remove the mistakes that were merged, add the new merged mistake
+		for (const child of m.children) {
+			delete hashMistakeMap[child.hash];
+		}
+		
+		hashMistakeMap[await mergedMistake.genHash()] = mergedMistake;
+		
+		return true;
+	}
+	
+	// Merge previously merged mistakes
+	for (const m of mergedMistakes) {
+		let stillMerged = true;
+		let split = false;
+		
+		if (m.children.length < 2) continue;
+		
+		// Check if all of the mistakes are still in the diff
+		for (const child of m.children) {
+			if (!(child.hash in hashMistakeMap)) {
+				stillMerged = false;
+				
+				if (child.splitFrom) {
+					split = true;
+				} else {
+					split = false;
+				}
+				
+				break;
+			}
+		}
+		
+		if (!stillMerged) {
+			if (split) splitMerged.push(m);
+			continue;
+		}
+		
+		await mergeMistake(m);
+	}
+	
+	let mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
+	mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+	
+	// Split mistakes
+	for (const hash of (rawData.data.splitMistakes ?? [])) {
+		const mIndex = mistakes.findIndex((cm) => cm.hash === hash);
+		const m = mistakes[mIndex];
+		
+		if (!m) {
+			rawData.data.splitMistakes.splice(rawData.data.splitMistakes.findIndex((v) => v === hash), 1);
+			continue;
+		}
+		
+		const split = Mistake.splitMixed(m);
+		
+		if (!split) {
+			console.warn(`Failed to split mixed! (${hash})`);
+			rawData.data.splitMistakes.splice(rawData.data.splitMistakes.findIndex((v) => v === hash), 1);
+			continue;
+		}
+		
+		// Add an offset to boundsDiff for all mistakes after this one
+		const curMistakeLen = m.boundsDiff.end - m.boundsDiff.start;
+		const newMistakeLen = split.add.word.length + split.del.word.length;
+		const offset = newMistakeLen - curMistakeLen;
+		
+		for (let i = mIndex + 1; i < mistakes.length; i++) {
+			const otherM = mistakes[i];
+			otherM.boundsDiff.start += offset;
+			otherM.boundsDiff.end += offset;
+			
+			if (otherM.subtype === "MERGED") {
+				for (const c of otherM.children) {
+					c.boundsDiff.start += offset;
+					c.boundsDiff.end += offset;
+				}
+			}
+		}
+		
+		const addData = await split.add.exportData();
+		const delData = await split.del.exportData();
+		
+		mistakes.splice(mIndex, 1);
+		mistakes.splice(mIndex, 0, addData);
+		mistakes.splice(mIndex, 0, delData);
+		
+		delete hashMistakeMap[m.hash];
+		hashMistakeMap[addData.hash] = split.add;
+		hashMistakeMap[delData.hash] = split.del;
+	}
+	
+	// Merge split mistakes
+	for (const m of splitMerged) {
+		if (!await mergeMistake(m)) {
+			console.warn(`Failed to remerge mistake (${m.hash}, ${m.word})`);
+		}
+	}
+	
+	mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
+	mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
+
+	return mistakes;
 }
 
 async function loadDebugWorkspace(): Promise<Workspace> {

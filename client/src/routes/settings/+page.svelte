@@ -47,7 +47,7 @@
 		if (!ws) return;
 
 		const submissions = Object.values(ws.submissions as unknown as Record<string, Submission>);
-		const submTest = submissions.filter((s) => s.id === "9999");
+		const submTest = submissions.filter((s) => s.id === "573");
 		const output: Record<string, { id: string, data: ExportedSubmission }> = {};
 
 		for (const subm of submissions) {
