@@ -203,9 +203,12 @@ function genDiffBounds(subm: Submission, exportedMistakeIDs: string[]) {
 				const otherM = subm.data.mistakes[j];
 
 				if (otherM.type !== "ADD") break;
-				if (otherM.subtype === "MERGED") continue; // WIP
+				if (otherM.subtype === "MERGED") continue; // TODO: WIP
 
 				const len = otherM.boundsDiff.end - otherM.boundsDiff.start;
+
+				if (!adjBounds[otherM.id]) continue;
+
 				const otherBounds = adjBounds[otherM.id][0].bounds;
 
 				otherBounds.start = addBound.bounds.end;
@@ -280,6 +283,8 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 	const avgMistakes = calcSubmissionAvgMistakesPerWord(subm, workspace);
 	const submissions = Object.values(workspace.submissions) as unknown as Submission[];
 
+	const incorrectWords: string[] = [];
+
 	// Generate mistake metadata
 	for (const m of subm.data.mistakes) {
 		const registerEntry = getRegisterEntry(m.hash, workspace.register);
@@ -287,7 +292,23 @@ export function exportSubmission(subm: Submission, workspace: Workspace): Export
 		if (!registerEntry) continue;
 		if (registerEntry.opts.ignore) continue;
 
+		// if (registerEntry.opts.countType === "TOTAL") {
+		// 	registerEntry.opts.countType = "VARIATION";
+		// }
+
 		const { mistakeCount, typeCounter } = parseExportOptions(m, registerEntry, submissions, avgMistakes);
+
+		if (m.type === "MIXED") {
+			if (m.subtype === "WORD") {
+				if (incorrectWords.includes(m.wordCorrect!)) {
+					typeCounter.ortho = 0;
+				} else {
+					incorrectWords.push(m.wordCorrect!);
+				}
+			}
+
+			// TODO: Is a branch for MERGED mistakes necessary?
+		}
 
 		mistakes.push({
 			id: m.id,

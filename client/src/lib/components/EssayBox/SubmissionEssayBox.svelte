@@ -37,6 +37,8 @@
 		essayEl.setPlainText(newText);
 
 		for (const b of ignoredText) {
+			if (b.start === b.end) continue;
+
 			try {
 				essayEl.highlightText(b.start, b.end - b.start, "hl-status-ignored")!;
 			} catch (err) {
@@ -74,6 +76,11 @@
 
 		const range = selection.getRangeAt(0);
 
+		if (range.startOffset === range.endOffset) {
+			selection.removeAllRanges();
+			return;
+		}
+
 		const id = essayEl.highlightRange(range, "hl-status-ignored");
 		selection.removeAllRanges();
 
@@ -107,6 +114,8 @@
 		const bounds: Bounds[] = [];
 		let curOffset = 0;
 
+		essayEl.getTextContainer().normalize();
+
 		for (const el of essayEl.getTextContainer().childNodes) {
 			const textLen = el.textContent!.length;
 
@@ -119,8 +128,32 @@
 
 			curOffset += textLen;
 		}
+
+		// Some bounds post-processing to simplify them
 		
-		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, bounds);
+		const ppBounds: Bounds[] = [];
+
+		for (const b of bounds) {
+			if (b.start === b.end) continue;
+			ppBounds.push(b);
+		}
+
+		for (let i = 0; i < ppBounds.length - 1; i++) {
+			const curBounds = ppBounds[i];
+			const nextBounds = ppBounds[i + 1];
+
+			// If the bounds are right next to eachother, combine them
+			if (curBounds.end === nextBounds.start) {
+				ppBounds[i].end = nextBounds.end;
+
+				// Remove next bounds and check if there are more bounds that can be combined
+				ppBounds.splice(i + 1, 1);
+				i--;
+			}
+		}
+		
+		console.log(ppBounds);
+		$ds.textIgnore($activeSubmissionID!, $activeWorkspaceID!, ppBounds);
 	}
 
 	async function onToolbarModeChange(ev: ToolbarModeEvent) {
