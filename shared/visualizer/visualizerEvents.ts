@@ -150,10 +150,10 @@ export function onResize() {
 			.insertAdjacentHTML(
 				"afterend",
 				'<div class="mistakeLine" style="top:' +
-				(el.offsetTop + el.parentElement!.offsetTop) +
+				(el.offsetTop + el.parentElement!.offsetTop - 1.6) +
 				"px; height:" +
-				rect.height +
-				'px;"></div>'
+				"1.7em" +
+				';"></div>'
 			);
 		doneYLevels.push(rect.y);
 	});
