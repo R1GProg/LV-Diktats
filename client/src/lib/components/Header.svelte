@@ -13,6 +13,7 @@
 	<nav>
 		<a href="/" class:active={$page.url.pathname === "/"}>Labošana</a>
 		<a href="/register" class:active={$page.url.pathname === "/register"}>Kļūdu reģistrs</a>
+		<a href="/statistics" class:active={$page.url.pathname === "/statistics"}>Statistika</a>
 		<a href="/settings" class:active={$page.url.pathname === "/settings"}>Iestatījumi</a>
 	</nav>
 
@@ -45,7 +46,7 @@
 		grid-area: nav;
 
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(4, 1fr);
 		width: min-content;
 		column-gap: 1em;
 		font-size: calc(#{$HEADER_HEIGHT} / 2.25);

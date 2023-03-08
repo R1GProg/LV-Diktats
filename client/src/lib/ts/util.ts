@@ -105,6 +105,21 @@ export function countRegisteredMistakes(subm: Submission, reg: RegisterEntry[]) 
 	return subm.data.mistakes.filter((m) => mistakeInRegister(m.hash, reg)).length;
 }
 
+export function countValidMistakes(subm: Submission, reg: RegisterEntry[]) {
+	let count = 0;
+
+	for (const m of subm.data.mistakes) {
+		const regEntry = getRegisterEntry(m.hash, reg);
+
+		if (regEntry === null) continue;
+		if (regEntry.opts.ignore) continue;
+
+		count++;
+	}
+
+	return count;
+}
+
 export function getSubmissionGradingStatus(subm: Submission, ws: Workspace) {
 	const num = countRegisteredMistakes(subm, ws.register);
 	
