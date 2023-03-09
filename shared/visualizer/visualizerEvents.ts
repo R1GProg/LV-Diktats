@@ -159,6 +159,7 @@ export function onResize() {
 	});
 }
 
+let resizeInterval: any;
 export function registerClickHandler() {
 	getCont().addEventListener("click", function (evt) {
 		//   if (!is_touch_enabled()) return;
@@ -175,5 +176,5 @@ export function registerClickHandler() {
 	// window.addEventListener("resize", () => onResize());
 	const observer = new ResizeObserver(onResize);
 	observer.observe(getCont());
-	// if (!resizeInterval) resizeInterval = setInterval(() => onResize(), 100);
+	if (!resizeInterval) resizeInterval = setInterval(() => onResize(), 100);
 }

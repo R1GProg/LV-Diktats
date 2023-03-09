@@ -129,8 +129,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 				onLeaveMistake(mistakeElement.dataset["mid"]!)
 			});
 		});
-		registerClickHandler();
-		setTimeout(() => { onResize() }, 500);
+		registerClickHandler(); 
 	}, 0);
 }
 
