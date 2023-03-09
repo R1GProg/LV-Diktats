@@ -130,6 +130,7 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 			});
 		});
 		registerClickHandler();
+		setTimeout(() => { onResize() }, 500);
 	}, 0);
 }
 
