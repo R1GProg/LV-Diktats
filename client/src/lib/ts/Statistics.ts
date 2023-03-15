@@ -134,11 +134,46 @@ export const statisticsTemplate: StatisticsEntry[] = [
 		type: "CSV",
 		calc: (dataset) => {
 			const subms = Object.values(dataset.submissions) as unknown as Submission[];
-			const outputData = subms.map((s) => ({
-				id: s.id,
-				mistakes: countValidMistakes(s, dataset.register),
-				state: s.state
-			}));
+			const outputData: {
+				id: string,
+				orthoMistakes: number,
+				punctMistakes: number,
+				state: string
+			}[] = [];
+
+			for (const s of subms) { 
+				let orthoMistakes = 0;
+				let punctMistakes = 0;
+				const orthoCountedWords: string[] = [];
+
+				for (const m of s.data.mistakes) {
+					const regEntry = getRegisterEntry(m.hash, dataset.register);
+
+					if (regEntry === null) continue;
+					if (regEntry.opts.ignore) continue;
+
+					if (regEntry.opts.mistakeType === "ORTHO") {
+						if (m.type === "MIXED") {
+							const word = m.wordCorrect!.trim();
+
+							if (orthoCountedWords.includes(word)) continue;
+
+							orthoCountedWords.push(word);
+						}
+
+						orthoMistakes++;
+					} else if (regEntry.opts.mistakeType === "PUNCT") {
+						punctMistakes++;
+					}
+				}
+
+				outputData.push({
+					id: s.id,
+					state: s.state,
+					orthoMistakes,
+					punctMistakes
+				});
+			}
 
 			return Papa.unparse(outputData, { newline: "\n" });
 		}

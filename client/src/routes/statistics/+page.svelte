@@ -3,6 +3,7 @@
 	import { statisticsTemplate, type StatisticsData } from "$lib/ts/Statistics";
 	import { downloadText } from "$lib/ts/util";
 	import type { Workspace } from "@shared/api-types";
+	import Papa from "papaparse";
 
 	const workspace = store("workspace") as Stores["workspace"];
 
@@ -60,6 +61,15 @@
 		for (const csv of csvEntries) {
 			downloadText(`${getFilePrefix(ws)}-statistics-${csv.key}.csv`, csv.data.toString());
 		}
+
+		const numEntries = statData.filter((e) => e.type === "NUMBER");
+		const numCSV: { title: string, data: number }[] = [];
+
+		for (const e of numEntries) {
+			numCSV.push({ title: e.title, data: e.data as number });
+		}
+
+		downloadText(`${getFilePrefix(ws)}-statistics-num.csv`, Papa.unparse(numCSV, { newline: "\n" }));
 	}
 </script>
 
