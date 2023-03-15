@@ -87,7 +87,7 @@
 }
 .visualisation .tooltip {
 	position: absolute;
-	width: min(230px, 15vw);
+	width: min(230px, 20vw);
 	height: -moz-fit-content;
 		height: fit-content;
 	background-color: white;
@@ -108,7 +108,7 @@
 .visualisation .desc {
 	position: relative;
 	left: 9px;
-	top: 12%;
+	/* top: 12%; */
 	margin-top: 0.5em;
 		margin-bottom: 0.5em;
 		width: calc(min(230px, 15vw) - 18px);
@@ -126,7 +126,7 @@
 .visualisation .type {
 	position: relative;
 	right: 9px;
-	bottom: 2%;
+	/* bottom: 2%; */
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
@@ -140,7 +140,7 @@
 .visualisation .footer {
 	position: relative;
 	right: 9px;
-		bottom: 2%;
+		/* bottom: 2%; */
 
 	font-family: 'Roboto Serif';
 	font-style: normal;
@@ -148,6 +148,8 @@
 	font-size: 10px;
 	line-height: 12px;
 	text-align: right;
+
+	padding-bottom: 5px;
 
 	color: #000000;
 }
@@ -165,4 +167,18 @@
 
 	clip-path: polygon(50% 0, 200% 0, 100% 200%, 50% 200%);
 	filter: drop-shadow(0px 0px 2px #000);
+}
+
+@media only screen and (hover: none) and (pointer: coarse) {
+	.visualisation .desc {
+		font-size: 20px;
+	}
+
+	.visualisation .type {
+		font-size: 15px;
+	}
+	
+	.visualisation .footer {
+		font-size: 15px;
+	}
 }

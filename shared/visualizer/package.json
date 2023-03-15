@@ -15,5 +15,8 @@
     "rimraf": "^3.0.2",
     "tsify": "^5.0.4",
     "uglifyify": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.14.6"
   }
 }
