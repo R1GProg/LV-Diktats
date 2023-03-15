@@ -84,7 +84,20 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 		// console.log("<br/>");
 		offset += modified.length - original.length;
 	}
-	const total = jsonData.mistakes.map(x => x.typeCounter.ortho + x.typeCounter.punct).reduce((x, y, i) => x + y);
+
+	let orthoMistakes: number;
+	let punctMistakes: number;
+
+	if (jsonData.mistakes.length === 0) {
+		orthoMistakes = 0;
+		punctMistakes = 0;
+	} else {
+		orthoMistakes = jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y);
+		punctMistakes = jsonData.mistakes.map(x => x.typeCounter.punct).reduce((x, y, i) => x + y);
+	}
+
+	let total = orthoMistakes + punctMistakes;
+
 	// Visualisation HTML
 	const element = `<div class="visualisation">
 	<link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -98,11 +111,11 @@ export function renderCorrect(containerId: string, jsonData: GradedSubmission, e
 </div>
 	<div class="head">
 		<div class="left">
-			<span class="fieldName">Ortogrāfijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.ortho).reduce((x, y, i) => x + y)}<br>
-			<span class="fieldName">Interpunkcijas kļūdas:</span><br>${jsonData.mistakes.map(x => x.typeCounter.punct).reduce((x, y, i) => x + y)}
+			<span class="fieldName">Ortogrāfijas kļūdas:</span><br>${orthoMistakes}<br>
+			<span class="fieldName">Interpunkcijas kļūdas:</span><br>${punctMistakes}
 		</div>
 		<div class="right">
-			<span class="fieldName">Kopā:</span><br>${total} ${total > 1 ? "kļūdas" : "kļūda"}
+			<span class="fieldName">Kopā:</span><br>${total} ${total !== 1 ? "kļūdas" : "kļūda"}
 		</div>
 	</div>
 	<div class="submission">
