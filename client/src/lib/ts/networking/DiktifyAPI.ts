@@ -72,7 +72,7 @@ export default class DiktifyAPI {
 
 	async getWorkspaces(): Promise<WorkspacePreview[]> {
 		if (config.debug) {
-			return [{ id: config.debugWorkspaceId, name: "Krāsaina saule virs pelēkiem jumtiem	 (DEBUG)" }];
+			return [{ id: config.debugWorkspaceId, name: "Izdomāt diktātu (DEBUG)" }];
 		}
 		
 		// TODO: SERVER FETCH
@@ -365,7 +365,8 @@ async function reprocessDiff(rawData: Submission, rawMistakes: Mistake[]) {
 }
 
 async function loadDebugWorkspace(): Promise<Workspace> {
-	const req = await fetch("/output-prod.json");
+	// const req = await fetch("/output-prod.json");
+	const req = await fetch("/output-2023.json");
 	
 	return parseDebugWorkspace(await req.json());
 }

@@ -20,20 +20,22 @@ import { Submission, SubmissionData, SubmissionID, SubmissionPreview, Workspace 
 // };
 
 interface CSVSubmission {
-		id: number;
-		email: string;
-		text: string;
-	};
+	id: number;
+	email: string;
+	text: string;
+};
 
 async function parseshitdicksv2() {
-	const csv = fs.readFileSync(path.join(__dirname, "..", "data", "data-prod.csv"), "utf8");
-	const template = processString(fs.readFileSync(path.join(__dirname, "..", "data", "correct1.txt"), "utf8"));
+	let csv = fs.readFileSync(path.join(__dirname, "..", "data", "data-2023-min.csv"), "utf16le");
+	const template = processString(fs.readFileSync(path.join(__dirname, "..", "data", "correct-2023.txt"), "utf8"));
 
 	const submissions: Record<SubmissionID, Submission> = {};
 
 	parse(csv, {
 		delimiter: ',',
-		from_line: 2,
+		from_line: 1,
+		quote: "\"",
+		relax_column_count: true,
 		columns: ["id", "email", "text"]
 	}, async (err, records: CSVSubmission[], info) => {
 		if (err) {
@@ -70,8 +72,8 @@ async function parseshitdicksv2() {
 		}
 
 		const outputWorkspace: Workspace = {
-			id: "debugworkspaceid",
-			name: "Krāsaina saule virs pelēkiem jumtiem",
+			id: "diktats2023",
+			name: "Izdomāt diktātu",
 			template,
 			submissions: submissions as any,
 			register: [],

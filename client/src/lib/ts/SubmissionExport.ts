@@ -127,7 +127,6 @@ function genDiffBounds(subm: Submission, exportedMistakeIDs: string[]) {
 		
 		if (m.type === "MIXED") {
 			const charOffset = m.actions.filter((a) => a.type === "ADD").length;
-
 			const adjDelBounds = {
 				start: m.boundsDiff.start - offset,
 				end: m.boundsDiff.end - offset - charOffset
