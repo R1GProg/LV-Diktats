@@ -108,10 +108,6 @@ export default class DiktifySocket {
 			const rawData = ws.submissions[id] as unknown as Submission;
 			const mergedMistakes = rawData.data.mistakes.filter((m) => m.subtype === "MERGED");
 
-			if (rawData.id === "133") {
-				console.log(rawData);
-			}
-
 			// Make sure the ignoreBounds are valid (Required on some platforms for some reason)
 			for (const b of rawData.data.ignoreText) {
 				if (b.start > b.end) {
@@ -239,7 +235,7 @@ export default class DiktifySocket {
 				hashMistakeMap[addData.hash] = split.add;
 				hashMistakeMap[delData.hash] = split.del;
 			}
-			
+
 			// Merge split mistakes
 			for (const m of splitMerged) {
 				if (!await mergeMistake(m)) {
@@ -247,7 +243,39 @@ export default class DiktifySocket {
 				}
 			}
 
+
 			mistakes = await Promise.all(Object.values(hashMistakeMap).map((m) => m.exportData()));
+
+			// HACK: if there are any mistakes that ended up with the same hash and got dropped,
+			// reintroduce them back here
+			if (rawMistakes.length !== mistakes.length) {
+				const rawHashes = await Promise.all(rawMistakes.map((m) => m.genHash()));
+				const rawHashMistakePairs = rawMistakes.map((m, i) => ({ hash: rawHashes[i], mistake: m }));
+				const mistakesHashCollisions: Record<string, Mistake[]> = {};
+
+				for (const pair of rawHashMistakePairs) {
+					const hash = pair.hash;
+
+					if (hash in mistakesHashCollisions) {
+						mistakesHashCollisions[hash].push(pair.mistake);
+					} else {
+						mistakesHashCollisions[hash] = [pair.mistake];
+					}
+				}
+
+				// for all that have a hash collision, re-add the one that is missing from the new mistakes array
+				for (const hash of Object.keys(mistakesHashCollisions)) {
+					if (mistakesHashCollisions[hash].length === 1) continue;
+
+					const missingMistake = mistakesHashCollisions[hash].find((m) => !mistakes.find((cm) => cm.id === m.id));
+
+					if (!missingMistake) continue;
+
+					mistakes.push(await missingMistake.exportData());
+					console.warn(`Reintroduced mistake with hash collision ("${missingMistake.word}", diff: [${missingMistake.boundsDiff.start}; ${missingMistake.boundsDiff.end}])`);
+				}
+			}
+
 			mistakes.sort((a, b) => a.boundsDiff.start - b.boundsDiff.start);
 
 			const updatedData: SubmissionData = {
@@ -255,7 +283,7 @@ export default class DiktifySocket {
 				splitMistakes: rawData.data.splitMistakes ?? [],
 				mistakes,
 			};
-			
+
 			let state: SubmissionState = "UNGRADED";
 
 			if (
