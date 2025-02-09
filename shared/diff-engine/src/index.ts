@@ -309,53 +309,31 @@ export default class Diff {
 			// Adjust boundsDiff of all punctuation in the middle of the sub
 			// to compensate for the difference in word length of the sub mistake
 
-			// If there are other punct mistakes on either side of the sub mistake,
-			// move the punctuation in that direction.
-			// If there are no other punct mistakes or mistakes on both sides,
-			// move the punctuation according to the truth table
-			// ADD punct, ADD first mistake - punct after
-			// ADD punct, DEL first mistake - punct before
-			// DEL punct, ADD first mistake - punct before
-			// DEL punct, DEL first mistake - punct after
-
 			const deltaIndexAfterWord = adjIndex;
-			const deltaIndexBeforeWord = -m.word.length;
+			const deltaIndexBeforeWord = m.word.length;
 
-			// Check if there are punct mistakes around the sub mistakes
-			const punctBefore = this.mistakes[i - 1]?.subtype === "OTHER"
-				&& !this.mistakes[i - 1]?.word?.includes("\"");
-			const punctAfter = this.mistakes[nextWordIndex]?.subtype === "OTHER";
+			// The punct mistake should be moved to maintain the relative order
+			// with respect to the same-type word mistake
+			for (let curPunctMistakeIdx = 0; curPunctMistakeIdx < punctMistakesInMiddle; curPunctMistakeIdx++) {
+				const punctMistake = this.mistakes[i + curPunctMistakeIdx + 1];
+				const refMistake = punctMistake.type === "ADD" ? addMistake : delMistake;
+				const isBeforeRefMistake = punctMistake.boundsDiff.start < refMistake.boundsDiff.start;
 
-			for (let j = i + 1; j <= i + punctMistakesInMiddle; j++) {
-				const punctMistake = this.mistakes[j];
-				let deltaIndex;
+				if (isBeforeRefMistake) {
+					const punctMistakesBefore = this.mistakes.slice(i, i + curPunctMistakeIdx + 1).filter((mistake) => mistake.subtype === "OTHER").length;
+					punctMistake.boundsDiff.start -= deltaIndexBeforeWord + punctMistakesBefore;
+					punctMistake.boundsDiff.end -= deltaIndexBeforeWord + punctMistakesBefore;
 
-				if (punctBefore !== punctAfter) {
-					if (punctAfter) {
-						deltaIndex = deltaIndexAfterWord;
-					} else {
-						deltaIndex = deltaIndexBeforeWord;
-
-						// Adjust the bounds of the submistake to compensate
-						// for the change in punct location
-						subMistake.boundsDiff.start += 1;
-						subMistake.boundsDiff.end += 1;
-					}
+					// Adjust the bounds of the submistake to compensate
+					// for the change in punct location
+					subMistake.boundsDiff.start += 1;
+					subMistake.boundsDiff.end += 1;
 				} else {
-					if (m.type === punctMistake.type) {
-						deltaIndex = deltaIndexAfterWord;
-					} else {
-						deltaIndex = deltaIndexBeforeWord;
+					const punctMistakesAfter = this.mistakes.slice(i + curPunctMistakeIdx + 1, nextWordIndex - 1).filter((mistake) => mistake.subtype === "OTHER").length;
 
-						// Adjust the bounds of the submistake to compensate
-						// for the change in punct location
-						subMistake.boundsDiff.start += 1;
-						subMistake.boundsDiff.end += 1;
-					}
+					punctMistake.boundsDiff.start += deltaIndexAfterWord + punctMistakesAfter;
+					punctMistake.boundsDiff.end += deltaIndexAfterWord + punctMistakesAfter;
 				}
-
-				punctMistake.boundsDiff.start += deltaIndex;
-				punctMistake.boundsDiff.end += deltaIndex;
 			}
 
 			// Decrement boundsDiff of all subsequent words
